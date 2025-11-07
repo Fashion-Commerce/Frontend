@@ -1,5 +1,5 @@
-import { apiClient } from '@/lib/api-client';
-import type { ProductVariant } from '@/types';
+import http1 from "@/lib/http1";
+import type { ProductVariant } from "@/types";
 
 export interface Order {
   order_id: string;
@@ -41,7 +41,7 @@ export interface OrdersParams {
 
 export const orderApi = {
   async createOrder(data: CreateOrderRequest): Promise<Order> {
-    return apiClient.post<Order>('/orders', data);
+    return http1.post<Order>("/orders", data);
   },
 
   async getOrders(params?: OrdersParams): Promise<Order[]> {
@@ -53,12 +53,14 @@ export const orderApi = {
         }
       });
     }
-    
-    const url = `/orders${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
-    return apiClient.get<Order[]>(url);
+
+    const url = `/orders${
+      queryParams.toString() ? `?${queryParams.toString()}` : ""
+    }`;
+    return http1.get<Order[]>(url);
   },
 
   async getOrderById(orderId: string): Promise<Order> {
-    return apiClient.get<Order>(`/orders/${orderId}`);
+    return http1.get<Order>(`/orders/${orderId}`);
   },
 };

@@ -1,4 +1,4 @@
-import { apiClient } from '@/lib/api-client';
+import http1 from "@/lib/http1";
 
 export interface Message {
   message_id: string;
@@ -6,7 +6,7 @@ export interface Message {
   user_id: string;
   session_id?: string;
   content: string;
-  sender: 'user' | 'bot';
+  sender: "user" | "bot";
   agent_type?: string;
   created_at: string;
   updated_at: string;
@@ -33,7 +33,7 @@ export interface StreamChunk {
 
 export const chatApi = {
   async sendMessage(data: SendMessageRequest): Promise<Message> {
-    return apiClient.post<Message>('/messages', data);
+    return apiClient.post<Message>("/messages", data);
   },
 
   async getMessages(params?: MessagesParams): Promise<Message[]> {
@@ -45,8 +45,10 @@ export const chatApi = {
         }
       });
     }
-    
-    const url = `/messages${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
+
+    const url = `/messages${
+      queryParams.toString() ? `?${queryParams.toString()}` : ""
+    }`;
     return apiClient.get<Message[]>(url);
   },
 
@@ -57,7 +59,7 @@ export const chatApi = {
     onComplete?: () => void
   ): Promise<void> {
     try {
-      await apiClient.stream('/chat/stream', { message }, (chunk) => {
+      await apiClient.stream("/chat/stream", { message }, (chunk) => {
         onChunk(chunk);
       });
       onComplete?.();

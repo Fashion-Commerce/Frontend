@@ -1,5 +1,5 @@
-import { apiClient } from '@/lib/api-client';
-import type { Product, ProductVariant } from '@/types';
+import http1 from "@/lib/http1";
+import type { Product, ProductVariant } from "@/types";
 
 export interface CartItem {
   cart_item_id: string;
@@ -24,18 +24,21 @@ export interface UpdateCartRequest {
 
 export const cartApi = {
   async getCartItems(): Promise<CartItem[]> {
-    return apiClient.get<CartItem[]>('/cart-items');
+    return http1.get<CartItem[]>("/cart-items");
   },
 
   async addToCart(data: AddToCartRequest): Promise<CartItem> {
-    return apiClient.post<CartItem>('/cart-items', data);
+    return http1.post<CartItem>("/cart-items", data);
   },
 
-  async updateCartItem(cartItemId: string, data: UpdateCartRequest): Promise<CartItem> {
-    return apiClient.put<CartItem>(`/cart-items/${cartItemId}`, data);
+  async updateCartItem(
+    cartItemId: string,
+    data: { quantity: number }
+  ): Promise<CartItem> {
+    return http1.put<CartItem>(`/cart-items/${cartItemId}`, data);
   },
 
   async removeFromCart(cartItemId: string): Promise<void> {
-    return apiClient.delete<void>(`/cart-items/${cartItemId}`);
+    return http1.delete<void>(`/cart-items/${cartItemId}`);
   },
 };

@@ -1,4 +1,4 @@
-import { apiClient } from '@/lib/api-client';
+import http1 from "@/lib/http1";
 
 export interface Product {
   product_id: string;
@@ -62,7 +62,7 @@ export interface ProductsParams {
   is_active_filter?: boolean;
   sku_search?: string;
   sort_by?: string;
-  sort_order?: 'asc' | 'desc';
+  sort_order?: "asc" | "desc";
 }
 
 export interface CategoriesParams {
@@ -88,13 +88,15 @@ export const productApi = {
         }
       });
     }
-    
-    const url = `/products${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
-    return apiClient.get<Product[]>(url);
+
+    const url = `/products${
+      queryParams.toString() ? `?${queryParams.toString()}` : ""
+    }`;
+    return http1.get<Product[]>(url);
   },
 
   async getProductById(id: string): Promise<Product> {
-    return apiClient.get<Product>(`/products/${id}`);
+    return http1.get<Product>(`/products/${id}`);
   },
 
   async getCategories(params?: CategoriesParams): Promise<Category[]> {
@@ -106,9 +108,11 @@ export const productApi = {
         }
       });
     }
-    
-    const url = `/categories${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
-    return apiClient.get<Category[]>(url);
+
+    const url = `/categories${
+      queryParams.toString() ? `?${queryParams.toString()}` : ""
+    }`;
+    return http1.get<Category[]>(url);
   },
 
   async getBrands(params?: BrandsParams): Promise<Brand[]> {
@@ -120,12 +124,16 @@ export const productApi = {
         }
       });
     }
-    
-    const url = `/brands${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
-    return apiClient.get<Brand[]>(url);
+
+    const url = `/brands${
+      queryParams.toString() ? `?${queryParams.toString()}` : ""
+    }`;
+    return http1.get<Brand[]>(url);
   },
 
   async getProductVariants(productId: string): Promise<ProductVariant[]> {
-    return apiClient.get<ProductVariant[]>(`/product-variants?product_id=${productId}`);
+    return http1.get<ProductVariant[]>(
+      `/product-variants?product_id=${productId}`
+    );
   },
 };
