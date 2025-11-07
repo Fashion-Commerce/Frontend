@@ -1,7 +1,8 @@
-import { apiClient } from '@/lib/api-client';
+import http1 from "@/lib/http1";
+import http2 from "@/lib/http2";
 
 export interface LoginRequest {
-  username: string; // email or phone
+  account: string; // email or phone
   password: string;
 }
 
@@ -10,11 +11,28 @@ export interface RegisterRequest {
   email: string;
   phone?: string;
   password: string;
+  is_admin: boolean; // Required field
 }
 
 export interface AuthResponse {
-  access_token: string;
-  token_type: string;
+  message: string;
+  info: {
+    message: string;
+    user_id: string;
+    access_token: string;
+    refresh_token: string;
+    token_type: string;
+    expires_in: number;
+  };
+}
+
+export interface RegisterResponse {
+  message: string;
+  info: {
+    message: string;
+    user_id: string;
+    success: boolean;
+  };
 }
 
 export interface User {
@@ -41,57 +59,66 @@ export interface UpdatePasswordRequest {
 }
 
 export const authApi = {
-  // Login with form data
+  // Login with JSON body
   async login(credentials: LoginRequest): Promise<AuthResponse> {
-    const formData = new FormData();
-    formData.append('username', credentials.username);
-    formData.append('password', credentials.password);
+    try {
+      const data = await http2.post<AuthResponse>("/signin", {
+        account: credentials.account,
+        password: credentials.password,
+      });
 
-    const response = await fetch(
-      `${(import.meta as any).env?.VITE_API_BASE_URL || 'http://localhost:8000/v1'}/token`,
-      {
-        method: 'POST',
-        body: formData,
-      }
-    );
+      // Set token in both http clients
+      http1.setToken(data.info.access_token);
+      http2.setToken(data.info.access_token);
 
-    if (!response.ok) {
-      throw new Error('Invalid credentials');
+      return data;
+    } catch (error: any) {
+      throw new Error(error?.response?.data?.detail || "Invalid credentials");
     }
-
-    const data = await response.json();
-    
-    // Set token in API client
-    apiClient.setToken(data.access_token);
-    
-    return data;
   },
 
-  async register(data: RegisterRequest): Promise<User> {
-    return apiClient.post<User>('/users', data);
+  async register(data: RegisterRequest): Promise<RegisterResponse> {
+    try {
+      // Use http2 (API_URL_2) for register
+      const result = await http2.post<RegisterResponse>("/v1/users", data);
+      return result;
+    } catch (error: any) {
+      // Re-throw error with server message if available
+      if (error.response?.data) {
+        const serverError = new Error(
+          error.response.data.detail ||
+            error.response.data.message ||
+            error.message
+        );
+        (serverError as any).response = error.response;
+        throw serverError;
+      }
+      throw error;
+    }
   },
 
   async getCurrentUser(): Promise<User> {
-    return apiClient.get<User>('/users/me');
+    return http1.get<User>("/users/me");
   },
 
   async updateProfile(data: UpdateProfileRequest): Promise<User> {
-    return apiClient.put<User>('/users/profile', data);
+    return http1.put<User>("/users/profile", data);
   },
 
   async updatePassword(data: UpdatePasswordRequest): Promise<void> {
-    return apiClient.put<void>('/users/password', data);
+    return http1.put<void>("/users/password", data);
   },
 
   logout() {
-    apiClient.clearToken();
+    http1.clearToken();
+    http2.clearToken();
   },
 
   isAuthenticated(): boolean {
-    return apiClient.isAuthenticated();
+    return http1.isAuthenticated();
   },
 
   getToken(): string | null {
-    return apiClient.getToken();
+    return http1.getToken();
   },
 };

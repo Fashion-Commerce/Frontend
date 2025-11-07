@@ -58,7 +58,7 @@ export interface ProductVariant {
 // ========== USER & AUTH TYPES ==========
 export interface User {
   user_id?: string;
-  id: string;
+  id?: string;
   fullname: string;
   email: string;
   phone?: string;
@@ -79,6 +79,7 @@ export interface RegisterRequest {
   email: string;
   phone?: string;
   password: string;
+  is_admin: boolean; // Required field, default to false
 }
 
 export interface AuthResponse {
@@ -116,15 +117,15 @@ export interface ChatMessage {
 }
 
 export enum MessageSender {
-  USER = 'user',
-  BOT = 'bot',
+  USER = "user",
+  BOT = "bot",
 }
 
 export enum AgentType {
-  SYSTEM = 'system',
-  SEARCH = 'search',
-  ADVISOR = 'advisor',
-  ORDER = 'order',
+  SYSTEM = "system",
+  SEARCH = "search",
+  ADVISOR = "advisor",
+  ORDER = "order",
 }
 
 // ========== ORDER TYPES ==========
@@ -155,18 +156,18 @@ export interface OrderItem {
 }
 
 export enum OrderStatus {
-  PENDING = 'pending',
-  CONFIRMED = 'confirmed',
-  SHIPPED = 'shipped',
-  DELIVERED = 'delivered',
-  CANCELLED = 'cancelled',
+  PENDING = "pending",
+  CONFIRMED = "confirmed",
+  SHIPPED = "shipped",
+  DELIVERED = "delivered",
+  CANCELLED = "cancelled",
 }
 
 export enum PaymentStatus {
-  PENDING = 'pending',
-  COMPLETED = 'completed',
-  FAILED = 'failed',
-  REFUNDED = 'refunded',
+  PENDING = "pending",
+  COMPLETED = "completed",
+  FAILED = "failed",
+  REFUNDED = "refunded",
 }
 
 // ========== API REQUEST PARAMS ==========
@@ -181,7 +182,7 @@ export interface ProductsParams {
   is_active_filter?: boolean;
   sku_search?: string;
   sort_by?: string;
-  sort_order?: 'asc' | 'desc';
+  sort_order?: "asc" | "desc";
 }
 
 export interface CategoriesParams {
@@ -203,5 +204,5 @@ export interface OrdersParams {
   status_filter?: OrderStatus;
   payment_status_filter?: PaymentStatus;
   sort_by?: string;
-  sort_order?: 'asc' | 'desc';
+  sort_order?: "asc" | "desc";
 }

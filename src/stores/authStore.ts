@@ -1,20 +1,30 @@
-import { create } from 'zustand';
-import { devtools, persist } from 'zustand/middleware';
-import { authApi, type User } from '../api/auth.api';
+import { create } from "zustand";
+import { devtools, persist } from "zustand/middleware";
+import { toast } from "react-toastify";
+import { authApi, type User } from "../api/auth.api";
 
 interface AuthState {
   user: User | null;
   isLoading: boolean;
   error: string | null;
   isAuthenticated: boolean;
-  
+
   // Actions
   login: (email: string, password: string) => Promise<boolean>;
-  register: (fullname: string, email: string, password: string, phone?: string) => Promise<boolean>;
+  register: (
+    fullname: string,
+    email: string,
+    password: string,
+    phone?: string
+  ) => Promise<boolean>;
   logout: () => void;
   fetchCurrentUser: () => Promise<void>;
-  updateProfile: (data: { fullname?: string; phone?: string }) => Promise<boolean>;
+  updateProfile: (data: {
+    fullname?: string;
+    phone?: string;
+  }) => Promise<boolean>;
   clearError: () => void;
+  initializeAuth: () => void; // Load token from localStorage
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -29,54 +39,124 @@ export const useAuthStore = create<AuthState>()(
         login: async (email: string, password: string) => {
           set({ isLoading: true, error: null });
           try {
-            const authResponse = await authApi.login({ username: email, password });
-            
-            // Fetch user data after successful login
-            const user = await authApi.getCurrentUser();
-            
-            set({ 
-              user, 
-              isAuthenticated: true, 
-              isLoading: false,
-              error: null
+            const authResponse = await authApi.login({
+              account: email,
+              password,
             });
-            
+
+            // Create user object from login response
+            const user = {
+              user_id: authResponse.info.user_id,
+              email,
+              fullname: email.split("@")[0], // Use email prefix as temporary name
+              user_type: "customer",
+              is_active: true,
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString(),
+            };
+
+            set({
+              user,
+              isAuthenticated: true,
+              isLoading: false,
+              error: null,
+            });
+
+            toast.success(`Chào mừng ${user.fullname}! Đăng nhập thành công.`);
             return true;
           } catch (error: any) {
-            set({ 
-              error: error.message || 'Login failed', 
+            const errorMessage = error.message || "Đăng nhập thất bại";
+            set({
+              error: errorMessage,
               isLoading: false,
-              isAuthenticated: false
+              isAuthenticated: false,
             });
+            toast.error(errorMessage);
             return false;
           }
         },
 
-        register: async (fullname: string, email: string, password: string, phone?: string) => {
+        register: async (
+          fullname: string,
+          email: string,
+          password: string,
+          phone?: string
+        ) => {
           set({ isLoading: true, error: null });
           try {
-            await authApi.register({ fullname, email, password, phone });
-            
+            const registerData = {
+              fullname,
+              email,
+              password,
+              phone,
+              is_admin: false,
+            };
+
+            const registerResult = await authApi.register(registerData);
+
             // Auto login after registration
-            const success = await get().login(email, password);
-            
-            return success;
-          } catch (error: any) {
-            set({ 
-              error: error.message || 'Registration failed', 
-              isLoading: false 
+            const authResponse = await authApi.login({
+              account: email,
+              password,
             });
+
+            // Create user object from both responses
+            const user = {
+              user_id: authResponse.info.user_id,
+              fullname,
+              email,
+              phone,
+              user_type: "customer",
+              is_active: true,
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString(),
+            };
+
+            set({
+              user,
+              isAuthenticated: true,
+              isLoading: false,
+              error: null,
+            });
+
+            toast.success(`Chào mừng ${fullname}! Đăng ký thành công.`);
+            return true;
+          } catch (error: any) {
+            // Extract error message from server response
+            let errorMessage = "Đăng ký thất bại";
+
+            if (error.response?.data?.detail) {
+              const detail = error.response.data.detail;
+              if (detail.includes("already exists")) {
+                errorMessage =
+                  "Email này đã được đăng ký. Vui lòng sử dụng email khác hoặc đăng nhập.";
+              } else {
+                errorMessage = detail;
+              }
+            } else if (error.response?.data?.message) {
+              errorMessage = error.response.data.message;
+            } else if (error.message) {
+              errorMessage = error.message;
+            }
+
+            set({
+              error: errorMessage,
+              isLoading: false,
+            });
+
+            toast.error(errorMessage);
             return false;
           }
         },
 
         logout: () => {
           authApi.logout();
-          set({ 
-            user: null, 
+          set({
+            user: null,
             isAuthenticated: false,
-            error: null
+            error: null,
           });
+          toast.info("Đã đăng xuất thành công");
         },
 
         fetchCurrentUser: async () => {
@@ -88,17 +168,17 @@ export const useAuthStore = create<AuthState>()(
           set({ isLoading: true });
           try {
             const user = await authApi.getCurrentUser();
-            set({ 
-              user, 
-              isAuthenticated: true, 
-              isLoading: false 
+            set({
+              user,
+              isAuthenticated: true,
+              isLoading: false,
             });
           } catch (error: any) {
-            set({ 
-              error: error.message || 'Failed to fetch user', 
+            set({
+              error: error.message || "Failed to fetch user",
               isLoading: false,
               isAuthenticated: false,
-              user: null
+              user: null,
             });
             authApi.logout();
           }
@@ -108,15 +188,15 @@ export const useAuthStore = create<AuthState>()(
           set({ isLoading: true, error: null });
           try {
             const updatedUser = await authApi.updateProfile(data);
-            set({ 
-              user: updatedUser, 
-              isLoading: false 
+            set({
+              user: updatedUser,
+              isLoading: false,
             });
             return true;
           } catch (error: any) {
-            set({ 
-              error: error.message || 'Update failed', 
-              isLoading: false 
+            set({
+              error: error.message || "Update failed",
+              isLoading: false,
             });
             return false;
           }
@@ -125,14 +205,35 @@ export const useAuthStore = create<AuthState>()(
         clearError: () => {
           set({ error: null });
         },
+
+        initializeAuth: () => {
+          // Load token from localStorage on app start
+          const token = authApi.getToken();
+          if (token) {
+            // Token exists, user is authenticated
+            // User data will be loaded from zustand persist
+            const state = get();
+            if (state.user && state.isAuthenticated) {
+              // Already have user data from persist, just verify we're authenticated
+              set({ isAuthenticated: true });
+            }
+          } else {
+            // No token, clear everything
+            set({
+              user: null,
+              isAuthenticated: false,
+            });
+          }
+        },
       }),
       {
-        name: 'auth-storage',
-        partialize: (state) => ({ 
-          isAuthenticated: state.isAuthenticated 
+        name: "auth-storage",
+        partialize: (state) => ({
+          user: state.user,
+          isAuthenticated: state.isAuthenticated,
         }),
       }
     ),
-    { name: 'AuthStore' }
+    { name: "AuthStore" }
   )
 );
