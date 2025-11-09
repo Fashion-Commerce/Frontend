@@ -2,6 +2,7 @@ import React, { useEffect } from "react";
 import { RouterProvider } from "react-router-dom";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { Provider } from "@/components/ui/provider";
 import { router } from "@/router";
 import { useAuthStore } from "@/stores/authStore";
 import { useProductStore } from "@/stores/productStore";
@@ -52,7 +53,7 @@ const App: React.FC = () => {
   }, []); // Only run once on mount
 
   return (
-    <>
+    <Provider>
       <RouterProvider router={router} />
       <ToastContainer
         position="top-right"
@@ -66,7 +67,7 @@ const App: React.FC = () => {
         pauseOnHover
         theme="light"
       />
-    </>
+    </Provider>
   );
 };
 

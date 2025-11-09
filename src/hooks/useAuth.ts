@@ -4,9 +4,9 @@
  * Theo coding standards - hooks pattern
  */
 
-import { useState, useEffect, useCallback } from 'react';
-import type { User } from '@/types';
-import * as authService from '@/services/authService';
+import { useState, useEffect, useCallback } from "react";
+import type { User } from "@/types";
+import * as authService from "@/services/authService";
 
 interface UseAuthReturn {
   user: User | null;
@@ -14,7 +14,11 @@ interface UseAuthReturn {
   loading: boolean;
   error: string | null;
   login: (email: string, password: string) => Promise<boolean>;
-  register: (fullname: string, email: string, password: string) => Promise<boolean>;
+  register: (
+    fullname: string,
+    email: string,
+    password: string,
+  ) => Promise<boolean>;
   logout: () => void;
   clearError: () => void;
 }
@@ -39,54 +43,61 @@ export const useAuth = (): UseAuthReturn => {
   /**
    * Đăng nhập
    */
-  const login = useCallback(async (email: string, password: string): Promise<boolean> => {
-    setLoading(true);
-    setError(null);
-
-    try {
-      const result = await authService.login(email, password);
-      
-      if (result.user) {
-        setUser(result.user);
-        return true;
-      } else {
-        setError(result.error || 'Đăng nhập thất bại');
-        return false;
-      }
-    } catch (err: any) {
-      setError(err?.message || 'Đã có lỗi xảy ra');
-      return false;
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  /**
-   * Đăng ký
-   */
-  const register = useCallback(
-    async (fullname: string, email: string, password: string): Promise<boolean> => {
+  const login = useCallback(
+    async (email: string, password: string): Promise<boolean> => {
       setLoading(true);
       setError(null);
 
       try {
-        const result = await authService.register(fullname, email, password);
-        
+        const result = await authService.login(email, password);
+
         if (result.user) {
-          // Auto login after register
-          return await login(email, password);
+          setUser(result.user);
+          return true;
         } else {
-          setError(result.error || 'Đăng ký thất bại');
+          setError(result.error || "Đăng nhập thất bại");
           return false;
         }
       } catch (err: any) {
-        setError(err?.message || 'Đã có lỗi xảy ra');
+        setError(err?.message || "Đã có lỗi xảy ra");
         return false;
       } finally {
         setLoading(false);
       }
     },
-    [login]
+    [],
+  );
+
+  /**
+   * Đăng ký
+   */
+  const register = useCallback(
+    async (
+      fullname: string,
+      email: string,
+      password: string,
+    ): Promise<boolean> => {
+      setLoading(true);
+      setError(null);
+
+      try {
+        const result = await authService.register(fullname, email, password);
+
+        if (result.user) {
+          // Auto login after register
+          return await login(email, password);
+        } else {
+          setError(result.error || "Đăng ký thất bại");
+          return false;
+        }
+      } catch (err: any) {
+        setError(err?.message || "Đã có lỗi xảy ra");
+        return false;
+      } finally {
+        setLoading(false);
+      }
+    },
+    [login],
   );
 
   /**

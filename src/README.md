@@ -25,21 +25,24 @@ src/
 ## 📝 Quy tắc
 
 ### Import Pattern
+
 Sử dụng `@/` alias thay vì relative paths:
 
 ```tsx
 // ✅ ĐÚNG
-import { Button } from '@/components/Button';
-import { useAuth } from '@/hooks';
-import type { User } from '@/types';
+import { Button } from "@/components/Button";
+import { useAuth } from "@/hooks";
+import type { User } from "@/types";
 
 // ❌ SAI
-import { Button } from '../components/Button';
-import { useAuth } from '../../hooks';
+import { Button } from "../components/Button";
+import { useAuth } from "../../hooks";
 ```
 
 ### Component Structure
+
 Mỗi component nên có:
+
 - File component (`.tsx`)
 - Props interface
 - JSDoc comments
@@ -62,6 +65,7 @@ export const Button: React.FC<ButtonProps> = ({ ... }) => {
 ```
 
 ### Naming Convention
+
 - **Components**: PascalCase (`UserCard.tsx`)
 - **Hooks**: camelCase, prefix `use` (`useAuth.ts`)
 - **Services**: camelCase (`authService.ts`)
@@ -71,26 +75,34 @@ export const Button: React.FC<ButtonProps> = ({ ... }) => {
 ## 🔧 Các thư mục chi tiết
 
 ### `/api`
+
 Chứa tất cả API calls, endpoint definitions, và API-related types.
 
 ### `/components`
+
 UI components tái sử dụng. Có thể tổ chức theo:
+
 - Atomic design (atoms, molecules, organisms)
 - Feature-based (auth/, products/, etc.)
 
 ### `/hooks`
+
 Custom React hooks để tái sử dụng logic.
 
 ### `/services`
+
 Business logic, không phụ thuộc vào React.
 
 ### `/stores`
+
 Global state management (Zustand, Redux, etc.)
 
 ### `/types`
+
 Tất cả TypeScript types tập trung ở đây.
 
 ### `/utils`
+
 Pure functions, helpers, formatters.
 
 ---

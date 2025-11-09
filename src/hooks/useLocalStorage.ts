@@ -4,7 +4,7 @@
  * Theo coding standards - hooks pattern
  */
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from "react";
 
 /**
  * Hook để sync state với localStorage
@@ -14,7 +14,7 @@ import { useState, useEffect, useCallback } from 'react';
  */
 export function useLocalStorage<T>(
   key: string,
-  initialValue: T
+  initialValue: T,
 ): [T, (value: T | ((prev: T) => T)) => void, () => void] {
   // State để lưu giá trị
   const [storedValue, setStoredValue] = useState<T>(() => {
@@ -32,15 +32,16 @@ export function useLocalStorage<T>(
     (value: T | ((prev: T) => T)) => {
       try {
         // Cho phép value là function để update state
-        const valueToStore = value instanceof Function ? value(storedValue) : value;
-        
+        const valueToStore =
+          value instanceof Function ? value(storedValue) : value;
+
         setStoredValue(valueToStore);
         window.localStorage.setItem(key, JSON.stringify(valueToStore));
       } catch (error) {
         console.error(`Error saving ${key} to localStorage:`, error);
       }
     },
-    [key, storedValue]
+    [key, storedValue],
   );
 
   // Hàm để xóa value

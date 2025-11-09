@@ -67,6 +67,7 @@ export interface User {
   deleted?: boolean;
   created_at: string;
   updated_at: string;
+  last_login?: string | null;
 }
 
 export interface LoginRequest {
@@ -85,6 +86,17 @@ export interface RegisterRequest {
 export interface AuthResponse {
   access_token: string;
   token_type: string;
+}
+
+export interface UpdateProfileRequest {
+  fullname?: string;
+  phone?: string;
+}
+
+export interface UpdatePasswordRequest {
+  current_password: string;
+  new_password: string;
+  confirm_password: string;
 }
 
 // ========== CART TYPES ==========

@@ -49,7 +49,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ initialView, onClose }) => {
           name,
           email,
           password,
-          phone || undefined
+          phone || undefined,
         );
         if (success) {
           await fetchCart();

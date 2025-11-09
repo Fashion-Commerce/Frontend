@@ -56,7 +56,7 @@ export const chatApi = {
     message: string,
     onChunk: (chunk: StreamChunk) => void,
     onError?: (error: Error) => void,
-    onComplete?: () => void
+    onComplete?: () => void,
   ): Promise<void> {
     try {
       await apiClient.stream("/chat/stream", { message }, (chunk) => {

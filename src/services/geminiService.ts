@@ -4,10 +4,10 @@
  * Theo coding standards - service pattern
  */
 
-import type { ChatMessage, Product, AgentType } from '@/types';
-import { MessageSender } from '@/types';
-import { AgentType as AgentEnum } from '@/types';
-import { AGENT_KEYWORDS } from '@/constants';
+import type { ChatMessage, Product, AgentType } from "@/types";
+import { MessageSender } from "@/types";
+import { AgentType as AgentEnum } from "@/types";
+import { AGENT_KEYWORDS } from "@/constants";
 
 // Mock data - sẽ được thay thế bằng API call thật
 const MOCK_PRODUCTS: Product[] = [];
@@ -21,17 +21,17 @@ export const routeToAgent = (message: string): AgentType => {
   const lowerMessage = message.toLowerCase();
 
   // Check SEARCH agent keywords
-  if (AGENT_KEYWORDS.SEARCH.some(kw => lowerMessage.includes(kw))) {
+  if (AGENT_KEYWORDS.SEARCH.some((kw) => lowerMessage.includes(kw))) {
     return AgentEnum.SEARCH;
   }
 
   // Check ADVISOR agent keywords
-  if (AGENT_KEYWORDS.ADVISOR.some(kw => lowerMessage.includes(kw))) {
+  if (AGENT_KEYWORDS.ADVISOR.some((kw) => lowerMessage.includes(kw))) {
     return AgentEnum.ADVISOR;
   }
 
   // Check ORDER agent keywords
-  if (AGENT_KEYWORDS.ORDER.some(kw => lowerMessage.includes(kw))) {
+  if (AGENT_KEYWORDS.ORDER.some((kw) => lowerMessage.includes(kw))) {
     return AgentEnum.ORDER;
   }
 
@@ -44,14 +44,16 @@ export const routeToAgent = (message: string): AgentType => {
  * @param userMessage - Tin nhắn từ user
  * @returns ChatMessage response từ bot
  */
-export const getChatbotResponse = async (userMessage: string): Promise<ChatMessage> => {
+export const getChatbotResponse = async (
+  userMessage: string,
+): Promise<ChatMessage> => {
   // Simulate API delay
-  await new Promise(resolve => setTimeout(resolve, 1000));
+  await new Promise((resolve) => setTimeout(resolve, 1000));
 
   const agent = routeToAgent(userMessage);
   const lowerMessage = userMessage.toLowerCase();
 
-  let content = '';
+  let content = "";
   let suggestedProducts: Product[] = [];
 
   // SEARCH Agent Logic
@@ -68,9 +70,15 @@ export const getChatbotResponse = async (userMessage: string): Promise<ChatMessa
   }
   // ORDER Agent Logic
   else if (agent === AgentEnum.ORDER) {
-    if (lowerMessage.includes('xác nhận') || lowerMessage.includes('đặt hàng')) {
+    if (
+      lowerMessage.includes("xác nhận") ||
+      lowerMessage.includes("đặt hàng")
+    ) {
       content = `Đơn hàng của bạn đã được xác nhận! Chúng tôi sẽ giao hàng trong 2-3 ngày.`;
-    } else if (lowerMessage.includes('giỏ hàng') || lowerMessage.includes('cart')) {
+    } else if (
+      lowerMessage.includes("giỏ hàng") ||
+      lowerMessage.includes("cart")
+    ) {
       content = `Bạn muốn xem giỏ hàng? Hãy click vào biểu tượng giỏ hàng ở góc trên cùng nhé!`;
     } else {
       content = `Tôi có thể giúp bạn hoàn tất đơn hàng. Bạn đã sẵn sàng thanh toán chưa?`;
@@ -86,7 +94,8 @@ export const getChatbotResponse = async (userMessage: string): Promise<ChatMessa
     content,
     sender: MessageSender.BOT,
     agent,
-    suggestedProducts: suggestedProducts.length > 0 ? suggestedProducts : undefined,
+    suggestedProducts:
+      suggestedProducts.length > 0 ? suggestedProducts : undefined,
   };
 };
 
@@ -97,7 +106,7 @@ export const getChatbotResponse = async (userMessage: string): Promise<ChatMessa
  */
 export const streamChatbotResponse = async (
   userMessage: string,
-  onChunk: (chunk: string) => void
+  onChunk: (chunk: string) => void,
 ): Promise<void> => {
   // TODO: Implement streaming with Gemini AI API
   const response = await getChatbotResponse(userMessage);

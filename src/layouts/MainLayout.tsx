@@ -18,7 +18,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ theme, onThemeToggle }) => {
 
   // Auth modal state
   const [authModal, setAuthModal] = useState<"hidden" | "login" | "register">(
-    "hidden"
+    "hidden",
   );
 
   // Placeholder for wishlist - sẽ có wishlist store sau
@@ -39,6 +39,10 @@ const MainLayout: React.FC<MainLayoutProps> = ({ theme, onThemeToggle }) => {
     setAuthModal(view);
   };
 
+  const handleProfileClick = () => {
+    navigate("/profile");
+  };
+
   return (
     <div className="h-screen w-screen flex flex-col font-sans text-gray-900 dark:text-gray-100">
       <Header
@@ -50,11 +54,11 @@ const MainLayout: React.FC<MainLayoutProps> = ({ theme, onThemeToggle }) => {
         onLogout={handleLogout}
         onAuthClick={handleAuthClick}
         onAdminClick={handleAdminClick}
-        theme={theme}
-        onThemeToggle={onThemeToggle}
+        handleProfileClick={handleProfileClick}
       />
 
       <main className="flex-grow flex overflow-hidden">
+        {/* Chatbot - always visible, takes 1/5 of screen */}
         <Chatbot
           messages={[]}
           onSendMessage={(msg) => console.log("Send:", msg)}
@@ -63,6 +67,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ theme, onThemeToggle }) => {
           activeAgent={"system" as any}
         />
 
+        {/* Main content area - takes 4/5 of screen */}
         <div className="flex-grow h-full overflow-y-auto bg-gray-100 dark:bg-slate-900">
           <Outlet />
         </div>
