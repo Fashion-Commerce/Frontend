@@ -46,6 +46,16 @@ export interface User {
   deleted?: boolean;
   created_at: string;
   updated_at: string;
+  last_login?: string | null;
+}
+
+export interface UserDetailResponse {
+  message: string;
+  info: {
+    user: User;
+    success: boolean;
+    message: string;
+  };
 }
 
 export interface UpdateProfileRequest {
@@ -53,9 +63,26 @@ export interface UpdateProfileRequest {
   phone?: string;
 }
 
+export interface UpdateProfileResponse {
+  message: string;
+  info: {
+    message: string;
+    success: boolean;
+  };
+}
+
 export interface UpdatePasswordRequest {
   current_password: string;
   new_password: string;
+  confirm_password: string;
+}
+
+export interface UpdatePasswordResponse {
+  message: string;
+  info: {
+    message: string;
+    success: boolean;
+  };
 }
 
 export const authApi = {
@@ -88,7 +115,7 @@ export const authApi = {
         const serverError = new Error(
           error.response.data.detail ||
             error.response.data.message ||
-            error.message
+            error.message,
         );
         (serverError as any).response = error.response;
         throw serverError;
@@ -101,12 +128,52 @@ export const authApi = {
     return http1.get<User>("/users/me");
   },
 
-  async updateProfile(data: UpdateProfileRequest): Promise<User> {
-    return http1.put<User>("/users/profile", data);
+  // Get user details by user_id (http2 endpoint)
+  async getUserDetails(userId: string): Promise<UserDetailResponse> {
+    try {
+      const data = await http2.get<UserDetailResponse>(`/v1/users/${userId}`);
+      return data;
+    } catch (error: any) {
+      throw new Error(
+        error?.response?.data?.detail || "Failed to get user details",
+      );
+    }
   },
 
-  async updatePassword(data: UpdatePasswordRequest): Promise<void> {
-    return http1.put<void>("/users/password", data);
+  // Update user profile (http2 endpoint)
+  async updateProfile(
+    userId: string,
+    data: UpdateProfileRequest,
+  ): Promise<UpdateProfileResponse> {
+    try {
+      const result = await http2.patch<UpdateProfileResponse>(
+        `/v1/users/${userId}/profile`,
+        data,
+      );
+      return result;
+    } catch (error: any) {
+      throw new Error(
+        error?.response?.data?.detail || "Failed to update profile",
+      );
+    }
+  },
+
+  // Update user password (http2 endpoint)
+  async updatePassword(
+    userId: string,
+    data: UpdatePasswordRequest,
+  ): Promise<UpdatePasswordResponse> {
+    try {
+      const result = await http2.patch<UpdatePasswordResponse>(
+        `/v1/users/${userId}/password`,
+        data,
+      );
+      return result;
+    } catch (error: any) {
+      throw new Error(
+        error?.response?.data?.detail || "Failed to update password",
+      );
+    }
   },
 
   logout() {

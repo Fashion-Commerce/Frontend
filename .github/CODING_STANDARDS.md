@@ -1,6 +1,7 @@
 # 📋 Coding Standards & Best Practices
 
 ## 🎯 Mục tiêu
+
 Đây là **bộ quy chuẩn code** cho tất cả các dự án frontend React + Vite, giúp đảm bảo **tính nhất quán**, **chất lượng code**, và **khả năng mở rộng**.
 
 ---
@@ -11,9 +12,9 @@
 
 ```jsx
 // src/components/Button/Button.jsx
-import React from 'react';
-import PropTypes from 'prop-types';
-import './Button.css';
+import React from "react";
+import PropTypes from "prop-types";
+import "./Button.css";
 
 /**
  * Button component tái sử dụng
@@ -23,18 +24,18 @@ import './Button.css';
  * @param {function} onClick - Callback khi click
  * @param {ReactNode} children - Nội dung bên trong button
  */
-const Button = ({ 
-  variant = 'primary', 
-  size = 'md', 
-  disabled = false, 
-  onClick, 
+const Button = ({
+  variant = "primary",
+  size = "md",
+  disabled = false,
+  onClick,
   children,
-  ...props 
+  ...props
 }) => {
-  const baseClass = 'btn';
+  const baseClass = "btn";
   const variantClass = `btn--${variant}`;
   const sizeClass = `btn--${size}`;
-  
+
   return (
     <button
       className={`${baseClass} ${variantClass} ${sizeClass}`}
@@ -48,8 +49,8 @@ const Button = ({
 };
 
 Button.propTypes = {
-  variant: PropTypes.oneOf(['primary', 'secondary', 'outline']),
-  size: PropTypes.oneOf(['sm', 'md', 'lg']),
+  variant: PropTypes.oneOf(["primary", "secondary", "outline"]),
+  size: PropTypes.oneOf(["sm", "md", "lg"]),
   disabled: PropTypes.bool,
   onClick: PropTypes.func,
   children: PropTypes.node.isRequired,
@@ -62,7 +63,7 @@ export default Button;
 
 ```jsx
 // src/components/Button/index.js
-export { default } from './Button';
+export { default } from "./Button";
 ```
 
 ---
@@ -137,9 +138,9 @@ export { default } from './Button';
 
 ```jsx
 // src/hooks/useAuth.js
-import { useState, useEffect, useContext } from 'react';
-import { AuthContext } from '@/context/AuthContext';
-import { authService } from '@/services/authService';
+import { useState, useEffect, useContext } from "react";
+import { AuthContext } from "@/context/AuthContext";
+import { authService } from "@/services/authService";
 
 /**
  * Hook xử lý authentication logic
@@ -153,11 +154,11 @@ export const useAuth = () => {
   const login = async (credentials) => {
     setLoading(true);
     setError(null);
-    
+
     try {
       const userData = await authService.login(credentials);
       setUser(userData);
-      localStorage.setItem('token', userData.token);
+      localStorage.setItem("token", userData.token);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -167,7 +168,7 @@ export const useAuth = () => {
 
   const logout = () => {
     setUser(null);
-    localStorage.removeItem('token');
+    localStorage.removeItem("token");
   };
 
   return {
@@ -188,28 +189,29 @@ export const useAuth = () => {
 
 ```jsx
 // src/services/apiClient.js
-import axios from 'axios';
+import axios from "axios";
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api';
+const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL || "http://localhost:3000/api";
 
 export const apiClient = axios.create({
   baseURL: API_BASE_URL,
   timeout: 10000,
   headers: {
-    'Content-Type': 'application/json',
+    "Content-Type": "application/json",
   },
 });
 
 // Request interceptor
 apiClient.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem("token");
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
     return config;
   },
-  (error) => Promise.reject(error)
+  (error) => Promise.reject(error),
 );
 
 // Response interceptor
@@ -217,22 +219,22 @@ apiClient.interceptors.response.use(
   (response) => response.data,
   (error) => {
     if (error.response?.status === 401) {
-      localStorage.removeItem('token');
-      window.location.href = '/login';
+      localStorage.removeItem("token");
+      window.location.href = "/login";
     }
     return Promise.reject(error);
-  }
+  },
 );
 ```
 
 ```jsx
 // src/services/userService.js
-import { apiClient } from './apiClient';
+import { apiClient } from "./apiClient";
 
 export const userService = {
   // Lấy danh sách users
   getUsers: async (params = {}) => {
-    const response = await apiClient.get('/users', { params });
+    const response = await apiClient.get("/users", { params });
     return response;
   },
 
@@ -244,7 +246,7 @@ export const userService = {
 
   // Tạo user mới
   createUser: async (userData) => {
-    const response = await apiClient.post('/users', userData);
+    const response = await apiClient.post("/users", userData);
     return response;
   },
 
@@ -307,14 +309,14 @@ import { formatDate, validateEmail } from '@/utils/helpers';
 
 ```jsx
 // src/context/AuthContext.jsx
-import React, { createContext, useReducer, useContext } from 'react';
+import React, { createContext, useReducer, useContext } from "react";
 
 // Action types
 const AUTH_ACTIONS = {
-  SET_LOADING: 'SET_LOADING',
-  SET_USER: 'SET_USER',
-  SET_ERROR: 'SET_ERROR',
-  LOGOUT: 'LOGOUT',
+  SET_LOADING: "SET_LOADING",
+  SET_USER: "SET_USER",
+  SET_ERROR: "SET_ERROR",
+  LOGOUT: "LOGOUT",
 };
 
 // Initial state
@@ -352,18 +354,14 @@ export const AuthProvider = ({ children }) => {
     dispatch,
   };
 
-  return (
-    <AuthContext.Provider value={value}>
-      {children}
-    </AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 
 // Custom hook
 export const useAuthContext = () => {
   const context = useContext(AuthContext);
   if (!context) {
-    throw new Error('useAuthContext must be used within AuthProvider');
+    throw new Error("useAuthContext must be used within AuthProvider");
   }
   return context;
 };
@@ -377,7 +375,7 @@ export const useAuthContext = () => {
 
 ```jsx
 // src/components/ErrorBoundary/ErrorBoundary.jsx
-import React from 'react';
+import React from "react";
 
 class ErrorBoundary extends React.Component {
   constructor(props) {
@@ -390,7 +388,7 @@ class ErrorBoundary extends React.Component {
   }
 
   componentDidCatch(error, errorInfo) {
-    console.error('ErrorBoundary caught an error:', error, errorInfo);
+    console.error("ErrorBoundary caught an error:", error, errorInfo);
   }
 
   render() {
@@ -422,13 +420,13 @@ export default ErrorBoundary;
 ```jsx
 /**
  * Modal component với backdrop và animation
- * 
+ *
  * @component
  * @example
  * <Modal isOpen={true} onClose={() => {}}>
  *   <p>Nội dung modal</p>
  * </Modal>
- * 
+ *
  * @param {boolean} isOpen - Trạng thái hiển thị modal
  * @param {function} onClose - Callback khi đóng modal
  * @param {ReactNode} children - Nội dung bên trong modal
@@ -447,8 +445,8 @@ export default ErrorBoundary;
  * @returns {string} Số tiền đã được format
  * @example formatCurrency(1000000) // "1.000.000 VNĐ"
  */
-export const formatCurrency = (amount, currency = 'VNĐ') => {
-  return new Intl.NumberFormat('vi-VN').format(amount) + ` ${currency}`;
+export const formatCurrency = (amount, currency = "VNĐ") => {
+  return new Intl.NumberFormat("vi-VN").format(amount) + ` ${currency}`;
 };
 ```
 
@@ -459,7 +457,7 @@ export const formatCurrency = (amount, currency = 'VNĐ') => {
 ### ✅ React.memo & useCallback
 
 ```jsx
-import React, { memo, useCallback } from 'react';
+import React, { memo, useCallback } from "react";
 
 const UserCard = memo(({ user, onEdit, onDelete }) => {
   // Memoize callbacks để tránh re-render không cần thiết
@@ -481,18 +479,18 @@ const UserCard = memo(({ user, onEdit, onDelete }) => {
   );
 });
 
-UserCard.displayName = 'UserCard';
+UserCard.displayName = "UserCard";
 export default UserCard;
 ```
 
 ### ✅ Lazy Loading
 
 ```jsx
-import { lazy, Suspense } from 'react';
+import { lazy, Suspense } from "react";
 
 // Lazy load components
-const Dashboard = lazy(() => import('@/pages/Dashboard'));
-const Settings = lazy(() => import('@/pages/Settings'));
+const Dashboard = lazy(() => import("@/pages/Dashboard"));
+const Settings = lazy(() => import("@/pages/Settings"));
 
 // Usage with Suspense
 <Suspense fallback={<div>Đang tải...</div>}>
@@ -500,7 +498,7 @@ const Settings = lazy(() => import('@/pages/Settings'));
     <Route path="/dashboard" element={<Dashboard />} />
     <Route path="/settings" element={<Settings />} />
   </Routes>
-</Suspense>
+</Suspense>;
 ```
 
 ---
@@ -512,7 +510,7 @@ const Settings = lazy(() => import('@/pages/Settings'));
 
 ✅ ĐÚNG:
 feat(auth): add login functionality
-fix(button): resolve hover state issue  
+fix(button): resolve hover state issue
 docs(readme): update installation guide
 style(header): improve responsive design
 refactor(api): optimize user service calls
@@ -526,6 +524,7 @@ update docs
 ---
 
 **📚 Tài liệu tham khảo:**
+
 - [React Best Practices](https://react.dev/)
 - [Vite Documentation](https://vitejs.dev/)
 - [Airbnb JavaScript Style Guide](https://github.com/airbnb/javascript)

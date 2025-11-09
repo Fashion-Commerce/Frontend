@@ -133,7 +133,7 @@ export const productApi = {
 
   async getProductVariants(productId: string): Promise<ProductVariant[]> {
     return http1.get<ProductVariant[]>(
-      `/product-variants?product_id=${productId}`
+      `/product-variants?product_id=${productId}`,
     );
   },
 };

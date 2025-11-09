@@ -31,7 +31,7 @@ class ApiClient {
       },
       (error) => {
         return Promise.reject(error);
-      }
+      },
     );
 
     // Response interceptor for error handling
@@ -45,7 +45,7 @@ class ApiClient {
           window.location.href = "/";
         }
         return Promise.reject(error);
-      }
+      },
     );
   }
 
@@ -81,7 +81,7 @@ class ApiClient {
   // Generic request methods
   public async get<T = any>(
     url: string,
-    config?: AxiosRequestConfig
+    config?: AxiosRequestConfig,
   ): Promise<T> {
     const response: AxiosResponse<T> = await this.client.get(url, config);
     return this.extractData(response.data);
@@ -90,12 +90,12 @@ class ApiClient {
   public async post<T = any>(
     url: string,
     data?: any,
-    config?: AxiosRequestConfig
+    config?: AxiosRequestConfig,
   ): Promise<T> {
     const response: AxiosResponse<T> = await this.client.post(
       url,
       data,
-      config
+      config,
     );
     return this.extractData(response.data);
   }
@@ -103,7 +103,7 @@ class ApiClient {
   public async put<T = any>(
     url: string,
     data?: any,
-    config?: AxiosRequestConfig
+    config?: AxiosRequestConfig,
   ): Promise<T> {
     const response: AxiosResponse<T> = await this.client.put(url, data, config);
     return this.extractData(response.data);
@@ -111,7 +111,7 @@ class ApiClient {
 
   public async delete<T = any>(
     url: string,
-    config?: AxiosRequestConfig
+    config?: AxiosRequestConfig,
   ): Promise<T> {
     const response: AxiosResponse<T> = await this.client.delete(url, config);
     return this.extractData(response.data);
@@ -120,12 +120,12 @@ class ApiClient {
   public async patch<T = any>(
     url: string,
     data?: any,
-    config?: AxiosRequestConfig
+    config?: AxiosRequestConfig,
   ): Promise<T> {
     const response: AxiosResponse<T> = await this.client.patch(
       url,
       data,
-      config
+      config,
     );
     return this.extractData(response.data);
   }
@@ -138,6 +138,11 @@ class ApiClient {
         return response as T;
       }
 
+      // For update operations that return success messages
+      if (response.info.success !== undefined && response.info.message) {
+        return response as T;
+      }
+
       // Handle paginated responses
       if (response.info.products) return response.info.products;
       if (response.info.categories) return response.info.categories;
@@ -146,7 +151,7 @@ class ApiClient {
       if (response.info.cart_items) return response.info.cart_items;
       if (response.info.orders) return response.info.orders;
       if (response.info.messages) return response.info.messages;
-      if (response.info.user) return response.info.user;
+      if (response.info.user) return response as T; // Return full response for user details
       return response.info;
     }
     return response;
@@ -156,7 +161,7 @@ class ApiClient {
   public async stream(
     url: string,
     data: any,
-    onChunk: (chunk: any) => void
+    onChunk: (chunk: any) => void,
   ): Promise<void> {
     const response = await fetch(`${this.baseURL}${url}`, {
       method: "POST",

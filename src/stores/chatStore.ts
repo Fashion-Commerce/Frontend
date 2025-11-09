@@ -1,10 +1,10 @@
-import { create } from 'zustand';
-import { devtools } from 'zustand/middleware';
-import { chatApi, type Message, type StreamChunk } from '../api/chat.api';
+import { create } from "zustand";
+import { devtools } from "zustand/middleware";
+import { chatApi, type Message, type StreamChunk } from "../api/chat.api";
 
 export interface ChatMessage {
   id: number;
-  sender: 'user' | 'bot';
+  sender: "user" | "bot";
   content: string;
   agent?: string;
   timestamp: string;
@@ -16,7 +16,7 @@ interface ChatState {
   activeAgent: string;
   sessionId: string;
   error: string | null;
-  
+
   // Actions
   sendMessage: (content: string) => Promise<void>;
   sendStreamMessage: (content: string) => Promise<void>;
@@ -32,8 +32,8 @@ export const useChatStore = create<ChatState>()(
     (set, get) => ({
       messages: [],
       isTyping: false,
-      activeAgent: 'system',
-      sessionId: '',
+      activeAgent: "system",
+      sessionId: "",
       error: null,
 
       sendMessage: async (content: string) => {
@@ -41,42 +41,42 @@ export const useChatStore = create<ChatState>()(
 
         const userMessage: ChatMessage = {
           id: Date.now(),
-          sender: 'user',
+          sender: "user",
           content: content.trim(),
           timestamp: new Date().toISOString(),
         };
 
-        set((state) => ({ 
+        set((state) => ({
           messages: [...state.messages, userMessage],
           isTyping: true,
-          error: null
+          error: null,
         }));
 
         try {
           const { sessionId } = get();
-          await chatApi.sendMessage({ 
-            content: content.trim(), 
-            session_id: sessionId 
+          await chatApi.sendMessage({
+            content: content.trim(),
+            session_id: sessionId,
           });
 
           // Simulate bot response (in real app, this comes from API)
           setTimeout(() => {
             const botMessage: ChatMessage = {
               id: Date.now() + 1,
-              sender: 'bot',
-              content: 'Tôi đã nhận được tin nhắn của bạn.',
+              sender: "bot",
+              content: "Tôi đã nhận được tin nhắn của bạn.",
               timestamp: new Date().toISOString(),
             };
 
-            set((state) => ({ 
+            set((state) => ({
               messages: [...state.messages, botMessage],
-              isTyping: false
+              isTyping: false,
             }));
           }, 1000);
         } catch (error: any) {
-          set({ 
-            error: error.message || 'Failed to send message',
-            isTyping: false
+          set({
+            error: error.message || "Failed to send message",
+            isTyping: false,
           });
         }
       },
@@ -86,20 +86,20 @@ export const useChatStore = create<ChatState>()(
 
         const userMessage: ChatMessage = {
           id: Date.now(),
-          sender: 'user',
+          sender: "user",
           content: content.trim(),
           timestamp: new Date().toISOString(),
         };
 
-        set((state) => ({ 
+        set((state) => ({
           messages: [...state.messages, userMessage],
           isTyping: true,
-          activeAgent: 'search',
-          error: null
+          activeAgent: "search",
+          error: null,
         }));
 
-        let botMessageContent = '';
-        let currentAgent = 'system';
+        let botMessageContent = "";
+        let currentAgent = "system";
 
         try {
           await chatApi.streamChat(
@@ -108,7 +108,7 @@ export const useChatStore = create<ChatState>()(
               if (chunk.content) {
                 botMessageContent += chunk.content;
               }
-              
+
               if (chunk.name) {
                 currentAgent = chunk.name;
                 set({ activeAgent: currentAgent });
@@ -119,7 +119,7 @@ export const useChatStore = create<ChatState>()(
                 const messages = [...state.messages];
                 const lastMessage = messages[messages.length - 1];
 
-                if (lastMessage && lastMessage.sender === 'bot') {
+                if (lastMessage && lastMessage.sender === "bot") {
                   // Update existing bot message
                   lastMessage.content = botMessageContent;
                   lastMessage.agent = currentAgent;
@@ -127,7 +127,7 @@ export const useChatStore = create<ChatState>()(
                   // Add new bot message
                   messages.push({
                     id: Date.now() + 1,
-                    sender: 'bot',
+                    sender: "bot",
                     content: botMessageContent,
                     agent: currentAgent,
                     timestamp: new Date().toISOString(),
@@ -138,29 +138,29 @@ export const useChatStore = create<ChatState>()(
               });
             },
             (error) => {
-              console.error('Stream error:', error);
-              set({ 
-                error: error.message || 'Stream error',
-                isTyping: false
+              console.error("Stream error:", error);
+              set({
+                error: error.message || "Stream error",
+                isTyping: false,
               });
             },
             () => {
               set({ isTyping: false });
-            }
+            },
           );
         } catch (error: any) {
-          set({ 
-            error: error.message || 'Failed to send message',
-            isTyping: false
+          set({
+            error: error.message || "Failed to send message",
+            isTyping: false,
           });
         }
       },
 
       loadMessages: async (sessionId) => {
         try {
-          const messages = await chatApi.getMessages({ 
+          const messages = await chatApi.getMessages({
             session_id: sessionId,
-            page_size: 100 
+            page_size: 100,
           });
 
           const chatMessages: ChatMessage[] = messages.map((msg, index) => ({
@@ -173,7 +173,7 @@ export const useChatStore = create<ChatState>()(
 
           set({ messages: chatMessages });
         } catch (error: any) {
-          set({ error: error.message || 'Failed to load messages' });
+          set({ error: error.message || "Failed to load messages" });
         }
       },
 
@@ -195,6 +195,6 @@ export const useChatStore = create<ChatState>()(
         set({ error: null });
       },
     }),
-    { name: 'ChatStore' }
-  )
+    { name: "ChatStore" },
+  ),
 );

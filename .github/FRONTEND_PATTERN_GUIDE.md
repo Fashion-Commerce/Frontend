@@ -1,6 +1,7 @@
 # 🚀 React + Vite Frontend Template (Scalable Pattern)
 
 ## 🧩 Giới thiệu
+
 Đây là **template cấu trúc dự án React dùng Vite** được thiết kế hướng tới **quy mô lớn**, **dễ mở rộng**, và **dễ duy trì**.  
 Mục tiêu là cung cấp một chuẩn thống nhất cho tất cả các project frontend bạn phát triển — giúp bạn và Copilot code theo cùng một pattern rõ ràng.
 
@@ -36,6 +37,7 @@ Mục tiêu là cung cấp một chuẩn thống nhất cho tất cả các proj
 ---
 
 ## ⚙️ Cài Đặt & Chạy Dự Án
+
 ```bash
 # 1. Cài dependencies
 npm install
@@ -62,10 +64,10 @@ npm run preview
 
 Chia nhỏ UI thành:
 
-* **Atoms**: Thành phần cơ bản (Button, Input, Icon)
-* **Molecules**: Kết hợp nhiều atom (SearchBar, Card)
-* **Organisms**: Thành phần phức tạp (Header, Sidebar)
-* **Pages**: Trang cụ thể (HomePage, LoginPage)
+- **Atoms**: Thành phần cơ bản (Button, Input, Icon)
+- **Molecules**: Kết hợp nhiều atom (SearchBar, Card)
+- **Organisms**: Thành phần phức tạp (Header, Sidebar)
+- **Pages**: Trang cụ thể (HomePage, LoginPage)
 
 👉 Giúp Copilot hiểu context khi code UI.
 
@@ -73,10 +75,10 @@ Chia nhỏ UI thành:
 
 ### 2️⃣ Separation of Concerns
 
-* **UI logic** nằm trong `components/`
-* **Business logic** nằm trong `services/`, `hooks/`
-* **Global state** tách biệt trong `context/` hoặc `store/`
-* **Routing** (React Router) tách riêng tại `src/router/`
+- **UI logic** nằm trong `components/`
+- **Business logic** nằm trong `services/`, `hooks/`
+- **Global state** tách biệt trong `context/` hoặc `store/`
+- **Routing** (React Router) tách riêng tại `src/router/`
 
 ---
 
@@ -95,11 +97,11 @@ VITE_APP_NAME=MyViteApp
 
 ### 4️⃣ Coding Convention
 
-* **Tên component**: PascalCase (`UserCard.jsx`)
-* **Tên hook**: camelCase, bắt đầu bằng `use` (`useAuth.js`)
-* **Tên file CSS**: giống tên component (`UserCard.css`)
-* **Import alias**: Dùng `@` để trỏ vào `src/`
-  (*Cấu hình trong `vite.config.js` và `jsconfig.json`*)
+- **Tên component**: PascalCase (`UserCard.jsx`)
+- **Tên hook**: camelCase, bắt đầu bằng `use` (`useAuth.js`)
+- **Tên file CSS**: giống tên component (`UserCard.css`)
+- **Import alias**: Dùng `@` để trỏ vào `src/`
+  (_Cấu hình trong `vite.config.js` và `jsconfig.json`_)
 
 Ví dụ:
 
@@ -149,8 +151,8 @@ src/
 
 ## 🧪 Testing (Tùy chọn)
 
-* Jest + React Testing Library
-* Vitest (tích hợp tốt hơn với Vite)
+- Jest + React Testing Library
+- Vitest (tích hợp tốt hơn với Vite)
 
 ---
 
@@ -163,6 +165,7 @@ src/
    ```js
    // Tạo component Button tái sử dụng có 2 style: primary và outline
    ```
+
 2. **Giữ comment nhất quán** giữa các file, Copilot sẽ tự "bắt pattern".
 3. **Không code trong App.jsx trực tiếp**, mà chia component rõ ràng trong `src/components/`.
 4. **Khi tạo trang mới**, luôn tạo folder trong `pages/` và file theo dạng PascalCase.
@@ -180,10 +183,10 @@ npm run build
 
 Upload thư mục `dist` lên bất kỳ hosting tĩnh nào:
 
-* Netlify
-* Vercel
-* GitHub Pages
-* Cloudflare Pages
+- Netlify
+- Vercel
+- GitHub Pages
+- Cloudflare Pages
 
 ---
 

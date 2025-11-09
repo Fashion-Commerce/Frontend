@@ -15,7 +15,7 @@ interface AuthState {
     fullname: string,
     email: string,
     password: string,
-    phone?: string
+    phone?: string,
   ) => Promise<boolean>;
   logout: () => void;
   fetchCurrentUser: () => Promise<void>;
@@ -44,11 +44,17 @@ export const useAuthStore = create<AuthState>()(
               password,
             });
 
+            // Extract fullname from message: "User signed in successfully: FULLNAME"
+            const fullnameMatch = authResponse.info.message.match(/:\s*(.+)$/);
+            const fullname = fullnameMatch
+              ? fullnameMatch[1]
+              : email.split("@")[0];
+
             // Create user object from login response
             const user = {
               user_id: authResponse.info.user_id,
               email,
-              fullname: email.split("@")[0], // Use email prefix as temporary name
+              fullname, // Extracted from info.message
               user_type: "customer",
               is_active: true,
               created_at: new Date().toISOString(),
@@ -80,7 +86,7 @@ export const useAuthStore = create<AuthState>()(
           fullname: string,
           email: string,
           password: string,
-          phone?: string
+          phone?: string,
         ) => {
           set({ isLoading: true, error: null });
           try {
@@ -232,8 +238,8 @@ export const useAuthStore = create<AuthState>()(
           user: state.user,
           isAuthenticated: state.isAuthenticated,
         }),
-      }
+      },
     ),
-    { name: "AuthStore" }
-  )
+    { name: "AuthStore" },
+  ),
 );

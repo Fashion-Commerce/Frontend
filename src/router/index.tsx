@@ -6,6 +6,7 @@ import HomePage from "@/pages/HomePage";
 import CartPage from "@/pages/CartPage";
 import WishlistPage from "@/pages/WishlistPage";
 import AdminPage from "@/pages/AdminPage";
+import ProfilePage from "@/pages/ProfilePage";
 import { useAuthStore } from "@/stores/authStore";
 
 // Protected Route Component for Admin
@@ -31,7 +32,7 @@ let setThemeState: (theme: "light" | "dark") => void;
 
 export const setThemeHandlers = (
   theme: "light" | "dark",
-  setTheme: (theme: "light" | "dark") => void
+  setTheme: (theme: "light" | "dark") => void,
 ) => {
   themeState = theme;
   setThemeState = setTheme;
@@ -81,6 +82,10 @@ export const router = createBrowserRouter([
       {
         path: "wishlist",
         element: <WishlistPage />,
+      },
+      {
+        path: "profile",
+        element: <ProfilePage />,
       },
     ],
   },

@@ -147,7 +147,7 @@ const Chatbot: React.FC<ChatbotProps> = ({
   return (
     <div
       id="chatbot-panel"
-      className="w-full md:w-1/3 lg:w-1/4 h-full bg-white dark:bg-slate-800 border-r border-gray-200 dark:border-slate-700 flex flex-col shadow-lg"
+      className="md:w-1/5 h-full bg-white dark:bg-slate-800 border-r border-gray-200 dark:border-slate-700 flex flex-col shadow-lg flex-shrink-0"
     >
       <div className="p-4 border-b border-slate-700 flex items-center space-x-3 bg-gradient-to-br from-slate-900 to-slate-700 text-white">
         <div className="relative">

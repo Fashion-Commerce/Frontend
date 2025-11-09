@@ -1,6 +1,12 @@
-import { create } from 'zustand';
-import { devtools } from 'zustand/middleware';
-import { productApi, type Product, type Category, type Brand, type ProductsParams } from '../api/product.api';
+import { create } from "zustand";
+import { devtools } from "zustand/middleware";
+import {
+  productApi,
+  type Product,
+  type Category,
+  type Brand,
+  type ProductsParams,
+} from "../api/product.api";
 
 interface ProductState {
   products: Product[];
@@ -9,13 +15,13 @@ interface ProductState {
   selectedProduct: Product | null;
   isLoading: boolean;
   error: string | null;
-  
+
   // Filters
   activeCategory: string | null;
   activeBrand: string | null;
   searchQuery: string;
   priceRange: [number, number] | null;
-  
+
   // Actions
   fetchProducts: (params?: ProductsParams) => Promise<void>;
   fetchCategories: () => Promise<void>;
@@ -39,23 +45,24 @@ export const useProductStore = create<ProductState>()(
       selectedProduct: null,
       isLoading: false,
       error: null,
-      
+
       activeCategory: null,
       activeBrand: null,
-      searchQuery: '',
+      searchQuery: "",
       priceRange: null,
 
       fetchProducts: async (params) => {
         set({ isLoading: true, error: null });
         try {
-          const { activeCategory, activeBrand, searchQuery, priceRange } = get();
-          
+          const { activeCategory, activeBrand, searchQuery, priceRange } =
+            get();
+
           const queryParams: ProductsParams = {
             page: 1,
             page_size: 100,
             ...params,
           };
-          
+
           // Apply filters from state if not overridden
           if (!params?.category_id_filter && activeCategory) {
             queryParams.category_id_filter = activeCategory;
@@ -70,13 +77,13 @@ export const useProductStore = create<ProductState>()(
             queryParams.price_min = priceRange[0];
             queryParams.price_max = priceRange[1];
           }
-          
+
           const products = await productApi.getProducts(queryParams);
           set({ products, isLoading: false });
         } catch (error: any) {
-          set({ 
-            error: error.message || 'Failed to fetch products', 
-            isLoading: false 
+          set({
+            error: error.message || "Failed to fetch products",
+            isLoading: false,
           });
         }
       },
@@ -86,7 +93,7 @@ export const useProductStore = create<ProductState>()(
           const categories = await productApi.getCategories({ page_size: 100 });
           set({ categories });
         } catch (error: any) {
-          set({ error: error.message || 'Failed to fetch categories' });
+          set({ error: error.message || "Failed to fetch categories" });
         }
       },
 
@@ -95,7 +102,7 @@ export const useProductStore = create<ProductState>()(
           const brands = await productApi.getBrands({ page_size: 100 });
           set({ brands });
         } catch (error: any) {
-          set({ error: error.message || 'Failed to fetch brands' });
+          set({ error: error.message || "Failed to fetch brands" });
         }
       },
 
@@ -105,9 +112,9 @@ export const useProductStore = create<ProductState>()(
           const product = await productApi.getProductById(id);
           set({ selectedProduct: product, isLoading: false });
         } catch (error: any) {
-          set({ 
-            error: error.message || 'Failed to fetch product', 
-            isLoading: false 
+          set({
+            error: error.message || "Failed to fetch product",
+            isLoading: false,
           });
         }
       },
@@ -137,11 +144,11 @@ export const useProductStore = create<ProductState>()(
       },
 
       clearFilters: () => {
-        set({ 
+        set({
           activeCategory: null,
           activeBrand: null,
-          searchQuery: '',
-          priceRange: null
+          searchQuery: "",
+          priceRange: null,
         });
         get().fetchProducts();
       },
@@ -150,6 +157,6 @@ export const useProductStore = create<ProductState>()(
         set({ error: null });
       },
     }),
-    { name: 'ProductStore' }
-  )
+    { name: "ProductStore" },
+  ),
 );

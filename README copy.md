@@ -27,27 +27,32 @@ A modern React-based frontend for the Fashion E-commerce platform with AI-powere
 The frontend is fully integrated with the FastAPI backend and supports:
 
 ### Product Management
+
 - GET `/products` - List products with filtering and pagination
 - GET `/products/{id}` - Get product details
 - GET `/categories` - List categories
 - GET `/brands` - List brands
 
 ### User Authentication
+
 - POST `/token` - User login
 - POST `/users` - User registration
 - GET `/users/me` - Get current user profile
 
 ### Shopping Cart
+
 - GET `/cart-items` - Get user's cart items
 - POST `/cart-items` - Add item to cart
 - PUT `/cart-items/{id}` - Update cart item quantity
 - DELETE `/cart-items/{id}` - Remove item from cart
 
 ### Order Management
+
 - POST `/orders` - Create new order
 - GET `/orders` - Get user's orders
 
 ### AI Chat
+
 - POST `/chat/stream` - Stream chat with AI assistant
 - POST `/messages` - Send message
 - GET `/messages` - Get chat history
@@ -57,22 +62,26 @@ The frontend is fully integrated with the FastAPI backend and supports:
 **Prerequisites:** Node.js 18+ and npm, Backend server running
 
 1. Install dependencies:
+
    ```bash
    npm install
    ```
 
 2. Copy environment configuration:
+
    ```bash
    cp .env.example .env
    ```
 
 3. Configure your environment variables in `.env`:
+
    ```bash
    VITE_API_BASE_URL=http://localhost:8000/v1
    VITE_ENV=development
    ```
 
 4. Start the development server:
+
    ```bash
    npm run dev
    ```

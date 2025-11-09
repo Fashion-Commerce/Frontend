@@ -33,7 +33,7 @@ export const cartApi = {
 
   async updateCartItem(
     cartItemId: string,
-    data: { quantity: number }
+    data: { quantity: number },
   ): Promise<CartItem> {
     return http1.put<CartItem>(`/cart-items/${cartItemId}`, data);
   },

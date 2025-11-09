@@ -10,7 +10,7 @@ const WishlistPage: React.FC = () => {
   // Placeholder - sẽ có wishlist store sau
   const wishlist: string[] = [];
   const wishlistItems = products.filter((p) =>
-    wishlist.includes(p.id || p.product_id)
+    wishlist.includes(p.id || p.product_id),
   );
 
   const handleRemoveFromWishlist = (productId: string) => {

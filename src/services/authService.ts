@@ -21,7 +21,7 @@ import { authApi } from "@/api/auth.api";
  */
 export const login = async (
   email: string,
-  password: string
+  password: string,
 ): Promise<{ user?: User; error?: string }> => {
   try {
     const credentials: LoginRequest = {
@@ -64,7 +64,7 @@ export const register = async (
   fullname: string,
   email: string,
   password: string,
-  phone?: string
+  phone?: string,
 ): Promise<{ user?: User; error?: string }> => {
   try {
     const registerData: RegisterRequest = {
