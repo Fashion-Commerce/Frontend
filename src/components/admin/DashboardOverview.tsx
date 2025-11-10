@@ -39,11 +39,13 @@ const StatCard: React.FC<{ title: string; value: string; subtext: string }> = ({
   </div>
 );
 
-const DashboardOverview: React.FC<DashboardOverviewProps> = ({ products }) => {
+const DashboardOverview: React.FC<DashboardOverviewProps> = ({
+  products = [],
+}) => {
   const totalRevenue = salesData.reduce((acc, item) => acc + item.DoanhThu, 0);
   const totalOrders = salesData.reduce(
     (acc, item) => acc + item["Đơn hàng"],
-    0,
+    0
   );
 
   const formatPrice = (price: number) => {
@@ -52,6 +54,9 @@ const DashboardOverview: React.FC<DashboardOverviewProps> = ({ products }) => {
       currency: "VND",
     }).format(price);
   };
+
+  // Safe product count
+  const productCount = Array.isArray(products) ? products.length : 0;
 
   return (
     <div>
@@ -71,7 +76,7 @@ const DashboardOverview: React.FC<DashboardOverviewProps> = ({ products }) => {
         />
         <StatCard
           title="Tổng sản phẩm"
-          value={products.length.toString()}
+          value={productCount.toString()}
           subtext="Sản phẩm đang bán"
         />
         <StatCard
@@ -85,7 +90,7 @@ const DashboardOverview: React.FC<DashboardOverviewProps> = ({ products }) => {
         <h3 className="text-lg font-semibold text-gray-700 mb-4">
           Phân tích doanh thu
         </h3>
-        <div style={{ width: "100%", height: 400 }}>
+        <div className="w-full h-96">
           <ResponsiveContainer>
             <LineChart
               data={salesData}
