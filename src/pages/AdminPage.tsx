@@ -6,6 +6,7 @@ import ChatLogs from "@/components/admin/ChatLogs";
 import Analytics from "@/components/admin/Analytics";
 import AgentManagement from "@/components/admin/AgentManagement";
 import BrandManagement from "@/components/admin/BrandManagement";
+import CategoryManagement from "@/components/admin/CategoryManagement";
 import { useProductStore } from "@/stores/productStore";
 
 const AdminPage: React.FC = () => {
@@ -32,6 +33,8 @@ const AdminPage: React.FC = () => {
       return <AgentManagement />;
     } else if (path.includes("/admin/brands")) {
       return <BrandManagement />;
+    } else if (path.includes("/admin/categories")) {
+      return <CategoryManagement />;
     }
 
     return <Outlet />;

@@ -121,6 +121,10 @@ export const router = createBrowserRouter([
         path: "brands",
         element: <AdminPage />,
       },
+      {
+        path: "categories",
+        element: <AdminPage />,
+      },
     ],
   },
   {

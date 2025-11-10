@@ -18,6 +18,8 @@ import {
   Field,
   Menu,
   IconButton,
+  NativeSelectRoot,
+  NativeSelectField,
 } from "@chakra-ui/react";
 import {
   Trash2,
@@ -28,10 +30,11 @@ import {
   Check,
 } from "lucide-react";
 import { toast } from "react-toastify";
-import { brandApi, Brand, BrandsParams } from "@/api/brand.api";
+import { categoryApi, Category, CategoriesParams } from "@/api/category.api";
 
-const BrandManagement: React.FC = () => {
-  const [brands, setBrands] = useState<Brand[]>([]);
+const CategoryManagement: React.FC = () => {
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [allCategories, setAllCategories] = useState<Category[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isCreating, setIsCreating] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -49,13 +52,13 @@ const BrandManagement: React.FC = () => {
 
   // Create modal
   const [isOpen, setIsOpen] = useState(false);
-  const [newBrandName, setNewBrandName] = useState("");
-  const [newBrandDescription, setNewBrandDescription] = useState("");
+  const [newCategoryName, setNewCategoryName] = useState("");
+  const [newCategoryParentId, setNewCategoryParentId] = useState<string>("");
   const inputRef = useRef<HTMLInputElement | null>(null);
 
   // Delete confirmation modal
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [brandToDelete, setBrandToDelete] = useState<{
+  const [categoryToDelete, setCategoryToDelete] = useState<{
     id: string;
     name: string;
   } | null>(null);
@@ -72,14 +75,22 @@ const BrandManagement: React.FC = () => {
     return labels[key] || "Sắp xếp";
   };
 
+  // Get parent category name
+  const getParentName = (parentId?: string | null) => {
+    if (!parentId) return "Danh mục gốc";
+    const parent = allCategories.find((cat) => cat.category_id === parentId);
+    return parent?.name || "Không xác định";
+  };
+
   useEffect(() => {
-    loadBrands();
+    loadCategories();
+    loadAllCategories();
   }, [currentPage, searchTerm, sortBy, sortOrder]);
 
-  const loadBrands = async () => {
+  const loadCategories = async () => {
     try {
       setIsLoading(true);
-      const params: BrandsParams = {
+      const params: CategoriesParams = {
         page: currentPage,
         page_size: pageSize,
         sort_by: sortBy,
@@ -90,59 +101,76 @@ const BrandManagement: React.FC = () => {
         params.name_search = searchTerm;
       }
 
-      const response = await brandApi.getBrands(params);
-      setBrands(response.info.brands);
+      const response = await categoryApi.getCategories(params);
+      setCategories(response.info.categories);
       setTotal(response.info.total_count);
       setTotalPages(response.info.total_pages);
     } catch (error: any) {
-      toast.error(error.message || "Không thể tải danh sách thương hiệu");
+      toast.error(error.message || "Không thể tải danh sách danh mục");
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleCreateBrand = async () => {
-    if (!newBrandName.trim()) {
-      toast.error("Vui lòng nhập tên thương hiệu");
+  const loadAllCategories = async () => {
+    try {
+      const response = await categoryApi.getCategories({
+        page: 1,
+        page_size: 100,
+      });
+      setAllCategories(response.info.categories);
+    } catch (error: any) {
+      console.error("Failed to load all categories:", error);
+    }
+  };
+
+  const handleCreateCategory = async () => {
+    if (!newCategoryName.trim()) {
+      toast.error("Vui lòng nhập tên danh mục");
       return;
     }
 
     try {
       setIsCreating(true);
-      await brandApi.createBrand({
-        name: newBrandName.trim(),
-        description: newBrandDescription.trim() || undefined,
+      await categoryApi.createCategory({
+        name: newCategoryName.trim(),
+        parent_id: newCategoryParentId || null,
       });
-      toast.success("Tạo thương hiệu thành công!");
+      toast.success("Tạo danh mục thành công!");
       setIsOpen(false);
-      setNewBrandName("");
-      setNewBrandDescription("");
+      setNewCategoryName("");
+      setNewCategoryParentId("");
       setCurrentPage(1);
-      await loadBrands();
+      await loadCategories();
+      await loadAllCategories();
     } catch (error: any) {
-      toast.error(error.message || "Tạo thương hiệu thất bại");
+      toast.error(error.message || "Tạo danh mục thất bại");
     } finally {
       setIsCreating(false);
     }
   };
 
-  const handleDeleteBrand = async (brandId: string, brandName: string) => {
-    setBrandToDelete({ id: brandId, name: brandName });
+  const handleDeleteCategory = async (
+    categoryId: string,
+    categoryName: string
+  ) => {
+    setCategoryToDelete({ id: categoryId, name: categoryName });
     setDeleteDialogOpen(true);
   };
 
   const confirmDelete = async () => {
-    if (!brandToDelete) return;
+    if (!categoryToDelete) return;
 
     try {
-      setDeletingId(brandToDelete.id);
-      await brandApi.deleteBrand(brandToDelete.id);
-      toast.success("Xóa thương hiệu thành công!");
-      await loadBrands();
+      setDeletingId(categoryToDelete.id);
+      await categoryApi.deleteCategory(categoryToDelete.id);
+      toast.success("Xóa danh mục thành công!");
+      await loadCategories();
+      await loadAllCategories();
       setDeleteDialogOpen(false);
-      setBrandToDelete(null);
+      setCategoryToDelete(null);
     } catch (error: any) {
-      toast.error(error.message || "Xóa thương hiệu thất bại");
+      toast.error(error.message || "Xóa danh mục thất bại");
     } finally {
       setDeletingId(null);
     }
@@ -165,10 +193,10 @@ const BrandManagement: React.FC = () => {
       <VStack align="stretch" gap={6} mb={6}>
         <Box>
           <Heading className="text-4xl font-bold" mb={2}>
-            Quản lý thương hiệu
+            Quản lý danh mục
           </Heading>
           <Text color="gray.600">
-            Quản lý các thương hiệu sản phẩm trong hệ thống
+            Quản lý các danh mục sản phẩm trong hệ thống
           </Text>
         </Box>
 
@@ -178,7 +206,7 @@ const BrandManagement: React.FC = () => {
             <Card.Body className="px-6 py-4">
               <Stack gap={1}>
                 <Text fontSize="sm" color="gray.600">
-                  Tổng thương hiệu
+                  Tổng danh mục
                 </Text>
                 <Heading size="2xl">{total}</Heading>
               </Stack>
@@ -204,7 +232,7 @@ const BrandManagement: React.FC = () => {
                 <Text fontSize="sm" color="gray.600">
                   Hiển thị
                 </Text>
-                <Heading size="2xl">{brands.length}</Heading>
+                <Heading size="2xl">{categories.length}</Heading>
               </Stack>
             </Card.Body>
           </Card.Root>
@@ -221,7 +249,7 @@ const BrandManagement: React.FC = () => {
             >
               {/* Search */}
               <Input
-                placeholder="Tìm kiếm theo tên thương hiệu..."
+                placeholder="Tìm kiếm theo tên danh mục..."
                 value={searchTerm}
                 onChange={(e) => {
                   setSearchTerm(e.target.value);
@@ -337,13 +365,13 @@ const BrandManagement: React.FC = () => {
               </VStack>
             </Flex>
           </Card.Body>
-        ) : brands.length === 0 ? (
+        ) : categories.length === 0 ? (
           <Card.Body>
             <Flex justify="center" align="center" py={12}>
               <VStack gap={4}>
-                <Heading size="lg">Chưa có thương hiệu</Heading>
+                <Heading size="lg">Chưa có danh mục</Heading>
                 <Text color="gray.500">
-                  Bắt đầu bằng cách tạo thương hiệu đầu tiên
+                  Bắt đầu bằng cách tạo danh mục đầu tiên
                 </Text>
                 <Button
                   className="bg-green-500 hover:bg-green-600 text-white rounded-lg px-4 py-2"
@@ -351,7 +379,7 @@ const BrandManagement: React.FC = () => {
                 >
                   <HStack gap={2}>
                     <Plus size={18} />
-                    <Text>Tạo thương hiệu mới</Text>
+                    <Text>Tạo danh mục mới</Text>
                   </HStack>
                 </Button>
               </VStack>
@@ -366,9 +394,11 @@ const BrandManagement: React.FC = () => {
                     STT
                   </Table.ColumnHeader>
                   <Table.ColumnHeader className="px-6 py-4">
-                    Tên thương hiệu
+                    Tên danh mục
                   </Table.ColumnHeader>
-
+                  <Table.ColumnHeader className="px-6 py-4">
+                    Danh mục cha
+                  </Table.ColumnHeader>
                   <Table.ColumnHeader className="px-6 py-4">
                     Ngày tạo
                   </Table.ColumnHeader>
@@ -378,16 +408,19 @@ const BrandManagement: React.FC = () => {
                 </Table.Row>
               </Table.Header>
               <Table.Body>
-                {brands.map((brand, index) => (
-                  <Table.Row key={brand.brand_id}>
+                {categories.map((category, index) => (
+                  <Table.Row key={category.category_id}>
                     <Table.Cell className="px-6 py-4">
                       {(currentPage - 1) * pageSize + index + 1}
                     </Table.Cell>
                     <Table.Cell className="px-6 py-4 font-semibold">
-                      {brand.name}
+                      {category.name}
                     </Table.Cell>
                     <Table.Cell className="px-6 py-4 text-gray-600">
-                      {formatDate(brand.created_at)}
+                      {getParentName(category.parent_id)}
+                    </Table.Cell>
+                    <Table.Cell className="px-6 py-4 text-gray-600">
+                      {formatDate(category.created_at)}
                     </Table.Cell>
                     <Table.Cell className="px-6 py-4" textAlign="center">
                       <IconButton
@@ -395,10 +428,13 @@ const BrandManagement: React.FC = () => {
                         variant="ghost"
                         className="text-red-500 hover:bg-red-50"
                         onClick={() =>
-                          handleDeleteBrand(brand.brand_id || "", brand.name)
+                          handleDeleteCategory(
+                            category.category_id || "",
+                            category.name
+                          )
                         }
-                        loading={deletingId === brand.brand_id}
-                        disabled={deletingId === brand.brand_id}
+                        loading={deletingId === category.category_id}
+                        disabled={deletingId === category.category_id}
                       >
                         <Trash2 size={18} />
                       </IconButton>
@@ -421,7 +457,7 @@ const BrandManagement: React.FC = () => {
                   <Text fontSize="sm" color="gray.600">
                     Hiển thị {(currentPage - 1) * pageSize + 1} -{" "}
                     {Math.min(currentPage * pageSize, total)} trong tổng số{" "}
-                    {total} thương hiệu
+                    {total} danh mục
                   </Text>
                   <HStack gap={2}>
                     <IconButton
@@ -461,8 +497,8 @@ const BrandManagement: React.FC = () => {
         onOpenChange={(e) => {
           setIsOpen(e.open);
           if (!e.open) {
-            setNewBrandName("");
-            setNewBrandDescription("");
+            setNewCategoryName("");
+            setNewCategoryParentId("");
           }
         }}
         initialFocusEl={() => inputRef.current}
@@ -473,7 +509,7 @@ const BrandManagement: React.FC = () => {
             <Dialog.Content className="bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-[500px] w-full">
               <Dialog.Header className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
                 <Dialog.Title className="text-xl font-semibold">
-                  Tạo thương hiệu mới
+                  Tạo danh mục mới
                 </Dialog.Title>
                 <Dialog.CloseTrigger />
               </Dialog.Header>
@@ -482,15 +518,35 @@ const BrandManagement: React.FC = () => {
                 <Stack gap="4">
                   <Field.Root required>
                     <Field.Label className="font-medium mb-2">
-                      Tên thương hiệu
+                      Tên danh mục
                     </Field.Label>
                     <Input
                       ref={inputRef}
-                      value={newBrandName}
-                      onChange={(e) => setNewBrandName(e.target.value)}
-                      placeholder="Nhập tên thương hiệu..."
+                      value={newCategoryName}
+                      onChange={(e) => setNewCategoryName(e.target.value)}
+                      placeholder="Nhập tên danh mục..."
                       className="border-2 border-gray-200 focus:border-blue-500 rounded-lg px-4 py-2.5"
                     />
+                  </Field.Root>
+
+                  <Field.Root>
+                    <Field.Label className="font-medium mb-2">
+                      Danh mục cha (tùy chọn)
+                    </Field.Label>
+                    <NativeSelectRoot>
+                      <NativeSelectField
+                        value={newCategoryParentId}
+                        onChange={(e) => setNewCategoryParentId(e.target.value)}
+                        className="border-2 border-gray-200 focus:border-blue-500 rounded-lg px-4 py-2.5"
+                      >
+                        <option value="">-- Danh mục gốc --</option>
+                        {allCategories.map((cat) => (
+                          <option key={cat.category_id} value={cat.category_id}>
+                            {cat.name}
+                          </option>
+                        ))}
+                      </NativeSelectField>
+                    </NativeSelectRoot>
                   </Field.Root>
                 </Stack>
               </Dialog.Body>
@@ -507,11 +563,11 @@ const BrandManagement: React.FC = () => {
                 </Dialog.ActionTrigger>
                 <Button
                   className="bg-green-500 hover:bg-green-600 text-white rounded-lg px-4 py-2"
-                  onClick={handleCreateBrand}
-                  disabled={!newBrandName.trim() || isCreating}
+                  onClick={handleCreateCategory}
+                  disabled={!newCategoryName.trim() || isCreating}
                   loading={isCreating}
                 >
-                  Tạo thương hiệu
+                  Tạo danh mục
                 </Button>
               </Dialog.Footer>
             </Dialog.Content>
@@ -525,7 +581,7 @@ const BrandManagement: React.FC = () => {
         onOpenChange={(e) => {
           setDeleteDialogOpen(e.open);
           if (!e.open) {
-            setBrandToDelete(null);
+            setCategoryToDelete(null);
           }
         }}
       >
@@ -543,9 +599,9 @@ const BrandManagement: React.FC = () => {
               <Dialog.Body className="px-6 py-4">
                 <VStack gap={3} align="stretch">
                   <Text>
-                    Bạn có chắc chắn muốn xóa thương hiệu{" "}
+                    Bạn có chắc chắn muốn xóa danh mục{" "}
                     <Text as="span" fontWeight="bold">
-                      "{brandToDelete?.name}"
+                      "{categoryToDelete?.name}"
                     </Text>{" "}
                     không?
                   </Text>
@@ -571,7 +627,7 @@ const BrandManagement: React.FC = () => {
                   disabled={!!deletingId}
                   loading={!!deletingId}
                 >
-                  Xóa thương hiệu
+                  Xóa danh mục
                 </Button>
               </Dialog.Footer>
             </Dialog.Content>
@@ -582,4 +638,4 @@ const BrandManagement: React.FC = () => {
   );
 };
 
-export default BrandManagement;
+export default CategoryManagement;
