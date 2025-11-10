@@ -26,6 +26,12 @@ const AdminLayout: React.FC = () => {
               Sản phẩm
             </button>
             <button
+              onClick={() => navigate("/admin/brands")}
+              className="flex items-center w-full px-4 py-3 text-left rounded-md hover:bg-slate-700"
+            >
+              Thương hiệu
+            </button>
+            <button
               onClick={() => navigate("/admin/chat-logs")}
               className="flex items-center w-full px-4 py-3 text-left rounded-md hover:bg-slate-700"
             >
