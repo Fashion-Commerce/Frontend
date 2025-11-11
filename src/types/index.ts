@@ -5,54 +5,64 @@
 
 // ========== PRODUCT TYPES ==========
 export interface Product {
-  product_id: string;
-  id: string;
+  product_id?: string;
+  id?: string;
   name: string;
   description: string;
-  price: number;
-  sku: string;
-  is_active: boolean;
+  base_price?: number;
+  price?: number;
+  sku?: string;
+  is_active?: boolean;
   category_id: string;
   brand_id: string;
-  category: Category;
-  brand: Brand;
+  category?: Category;
+  brand?: Brand;
+  category_name?: string;
+  brand_name?: string;
   image_urls?: string[];
+  imageUrls?: string[];
   images?: string[];
   variants?: ProductVariant[];
-  created_at: string;
-  updated_at: string;
+  average_rating?: number;
+  averageRating?: number;
+  review_count?: number;
+  reviewCount?: number;
+  basePrice?: number;
+  created_at?: string;
+  updated_at?: string | null;
 }
 
 export interface Category {
-  category_id: string;
-  id: string;
+  category_id?: string;
+  id?: string;
   name: string;
   description?: string;
   parent_id?: string;
-  created_at: string;
-  updated_at: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface Brand {
-  brand_id: string;
-  id: string;
+  brand_id?: string;
+  id?: string;
   name: string;
   description?: string;
-  created_at: string;
-  updated_at: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface ProductVariant {
-  product_variant_id: string;
-  id: string;
+  product_variant_id?: string;
+  variant_id?: string;
+  id?: string;
   product_id: string;
   sku: string;
   color?: string;
   size?: string;
   price: number;
   stock_quantity: number;
-  created_at: string;
-  updated_at: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
 // ========== USER & AUTH TYPES ==========

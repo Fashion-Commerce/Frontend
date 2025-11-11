@@ -45,7 +45,8 @@ export interface Brand {
 }
 
 export interface ProductVariant {
-  product_variant_id: string;
+  variant_id?: string;
+  product_variant_id?: string;
   id?: string;
   product_id: string;
   sku: string;
@@ -53,8 +54,8 @@ export interface ProductVariant {
   size?: string;
   price: number;
   stock_quantity: number;
-  created_at: string;
-  updated_at: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface ProductsParams {
@@ -118,6 +119,69 @@ export interface ProductDetailResponse {
     product: Product;
     success: boolean;
     message: string;
+  };
+}
+
+// Product Variant interfaces
+export interface ProductVariantsParams {
+  page?: number;
+  page_size?: number;
+  product_id_filter?: string;
+  sku_search?: string;
+  color_filter?: string;
+  size_filter?: string;
+  min_stock?: number;
+  max_stock?: number;
+  price_min?: number;
+  price_max?: number;
+}
+
+export interface ProductVariantsResponse {
+  message: string;
+  info: {
+    variants: ProductVariant[];
+    total_count: number;
+    current_page: number;
+    total_pages: number;
+    has_next: boolean;
+    has_previous: boolean;
+    success: boolean;
+    message: string;
+  };
+}
+
+export interface CreateProductVariantRequest {
+  product_id: string;
+  sku: string;
+  color: string;
+  size: string;
+  price: number;
+  stock_quantity: number;
+}
+
+export interface CreateProductVariantResponse {
+  message: string;
+  info: {
+    message: string;
+    product_variant_id: string;
+    success: boolean;
+  };
+}
+
+export interface UpdateProductVariantRequest {
+  sku?: string;
+  color?: string;
+  size?: string;
+  price?: number;
+  stock_quantity?: number;
+}
+
+export interface UpdateProductVariantResponse {
+  message: string;
+  info: {
+    message: string;
+    product_variant_id: string;
+    success: boolean;
   };
 }
 
@@ -258,9 +322,61 @@ export const productApi = {
     return http1.get<Brand[]>(url);
   },
 
-  async getProductVariants(productId: string): Promise<ProductVariant[]> {
-    return http1.get<ProductVariant[]>(
-      `/product-variants?product_id=${productId}`
-    );
+  async getProductVariants(
+    params?: ProductVariantsParams
+  ): Promise<ProductVariantsResponse> {
+    try {
+      const queryParams = new URLSearchParams();
+      if (params) {
+        Object.entries(params).forEach(([key, value]) => {
+          if (value !== undefined && value !== null) {
+            queryParams.set(key, value.toString());
+          }
+        });
+      }
+
+      const url = `/v1/product-variants${
+        queryParams.toString() ? `?${queryParams.toString()}` : ""
+      }`;
+      const result = await http2.get<ProductVariantsResponse>(url);
+      return result;
+    } catch (error: any) {
+      throw new Error(
+        error?.response?.data?.detail || "Failed to fetch product variants"
+      );
+    }
+  },
+
+  async createProductVariant(
+    data: CreateProductVariantRequest
+  ): Promise<CreateProductVariantResponse> {
+    try {
+      const result = await http2.post<CreateProductVariantResponse>(
+        "/v1/product-variants",
+        data
+      );
+      return result;
+    } catch (error: any) {
+      throw new Error(
+        error?.response?.data?.detail || "Failed to create product variant"
+      );
+    }
+  },
+
+  async updateProductVariant(
+    variantId: string,
+    data: UpdateProductVariantRequest
+  ): Promise<UpdateProductVariantResponse> {
+    try {
+      const result = await http2.put<UpdateProductVariantResponse>(
+        `/v1/product-variants/${variantId}`,
+        data
+      );
+      return result;
+    } catch (error: any) {
+      throw new Error(
+        error?.response?.data?.detail || "Failed to update product variant"
+      );
+    }
   },
 };

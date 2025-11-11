@@ -33,6 +33,8 @@ import {
   X,
   Upload,
   ImageIcon,
+  Package,
+  Edit,
 } from "lucide-react";
 import { toast } from "react-toastify";
 import {
@@ -40,6 +42,10 @@ import {
   Product,
   ProductsParams,
   CreateProductRequest,
+  ProductVariant,
+  ProductVariantsParams,
+  CreateProductVariantRequest,
+  UpdateProductVariantRequest,
 } from "@/api/product.api";
 import { categoryApi, Category } from "@/api/category.api";
 import { brandApi, Brand } from "@/api/brand.api";
@@ -84,6 +90,30 @@ const ProductManagement: React.FC = () => {
     id: string;
     name: string;
   } | null>(null);
+
+  // Product Variants modal
+  const [variantsDialogOpen, setVariantsDialogOpen] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [variants, setVariants] = useState<ProductVariant[]>([]);
+  const [isLoadingVariants, setIsLoadingVariants] = useState(false);
+  const [variantPage, setVariantPage] = useState(1);
+  const [variantPageSize] = useState(10);
+  const [variantTotalPages, setVariantTotalPages] = useState(1);
+  const [variantTotal, setVariantTotal] = useState(0);
+
+  // Create/Edit Variant modal
+  const [variantFormOpen, setVariantFormOpen] = useState(false);
+  const [editingVariant, setEditingVariant] = useState<ProductVariant | null>(
+    null
+  );
+  const [variantForm, setVariantForm] = useState({
+    sku: "",
+    color: "",
+    size: "",
+    price: "",
+    stock_quantity: "",
+  });
+  const [isSubmittingVariant, setIsSubmittingVariant] = useState(false);
 
   // Sort label mapping
   const getSortLabel = () => {
@@ -297,6 +327,157 @@ const ProductManagement: React.FC = () => {
     } finally {
       setDeletingId(null);
     }
+  };
+
+  // Variant handlers
+  const handleOpenVariants = async (product: Product) => {
+    setSelectedProduct(product);
+    setVariantsDialogOpen(true);
+    setVariantPage(1);
+    await loadVariants(product.product_id, 1);
+  };
+
+  const loadVariants = async (
+    productId: string,
+    page: number = variantPage
+  ) => {
+    try {
+      setIsLoadingVariants(true);
+      const params: ProductVariantsParams = {
+        page,
+        page_size: variantPageSize,
+        product_id_filter: productId,
+      };
+
+      const response = await productApi.getProductVariants(params);
+      setVariants(response.info.variants);
+      setVariantTotal(response.info.total_count);
+      setVariantTotalPages(response.info.total_pages);
+    } catch (error: any) {
+      toast.error(error.message || "Không thể tải danh sách biến thể");
+    } finally {
+      setIsLoadingVariants(false);
+    }
+  };
+
+  const handleCreateVariant = () => {
+    setEditingVariant(null);
+    setVariantForm({
+      sku: "",
+      color: "",
+      size: "",
+      price: "",
+      stock_quantity: "",
+    });
+    setVariantFormOpen(true);
+  };
+
+  const handleEditVariant = (variant: ProductVariant) => {
+    setEditingVariant(variant);
+    setVariantForm({
+      sku: variant.sku,
+      color: variant.color || "",
+      size: variant.size || "",
+      price: variant.price.toString(),
+      stock_quantity: variant.stock_quantity.toString(),
+    });
+    setVariantFormOpen(true);
+  };
+
+  const handleSubmitVariant = async () => {
+    if (!selectedProduct) return;
+
+    // Validation
+    if (
+      !variantForm.sku ||
+      !variantForm.color ||
+      !variantForm.size ||
+      !variantForm.price ||
+      !variantForm.stock_quantity
+    ) {
+      toast.error("Vui lòng điền đầy đủ thông tin");
+      return;
+    }
+
+    try {
+      setIsSubmittingVariant(true);
+
+      if (editingVariant) {
+        // Update variant
+        const updateData: UpdateProductVariantRequest = {
+          sku: variantForm.sku,
+          color: variantForm.color,
+          size: variantForm.size,
+          price: parseFloat(variantForm.price),
+          stock_quantity: parseInt(variantForm.stock_quantity),
+        };
+
+        const variantId =
+          editingVariant.variant_id || editingVariant.product_variant_id;
+        if (!variantId) {
+          throw new Error("Variant ID not found");
+        }
+
+        await productApi.updateProductVariant(variantId, updateData);
+        toast.success("Cập nhật biến thể thành công!");
+      } else {
+        // Create new variant
+        const createData: CreateProductVariantRequest = {
+          product_id: selectedProduct.product_id,
+          sku: variantForm.sku,
+          color: variantForm.color,
+          size: variantForm.size,
+          price: parseFloat(variantForm.price),
+          stock_quantity: parseInt(variantForm.stock_quantity),
+        };
+
+        await productApi.createProductVariant(createData);
+        toast.success("Tạo biến thể mới thành công!");
+      }
+
+      setVariantFormOpen(false);
+      await loadVariants(selectedProduct.product_id);
+    } catch (error: any) {
+      toast.error(error.message || "Thao tác thất bại");
+    } finally {
+      setIsSubmittingVariant(false);
+    }
+  };
+
+  const resetVariantForm = () => {
+    setVariantForm({
+      sku: "",
+      color: "",
+      size: "",
+      price: "",
+      stock_quantity: "",
+    });
+    setEditingVariant(null);
+  };
+
+  const getColorCode = (colorName: string): string => {
+    const colorMap: Record<string, string> = {
+      Đen: "#000000",
+      Trắng: "#FFFFFF",
+      Đỏ: "#FF0000",
+      "Xanh dương": "#0000FF",
+      "Xanh lá": "#00FF00",
+      Vàng: "#FFFF00",
+      Cam: "#FFA500",
+      Hồng: "#FFC0CB",
+      Tím: "#800080",
+      Nâu: "#8B4513",
+      Xám: "#808080",
+      Be: "#F5F5DC",
+      "Xanh navy": "#000080",
+      XS: "#E0E0E0",
+      S: "#E0E0E0",
+      M: "#E0E0E0",
+      L: "#E0E0E0",
+      XL: "#E0E0E0",
+      XXL: "#E0E0E0",
+    };
+    return colorMap[colorName] || "#E0E0E0";
   };
 
   const formatDate = (dateString?: string | null) => {
@@ -657,21 +838,32 @@ const ProductManagement: React.FC = () => {
                       {formatDate(product.created_at)}
                     </Table.Cell>
                     <Table.Cell className="px-6 py-4" textAlign="center">
-                      <IconButton
-                        size="sm"
-                        variant="ghost"
-                        className="text-red-500 hover:bg-red-50"
-                        onClick={() =>
-                          handleDeleteProduct(
-                            product.product_id || "",
-                            product.name
-                          )
-                        }
-                        loading={deletingId === product.product_id}
-                        disabled={deletingId === product.product_id}
-                      >
-                        <Trash2 size={18} />
-                      </IconButton>
+                      <HStack gap={2} justify="center">
+                        <IconButton
+                          size="sm"
+                          variant="ghost"
+                          className="text-blue-500 hover:bg-blue-50"
+                          onClick={() => handleOpenVariants(product)}
+                          title="Quản lý biến thể"
+                        >
+                          <Package size={18} />
+                        </IconButton>
+                        <IconButton
+                          size="sm"
+                          variant="ghost"
+                          className="text-red-500 hover:bg-red-50"
+                          onClick={() =>
+                            handleDeleteProduct(
+                              product.product_id || "",
+                              product.name
+                            )
+                          }
+                          loading={deletingId === product.product_id}
+                          disabled={deletingId === product.product_id}
+                        >
+                          <Trash2 size={18} />
+                        </IconButton>
+                      </HStack>
                     </Table.Cell>
                   </Table.Row>
                 ))}
@@ -854,11 +1046,10 @@ const ProductManagement: React.FC = () => {
                       Ảnh sản phẩm (Tối đa 5 ảnh)
                     </Field.Label>
                     <VStack gap={4} align="stretch">
-                      <Box
-                        as="button"
+                      <button
                         type="button"
                         onClick={() => fileInputRef.current?.click()}
-                        className="relative group cursor-pointer transition-all duration-200"
+                        className="relative group cursor-pointer transition-all duration-200 border-0 bg-transparent p-0 w-full"
                       >
                         <Box className="border-2 border-dashed border-gray-300 group-hover:border-blue-500 rounded-xl p-8 bg-gray-50 group-hover:bg-blue-50 transition-all duration-200">
                           <VStack gap={3}>
@@ -878,7 +1069,7 @@ const ProductManagement: React.FC = () => {
                             </VStack>
                           </VStack>
                         </Box>
-                      </Box>
+                      </button>
                       <input
                         ref={fileInputRef}
                         type="file"
@@ -1014,6 +1205,366 @@ const ProductManagement: React.FC = () => {
                     disabled={!!deletingId}
                   >
                     Xóa
+                  </Button>
+                </Flex>
+              </Dialog.Footer>
+            </Dialog.Content>
+          </Dialog.Positioner>
+        </Portal>
+      </Dialog.Root>
+
+      {/* Product Variants Dialog */}
+      <Dialog.Root
+        open={variantsDialogOpen}
+        onOpenChange={(e) => {
+          setVariantsDialogOpen(e.open);
+          if (!e.open) {
+            setSelectedProduct(null);
+            setVariants([]);
+          }
+        }}
+        size="xl"
+      >
+        <Portal>
+          <Dialog.Backdrop className="!bg-black/50" />
+          <Dialog.Positioner>
+            <Dialog.Content className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-5xl w-full mx-4 max-h-[90vh] overflow-hidden flex flex-col">
+              <Dialog.Header className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+                <VStack align="stretch" gap={1}>
+                  <Dialog.Title className="text-2xl font-bold">
+                    Quản lý biến thể sản phẩm
+                  </Dialog.Title>
+                  <Text fontSize="sm" color="gray.600">
+                    {selectedProduct?.name}
+                  </Text>
+                </VStack>
+              </Dialog.Header>
+
+              <Dialog.Body className="px-6 py-6 overflow-y-auto flex-1">
+                <VStack gap={4} align="stretch">
+                  {/* Header Actions */}
+                  <Flex justify="space-between" align="center">
+                    <Text fontSize="sm" color="gray.600">
+                      Tổng số: {variantTotal} biến thể
+                    </Text>
+                    <Button
+                      className="bg-green-500 hover:bg-green-600 text-white rounded-lg px-4 py-2"
+                      onClick={handleCreateVariant}
+                    >
+                      <HStack gap={2}>
+                        <Plus size={18} />
+                        <Text>Thêm biến thể</Text>
+                      </HStack>
+                    </Button>
+                  </Flex>
+
+                  {/* Variants Table */}
+                  {isLoadingVariants ? (
+                    <Flex justify="center" align="center" py={12}>
+                      <VStack gap={4}>
+                        <Spinner size="xl" />
+                        <Text color="gray.500">Đang tải...</Text>
+                      </VStack>
+                    </Flex>
+                  ) : variants.length === 0 ? (
+                    <Flex justify="center" align="center" py={12}>
+                      <VStack gap={4}>
+                        <Package size={48} className="text-gray-300" />
+                        <Heading size="md">Chưa có biến thể</Heading>
+                        <Text color="gray.500">
+                          Thêm biến thể đầu tiên cho sản phẩm này
+                        </Text>
+                        <Button
+                          className="bg-green-500 hover:bg-green-600 text-white rounded-lg px-4 py-2"
+                          onClick={handleCreateVariant}
+                        >
+                          <HStack gap={2}>
+                            <Plus size={18} />
+                            <Text>Thêm biến thể</Text>
+                          </HStack>
+                        </Button>
+                      </VStack>
+                    </Flex>
+                  ) : (
+                    <Box className="border border-gray-200 rounded-lg overflow-hidden">
+                      <Table.Root variant="outline">
+                        <Table.Header>
+                          <Table.Row>
+                            <Table.ColumnHeader className="px-4 py-3">
+                              STT
+                            </Table.ColumnHeader>
+                            <Table.ColumnHeader className="px-4 py-3">
+                              SKU
+                            </Table.ColumnHeader>
+                            <Table.ColumnHeader className="px-4 py-3">
+                              Màu sắc
+                            </Table.ColumnHeader>
+                            <Table.ColumnHeader className="px-4 py-3">
+                              Kích cỡ
+                            </Table.ColumnHeader>
+                            <Table.ColumnHeader className="px-4 py-3">
+                              Giá
+                            </Table.ColumnHeader>
+                            <Table.ColumnHeader className="px-4 py-3">
+                              Tồn kho
+                            </Table.ColumnHeader>
+                            <Table.ColumnHeader className="px-4 py-3 text-center">
+                              Thao tác
+                            </Table.ColumnHeader>
+                          </Table.Row>
+                        </Table.Header>
+                        <Table.Body>
+                          {variants.map((variant, index) => (
+                            <Table.Row
+                              key={
+                                variant.variant_id || variant.product_variant_id
+                              }
+                            >
+                              <Table.Cell className="px-4 py-3">
+                                {(variantPage - 1) * variantPageSize +
+                                  index +
+                                  1}
+                              </Table.Cell>
+                              <Table.Cell className="px-4 py-3 font-mono text-sm">
+                                {variant.sku}
+                              </Table.Cell>
+                              <Table.Cell className="px-4 py-3">
+                                <HStack gap={2}>
+                                  <Box
+                                    className="w-4 h-4 rounded-full border border-gray-300"
+                                    style={{
+                                      backgroundColor: getColorCode(
+                                        variant.color || ""
+                                      ),
+                                    }}
+                                  />
+                                  <Text>{variant.color}</Text>
+                                </HStack>
+                              </Table.Cell>
+                              <Table.Cell className="px-4 py-3">
+                                <Box className="inline-block px-2 py-1 bg-gray-100 rounded text-sm font-medium">
+                                  {variant.size}
+                                </Box>
+                              </Table.Cell>
+                              <Table.Cell className="px-4 py-3 text-blue-600 font-medium">
+                                {formatPrice(variant.price)}
+                              </Table.Cell>
+                              <Table.Cell className="px-4 py-3">
+                                <Box
+                                  className={`inline-block px-2 py-1 rounded text-sm font-medium ${
+                                    variant.stock_quantity > 50
+                                      ? "bg-green-100 text-green-700"
+                                      : variant.stock_quantity > 10
+                                      ? "bg-yellow-100 text-yellow-700"
+                                      : "bg-red-100 text-red-700"
+                                  }`}
+                                >
+                                  {variant.stock_quantity}
+                                </Box>
+                              </Table.Cell>
+                              <Table.Cell
+                                className="px-4 py-3"
+                                textAlign="center"
+                              >
+                                <IconButton
+                                  size="sm"
+                                  variant="ghost"
+                                  className="text-blue-500 hover:bg-blue-50"
+                                  onClick={() => handleEditVariant(variant)}
+                                >
+                                  <Edit size={16} />
+                                </IconButton>
+                              </Table.Cell>
+                            </Table.Row>
+                          ))}
+                        </Table.Body>
+                      </Table.Root>
+                    </Box>
+                  )}
+
+                  {/* Pagination */}
+                  {variantTotalPages > 1 && (
+                    <Flex justify="space-between" align="center">
+                      <Text fontSize="sm" color="gray.600">
+                        Trang {variantPage} / {variantTotalPages}
+                      </Text>
+                      <HStack gap={2}>
+                        <IconButton
+                          variant="outline"
+                          size="sm"
+                          className="rounded-lg border-2 border-gray-200"
+                          onClick={() => {
+                            const newPage = Math.max(1, variantPage - 1);
+                            setVariantPage(newPage);
+                            if (selectedProduct) {
+                              loadVariants(selectedProduct.product_id, newPage);
+                            }
+                          }}
+                          disabled={variantPage === 1}
+                        >
+                          <ChevronLeft size={18} />
+                        </IconButton>
+                        <IconButton
+                          variant="outline"
+                          size="sm"
+                          className="rounded-lg border-2 border-gray-200"
+                          onClick={() => {
+                            const newPage = Math.min(
+                              variantTotalPages,
+                              variantPage + 1
+                            );
+                            setVariantPage(newPage);
+                            if (selectedProduct) {
+                              loadVariants(selectedProduct.product_id, newPage);
+                            }
+                          }}
+                          disabled={variantPage === variantTotalPages}
+                        >
+                          <ChevronRight size={18} />
+                        </IconButton>
+                      </HStack>
+                    </Flex>
+                  )}
+                </VStack>
+              </Dialog.Body>
+
+              <Dialog.Footer className="px-6 py-4 border-t border-gray-200 dark:border-gray-700">
+                <Flex justify="flex-end">
+                  <Dialog.CloseTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className="border-2 border-gray-200 hover:border-gray-300 rounded-lg px-4 py-2"
+                    >
+                      Đóng
+                    </Button>
+                  </Dialog.CloseTrigger>
+                </Flex>
+              </Dialog.Footer>
+            </Dialog.Content>
+          </Dialog.Positioner>
+        </Portal>
+      </Dialog.Root>
+
+      {/* Create/Edit Variant Dialog */}
+      <Dialog.Root
+        open={variantFormOpen}
+        onOpenChange={(e) => {
+          setVariantFormOpen(e.open);
+          if (!e.open) resetVariantForm();
+        }}
+      >
+        <Portal>
+          <Dialog.Backdrop className="!bg-black/50" />
+          <Dialog.Positioner>
+            <Dialog.Content className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-md w-full mx-4">
+              <Dialog.Header className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+                <Dialog.Title className="text-xl font-bold">
+                  {editingVariant ? "Cập nhật biến thể" : "Thêm biến thể mới"}
+                </Dialog.Title>
+              </Dialog.Header>
+
+              <Dialog.Body className="px-6 py-6">
+                <VStack gap={4} align="stretch">
+                  <Field.Root>
+                    <Field.Label className="font-medium mb-2">
+                      SKU <span className="text-red-500">*</span>
+                    </Field.Label>
+                    <Input
+                      placeholder="VD: SKU-001"
+                      value={variantForm.sku}
+                      onChange={(e) =>
+                        setVariantForm({ ...variantForm, sku: e.target.value })
+                      }
+                      className="border-2 border-gray-200 focus:border-blue-500 rounded-lg px-4 py-2"
+                    />
+                  </Field.Root>
+
+                  <Field.Root>
+                    <Field.Label className="font-medium mb-2">
+                      Màu sắc <span className="text-red-500">*</span>
+                    </Field.Label>
+                    <Input
+                      placeholder="VD: Đen, Trắng, Xanh dương"
+                      value={variantForm.color}
+                      onChange={(e) =>
+                        setVariantForm({
+                          ...variantForm,
+                          color: e.target.value,
+                        })
+                      }
+                      className="border-2 border-gray-200 focus:border-blue-500 rounded-lg px-4 py-2"
+                    />
+                  </Field.Root>
+
+                  <Field.Root>
+                    <Field.Label className="font-medium mb-2">
+                      Kích cỡ <span className="text-red-500">*</span>
+                    </Field.Label>
+                    <Input
+                      placeholder="VD: S, M, L, XL"
+                      value={variantForm.size}
+                      onChange={(e) =>
+                        setVariantForm({ ...variantForm, size: e.target.value })
+                      }
+                      className="border-2 border-gray-200 focus:border-blue-500 rounded-lg px-4 py-2"
+                    />
+                  </Field.Root>
+
+                  <Field.Root>
+                    <Field.Label className="font-medium mb-2">
+                      Giá <span className="text-red-500">*</span>
+                    </Field.Label>
+                    <Input
+                      type="number"
+                      placeholder="Nhập giá"
+                      value={variantForm.price}
+                      onChange={(e) =>
+                        setVariantForm({
+                          ...variantForm,
+                          price: e.target.value,
+                        })
+                      }
+                      className="border-2 border-gray-200 focus:border-blue-500 rounded-lg px-4 py-2"
+                    />
+                  </Field.Root>
+
+                  <Field.Root>
+                    <Field.Label className="font-medium mb-2">
+                      Số lượng tồn kho <span className="text-red-500">*</span>
+                    </Field.Label>
+                    <Input
+                      type="number"
+                      placeholder="Nhập số lượng"
+                      value={variantForm.stock_quantity}
+                      onChange={(e) =>
+                        setVariantForm({
+                          ...variantForm,
+                          stock_quantity: e.target.value,
+                        })
+                      }
+                      className="border-2 border-gray-200 focus:border-blue-500 rounded-lg px-4 py-2"
+                    />
+                  </Field.Root>
+                </VStack>
+              </Dialog.Body>
+
+              <Dialog.Footer className="px-6 py-4 border-t border-gray-200 dark:border-gray-700">
+                <Flex justify="flex-end" gap={3}>
+                  <Dialog.CloseTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className="border-2 border-gray-200 hover:border-gray-300 rounded-lg px-4 py-2"
+                    >
+                      Hủy
+                    </Button>
+                  </Dialog.CloseTrigger>
+                  <Button
+                    className="bg-green-500 hover:bg-green-600 text-white rounded-lg px-4 py-2"
+                    onClick={handleSubmitVariant}
+                    loading={isSubmittingVariant}
+                    disabled={isSubmittingVariant}
+                  >
+                    {editingVariant ? "Cập nhật" : "Tạo mới"}
                   </Button>
                 </Flex>
               </Dialog.Footer>

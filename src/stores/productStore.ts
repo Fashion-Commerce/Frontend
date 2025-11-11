@@ -2,11 +2,27 @@ import { create } from "zustand";
 import { devtools } from "zustand/middleware";
 import {
   productApi,
-  type Product,
-  type Category,
-  type Brand,
+  type Product as ApiProduct,
   type ProductsParams,
 } from "../api/product.api";
+import { categoryApi, type Category } from "../api/category.api";
+import { brandApi, type Brand } from "../api/brand.api";
+import type { Product } from "../types";
+
+// Normalize API product to frontend product
+const normalizeProduct = (apiProduct: ApiProduct): Product => {
+  const product = apiProduct as any;
+  return {
+    ...product,
+    id: product.product_id || product.id,
+    product_id: product.product_id || product.id,
+    basePrice: product.base_price || product.price || 0,
+    imageUrls: product.image_urls || product.images || [],
+    averageRating: product.average_rating || 0,
+    reviewCount: product.review_count || 0,
+    variants: product.variants || [],
+  } as Product;
+};
 
 interface ProductState {
   products: Product[];
@@ -15,6 +31,11 @@ interface ProductState {
   selectedProduct: Product | null;
   isLoading: boolean;
   error: string | null;
+
+  // Pagination
+  currentPage: number;
+  totalPages: number;
+  totalCount: number;
 
   // Filters
   activeCategory: string | null;
@@ -32,6 +53,7 @@ interface ProductState {
   setActiveBrand: (brandId: string | null) => void;
   setSearchQuery: (query: string) => void;
   setPriceRange: (range: [number, number] | null) => void;
+  setCurrentPage: (page: number) => void;
   clearFilters: () => void;
   clearError: () => void;
 }
@@ -45,6 +67,10 @@ export const useProductStore = create<ProductState>()(
       selectedProduct: null,
       isLoading: false,
       error: null,
+
+      currentPage: 1,
+      totalPages: 1,
+      totalCount: 0,
 
       activeCategory: null,
       activeBrand: null,
@@ -78,8 +104,16 @@ export const useProductStore = create<ProductState>()(
             queryParams.price_max = priceRange[1];
           }
 
-          const products = await productApi.getProducts(queryParams);
-          set({ products, isLoading: false });
+          const response = await productApi.getProducts(queryParams);
+          const normalizedProducts =
+            response.info.products.map(normalizeProduct);
+          set({
+            products: normalizedProducts,
+            totalPages: response.info.total_pages,
+            totalCount: response.info.total_count,
+            currentPage: response.info.current_page,
+            isLoading: false,
+          });
         } catch (error: any) {
           set({
             error: error.message || "Failed to fetch products",
@@ -90,8 +124,8 @@ export const useProductStore = create<ProductState>()(
 
       fetchCategories: async () => {
         try {
-          const categories = await productApi.getCategories({ page_size: 100 });
-          set({ categories });
+          const response = await categoryApi.getCategories({ page_size: 100 });
+          set({ categories: response.info.categories });
         } catch (error: any) {
           set({ error: error.message || "Failed to fetch categories" });
         }
@@ -99,8 +133,8 @@ export const useProductStore = create<ProductState>()(
 
       fetchBrands: async () => {
         try {
-          const brands = await productApi.getBrands({ page_size: 100 });
-          set({ brands });
+          const response = await brandApi.getBrands({ page_size: 100 });
+          set({ brands: response.info.brands });
         } catch (error: any) {
           set({ error: error.message || "Failed to fetch brands" });
         }
@@ -109,8 +143,9 @@ export const useProductStore = create<ProductState>()(
       fetchProductById: async (id: string) => {
         set({ isLoading: true, error: null });
         try {
-          const product = await productApi.getProductById(id);
-          set({ selectedProduct: product, isLoading: false });
+          const response = await productApi.getProductById(id);
+          const normalizedProduct = normalizeProduct(response.info.product);
+          set({ selectedProduct: normalizedProduct, isLoading: false });
         } catch (error: any) {
           set({
             error: error.message || "Failed to fetch product",
@@ -143,6 +178,10 @@ export const useProductStore = create<ProductState>()(
         get().fetchProducts();
       },
 
+      setCurrentPage: (page) => {
+        set({ currentPage: page });
+      },
+
       clearFilters: () => {
         set({
           activeCategory: null,
@@ -157,6 +196,6 @@ export const useProductStore = create<ProductState>()(
         set({ error: null });
       },
     }),
-    { name: "ProductStore" },
-  ),
+    { name: "ProductStore" }
+  )
 );

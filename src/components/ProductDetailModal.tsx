@@ -1,6 +1,22 @@
 import React, { useState, useMemo, useEffect } from "react";
+import {
+  Box,
+  Flex,
+  VStack,
+  HStack,
+  Heading,
+  Text,
+  Button,
+  Image,
+  AspectRatio,
+  Badge,
+  Spinner,
+} from "@chakra-ui/react";
+import { ChevronLeft, ChevronRight, X, Heart } from "lucide-react";
 import type { Product, ProductVariant } from "@/types";
-import { CloseIcon, HeartIcon, StarIcon } from "@/components/icons";
+import { StarIcon } from "@/components/icons";
+import ProductCard from "@/components/ProductCard";
+import { productApi } from "@/api/product.api";
 
 interface ProductDetailModalProps {
   product: Product;
@@ -9,11 +25,12 @@ interface ProductDetailModalProps {
   onAddToCart: (
     product: Product,
     variant: ProductVariant,
-    quantity: number,
+    quantity: number
   ) => void;
   onProductClick: (product: Product) => void;
   onToggleWishlist: (productId: string) => void;
   isWishlisted: boolean;
+  wishlist: string[];
 }
 
 const ProductRating: React.FC<{
@@ -21,7 +38,7 @@ const ProductRating: React.FC<{
   reviewCount: number;
   big?: boolean;
 }> = ({ rating, reviewCount, big }) => (
-  <div className="flex items-center">
+  <HStack className="items-center gap-1">
     {[...Array(5)].map((_, i) => (
       <StarIcon
         key={i}
@@ -29,12 +46,10 @@ const ProductRating: React.FC<{
         isFilled={i < Math.round(rating)}
       />
     ))}
-    <span
-      className={`${big ? "text-base" : "text-xs"} text-gray-600 dark:text-gray-400 ml-2`}
-    >
+    <Text className={`${big ? "text-base" : "text-xs"} text-gray-600 ml-2`}>
       {rating.toFixed(1)} ({reviewCount} đánh giá)
-    </span>
-  </div>
+    </Text>
+  </HStack>
 );
 
 const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
@@ -45,48 +60,82 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
   onProductClick,
   onToggleWishlist,
   isWishlisted,
+  wishlist,
 }) => {
   const [quantity, setQuantity] = useState(1);
-  const [selectedColor, setSelectedColor] = useState<string | null>(
-    product.variants[0]?.color || null,
-  );
-  const [selectedSize, setSelectedSize] = useState<string | null>(
-    product.variants[0]?.size || null,
-  );
-  const [selectedVariant, setSelectedVariant] = useState<ProductVariant | null>(
-    null,
-  );
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [variants, setVariants] = useState<ProductVariant[]>([]);
+  const [isLoadingVariants, setIsLoadingVariants] = useState(false);
+
+  const productId = product.id || product.product_id || "";
+  const images = product.imageUrls || product.image_urls || [];
+  const imageUrl = images[currentImageIndex] || images[0] || "";
+  const brandName = product.brand?.name || product.brand_name || "";
+  const avgRating = product.averageRating || product.average_rating || 0;
+  const reviewCnt = product.reviewCount || product.review_count || 0;
+
+  // Fetch variants from API
+  useEffect(() => {
+    const fetchVariants = async () => {
+      if (!productId) return;
+      setIsLoadingVariants(true);
+      try {
+        const response = await productApi.getProductVariants({
+          product_id_filter: productId,
+          page_size: 100,
+        });
+        setVariants(response.info.variants || []);
+      } catch (error) {
+        console.error("Failed to fetch variants:", error);
+        setVariants([]);
+      } finally {
+        setIsLoadingVariants(false);
+      }
+    };
+    fetchVariants();
+  }, [productId]);
+
+  const [selectedColor, setSelectedColor] = useState<string | null>(null);
+  const [selectedSize, setSelectedSize] = useState<string | null>(null);
+
+  // Auto-select first available color and size
+  useEffect(() => {
+    if (variants.length > 0 && !selectedColor) {
+      const firstVariant = variants[0];
+      setSelectedColor(firstVariant.color || null);
+      setSelectedSize(firstVariant.size || null);
+    }
+  }, [variants, selectedColor]);
 
   const availableColors = useMemo(() => {
     return [
-      ...new Set(product.variants.map((v) => v.color).filter(Boolean)),
+      ...new Set(variants.map((v) => v.color).filter(Boolean)),
     ] as string[];
-  }, [product.variants]);
+  }, [variants]);
 
   const availableSizes = useMemo(() => {
     return [
       ...new Set(
-        product.variants
+        variants
           .filter((v) => v.color === selectedColor)
           .map((v) => v.size)
-          .filter(Boolean),
+          .filter(Boolean)
       ),
     ] as string[];
-  }, [product.variants, selectedColor]);
+  }, [variants, selectedColor]);
 
-  useEffect(() => {
-    const variant = product.variants.find(
-      (v) => v.color === selectedColor && v.size === selectedSize,
+  const selectedVariant = useMemo(() => {
+    return (
+      variants.find(
+        (v) => v.color === selectedColor && v.size === selectedSize
+      ) || null
     );
-    setSelectedVariant(variant || null);
-  }, [selectedColor, selectedSize, product.variants]);
+  }, [selectedColor, selectedSize, variants]);
 
   // Reset selections when product changes
   useEffect(() => {
-    const firstVariant = product.variants[0];
-    setSelectedColor(firstVariant?.color || null);
-    setSelectedSize(firstVariant?.size || null);
     setQuantity(1);
+    setCurrentImageIndex(0);
   }, [product]);
 
   const formatPrice = (price: number) => {
@@ -101,181 +150,536 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
       onAddToCart(product, selectedVariant, quantity);
       onClose();
     } else {
-      alert("Sản phẩm này hiện không có sẵn. Vui lòng thử lại sau.");
+      alert("Vui lòng chọn màu sắc và kích thước");
     }
+  };
+
+  const nextImage = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setCurrentImageIndex((prev) => (prev + 1) % images.length);
+  };
+
+  const prevImage = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setCurrentImageIndex((prev) => (prev - 1 + images.length) % images.length);
   };
 
   const displayPrice = selectedVariant
     ? selectedVariant.price
-    : product.basePrice;
+    : product.base_price || product.price || 0;
 
   return (
-    <div
-      className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-40 p-4"
+    <Box
+      position="fixed"
+      inset="0"
+      bg="blackAlpha.700"
+      display="flex"
+      alignItems="center"
+      justifyContent="center"
+      zIndex="40"
+      p={4}
       onClick={onClose}
     >
-      <div
-        className="bg-white dark:bg-slate-800 rounded-lg shadow-2xl w-full max-w-4xl h-full max-h-[90vh] relative flex flex-col overflow-hidden"
+      <Box
+        bg="white"
+        borderRadius="xl"
+        boxShadow="2xl"
+        w="full"
+        maxW="5xl"
+        maxH="85vh"
+        position="relative"
+        display="flex"
+        flexDirection="column"
+        overflow="hidden"
         onClick={(e) => e.stopPropagation()}
       >
-        <button
+        {/* Close Button */}
+        <Button
           onClick={onClose}
-          className="absolute top-4 right-4 text-gray-500 hover:text-gray-800 dark:text-gray-300 dark:hover:text-white z-10 bg-white/50 dark:bg-slate-800/50 rounded-full p-1"
+          position="absolute"
+          top={3}
+          right={3}
+          zIndex={10}
+          bg="white"
+          _hover={{ bg: "gray.100" }}
+          borderRadius="full"
+          p={1.5}
+          minW="auto"
+          h="auto"
+          boxShadow="lg"
+          aria-label="Đóng"
         >
-          <CloseIcon className="w-7 h-7" />
-        </button>
-        <div className="flex-grow overflow-y-auto p-6 md:p-8">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div>
-              <img
-                src={product.imageUrls[0]}
-                alt={product.name}
-                className="w-full h-auto object-cover rounded-lg shadow-lg"
-              />
-            </div>
-            <div className="flex flex-col">
-              <h2 className="text-3xl font-bold text-gray-900 dark:text-gray-100">
-                {product.name}
-              </h2>
-              <p className="text-lg text-gray-500 dark:text-gray-400 mb-2">
-                Thương hiệu:{" "}
-                <span className="font-semibold text-slate-600 dark:text-slate-400">
-                  {product.brand.name}
-                </span>
-              </p>
-              <div className="my-3">
-                <ProductRating
-                  rating={product.averageRating}
-                  reviewCount={product.reviewCount}
-                  big
-                />
-              </div>
-              <p className="text-4xl font-extrabold text-slate-700 dark:text-slate-400 my-4">
-                {formatPrice(displayPrice)}
-              </p>
+          <X className="w-4 h-4" />
+        </Button>
 
-              {availableColors.length > 0 && (
-                <div className="mb-4">
-                  <h4 className="font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                    Màu sắc:{" "}
-                    <span className="font-normal">{selectedColor}</span>
-                  </h4>
-                  <div className="flex flex-wrap gap-2">
-                    {availableColors.map((color) => (
-                      <button
-                        key={color}
-                        onClick={() => setSelectedColor(color)}
-                        className={`w-8 h-8 rounded-full border-2 transition-transform transform hover:scale-110 ${selectedColor === color ? "border-slate-600 dark:border-slate-300" : "border-transparent"}`}
-                        style={{
-                          backgroundColor:
-                            color.toLowerCase() === "trắng"
-                              ? "#f0f0f0"
-                              : color.toLowerCase(),
-                        }}
-                        title={color}
-                      ></button>
-                    ))}
-                  </div>
-                </div>
-              )}
+        {/* Content */}
+        <Box flex="1" overflowY="auto" p={6}>
+          <Flex gap={6}>
+            {/* Left: Images - Thu nhỏ xuống 1/3 */}
+            <Box w="280px" flexShrink={0}>
+              <VStack spacing={3} position="sticky" top={0}>
+                {/* Main Image - Compact */}
+                <Box
+                  position="relative"
+                  w="full"
+                  bg="gray.50"
+                  borderRadius="lg"
+                  borderWidth="1px"
+                  borderColor="gray.200"
+                  overflow="hidden"
+                  boxShadow="sm"
+                >
+                  <AspectRatio ratio={1}>
+                    <Box
+                      display="flex"
+                      alignItems="center"
+                      justifyContent="center"
+                      p={6}
+                    >
+                      <Image
+                        src={imageUrl}
+                        alt={product.name}
+                        objectFit="contain"
+                        maxW="full"
+                        maxH="full"
+                      />
+                    </Box>
+                  </AspectRatio>
 
-              {availableSizes.length > 0 && (
-                <div>
-                  <h4 className="font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                    Chọn size:
-                  </h4>
-                  <div className="flex flex-wrap gap-2">
-                    {availableSizes.map((size) => (
-                      <button
-                        key={size}
-                        onClick={() => setSelectedSize(size)}
-                        className={`px-4 py-2 border rounded-md transition-colors text-sm ${selectedSize === size ? "bg-slate-600 text-white border-slate-600" : "bg-white text-gray-700 border-gray-300 hover:bg-gray-100 dark:bg-slate-700 dark:text-gray-200 dark:border-slate-600 dark:hover:bg-slate-600"}`}
+                  {/* Navigation Arrows */}
+                  {images.length > 1 && (
+                    <>
+                      <Button
+                        onClick={prevImage}
+                        position="absolute"
+                        left={2}
+                        top="50%"
+                        transform="translateY(-50%)"
+                        bg="whiteAlpha.900"
+                        backdropFilter="blur(8px)"
+                        p={1.5}
+                        minW="auto"
+                        h="auto"
+                        borderRadius="full"
+                        _hover={{ bg: "white" }}
+                        boxShadow="md"
+                        aria-label="Ảnh trước"
                       >
-                        {size}
-                      </button>
+                        <ChevronLeft className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        onClick={nextImage}
+                        position="absolute"
+                        right={2}
+                        top="50%"
+                        transform="translateY(-50%)"
+                        bg="whiteAlpha.900"
+                        backdropFilter="blur(8px)"
+                        p={1.5}
+                        minW="auto"
+                        h="auto"
+                        borderRadius="full"
+                        _hover={{ bg: "white" }}
+                        boxShadow="md"
+                        aria-label="Ảnh sau"
+                      >
+                        <ChevronRight className="w-4 h-4" />
+                      </Button>
+                    </>
+                  )}
+                </Box>
+
+                {/* Thumbnails */}
+                {images.length > 1 && (
+                  <Flex gap={2} w="full" overflowX="auto" pb={1}>
+                    {images.map((img, index) => (
+                      <Button
+                        key={index}
+                        onClick={() => setCurrentImageIndex(index)}
+                        flexShrink={0}
+                        w="60px"
+                        h="60px"
+                        p={0}
+                        minW="auto"
+                        borderRadius="md"
+                        overflow="hidden"
+                        borderWidth="2px"
+                        borderColor={
+                          index === currentImageIndex ? "blue.500" : "gray.200"
+                        }
+                        _hover={{
+                          borderColor:
+                            index === currentImageIndex
+                              ? "blue.500"
+                              : "gray.400",
+                        }}
+                        transition="all 0.2s"
+                      >
+                        <Image
+                          src={img}
+                          alt={`${product.name} - ${index + 1}`}
+                          w="full"
+                          h="full"
+                          objectFit="cover"
+                        />
+                      </Button>
                     ))}
-                  </div>
-                </div>
-              )}
+                  </Flex>
+                )}
+              </VStack>
+            </Box>
 
-              <div className="mt-6">
-                <h4 className="font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                  Số lượng:
-                </h4>
-                <div className="flex items-center border border-gray-300 dark:border-slate-600 rounded-md w-fit">
-                  <button
-                    onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-                    className="px-3 py-1.5 text-lg text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-700"
+            {/* Middle: Product Info */}
+            <Box flex="1" minW={0}>
+              <VStack gap={4} align="stretch">
+                {/* Brand */}
+                {brandName && (
+                  <Badge
+                    bg="blue.50"
+                    color="blue.600"
+                    px={3}
+                    py={1}
+                    borderRadius="md"
+                    fontSize="xs"
+                    fontWeight="medium"
+                    w="fit-content"
                   >
-                    -
-                  </button>
-                  <span className="px-4 py-1.5 font-semibold">{quantity}</span>
-                  <button
-                    onClick={() => setQuantity((q) => q + 1)}
-                    className="px-3 py-1.5 text-lg text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-700"
-                  >
-                    +
-                  </button>
-                </div>
-              </div>
+                    {brandName}
+                  </Badge>
+                )}
 
-              <div className="mt-8 flex items-center gap-4">
-                <button
-                  onClick={handleAddToCartClick}
-                  disabled={!selectedVariant}
-                  className="flex-grow bg-slate-600 text-white py-3 rounded-lg font-semibold text-lg hover:bg-slate-700 transition-colors dark:hover:bg-slate-500 disabled:bg-gray-400 dark:disabled:bg-gray-600 disabled:cursor-not-allowed"
-                >
-                  Thêm vào giỏ hàng
-                </button>
-                <button
-                  onClick={() => onToggleWishlist(product.id)}
-                  className={`p-3 border rounded-lg transition-colors ${isWishlisted ? "text-red-500 border-red-500 bg-red-50 dark:bg-red-900/50" : "text-gray-500 border-gray-300 hover:border-red-500 hover:text-red-500 dark:text-gray-400 dark:border-slate-600 dark:hover:border-red-500"}`}
-                >
-                  <HeartIcon className="w-6 h-6" isFilled={isWishlisted} />
-                </button>
-              </div>
+                {/* Product Name */}
+                <Heading size="md" color="gray.900" lineHeight="shorter">
+                  {product.name}
+                </Heading>
 
-              <div className="mt-8">
-                <h4 className="font-semibold text-gray-800 dark:text-gray-200 mb-2 border-b border-gray-200 dark:border-slate-700 pb-2">
-                  Mô tả sản phẩm
-                </h4>
-                <p className="text-gray-600 dark:text-gray-400 text-sm leading-relaxed">
-                  {product.description}
-                </p>
-              </div>
-            </div>
-          </div>
-          <div className="mt-12">
-            <h3 className="text-2xl font-bold text-gray-800 dark:text-gray-200 mb-4">
-              Sản phẩm liên quan
-            </h3>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              {relatedProducts.map((p) => (
-                <div
-                  key={p.id}
-                  onClick={() => onProductClick(p)}
-                  className="bg-white dark:bg-slate-700 rounded-lg border border-gray-200 dark:border-slate-600 overflow-hidden transition-shadow hover:shadow-lg cursor-pointer"
+                {/* Rating */}
+                {reviewCnt > 0 && (
+                  <Box>
+                    <ProductRating rating={avgRating} reviewCount={reviewCnt} />
+                  </Box>
+                )}
+
+                {/* Price */}
+                <Box
+                  bgGradient="linear(to-r, red.50, orange.50)"
+                  px={4}
+                  py={3}
+                  borderRadius="lg"
+                  borderWidth="1px"
+                  borderColor="red.100"
                 >
-                  <img
-                    src={p.imageUrls[0]}
-                    alt={p.name}
-                    className="w-full h-32 object-cover"
-                  />
-                  <div className="p-3">
-                    <h4 className="text-sm font-semibold text-gray-800 dark:text-gray-200 truncate">
-                      {p.name}
-                    </h4>
-                    <p className="text-md font-bold text-slate-600 dark:text-slate-400 mt-1">
-                      {formatPrice(p.basePrice)}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+                  <Text fontSize="2xl" fontWeight="bold" color="red.600">
+                    {formatPrice(displayPrice)}
+                  </Text>
+                  {selectedVariant &&
+                    selectedVariant.stock_quantity !== undefined && (
+                      <Text fontSize="xs" color="gray.600" mt={1}>
+                        Còn {selectedVariant.stock_quantity} sản phẩm
+                      </Text>
+                    )}
+                </Box>
+
+                {/* Loading */}
+                {isLoadingVariants && (
+                  <Flex justify="center" py={2}>
+                    <Spinner size="md" color="blue.500" />
+                  </Flex>
+                )}
+
+                {/* Color Selection */}
+                {!isLoadingVariants && availableColors.length > 0 && (
+                  <Box>
+                    <Text
+                      fontSize="sm"
+                      fontWeight="medium"
+                      color="gray.700"
+                      mb={2}
+                    >
+                      Màu sắc
+                    </Text>
+                    <Flex flexWrap="wrap" gap={2}>
+                      {availableColors.map((color) => (
+                        <Button
+                          key={color}
+                          onClick={() => {
+                            setSelectedColor(color);
+                            setSelectedSize(null);
+                          }}
+                          size="sm"
+                          px={3}
+                          py={2}
+                          minW="auto"
+                          h="auto"
+                          borderWidth="1px"
+                          borderRadius="md"
+                          fontSize="xs"
+                          fontWeight={
+                            selectedColor === color ? "medium" : "normal"
+                          }
+                          borderColor={
+                            selectedColor === color ? "blue.500" : "gray.300"
+                          }
+                          bg={selectedColor === color ? "blue.50" : "white"}
+                          color={
+                            selectedColor === color ? "blue.600" : "gray.700"
+                          }
+                          _hover={{
+                            borderColor:
+                              selectedColor === color ? "blue.500" : "gray.400",
+                          }}
+                        >
+                          {color}
+                        </Button>
+                      ))}
+                    </Flex>
+                  </Box>
+                )}
+
+                {/* Size Selection */}
+                {!isLoadingVariants && availableSizes.length > 0 && (
+                  <Box>
+                    <Text
+                      fontSize="sm"
+                      fontWeight="medium"
+                      color="gray.700"
+                      mb={2}
+                    >
+                      Kích thước
+                    </Text>
+                    <Flex flexWrap="wrap" gap={2}>
+                      {availableSizes.map((size) => (
+                        <Button
+                          key={size}
+                          onClick={() => setSelectedSize(size)}
+                          size="sm"
+                          px={4}
+                          py={2}
+                          minW="50px"
+                          h="auto"
+                          borderWidth="1px"
+                          borderRadius="md"
+                          fontSize="xs"
+                          fontWeight="medium"
+                          borderColor={
+                            selectedSize === size ? "blue.500" : "gray.300"
+                          }
+                          bg={selectedSize === size ? "blue.50" : "white"}
+                          color={
+                            selectedSize === size ? "blue.600" : "gray.700"
+                          }
+                          _hover={{
+                            borderColor:
+                              selectedSize === size ? "blue.500" : "gray.400",
+                          }}
+                        >
+                          {size}
+                        </Button>
+                      ))}
+                    </Flex>
+                  </Box>
+                )}
+
+                {/* Description */}
+                {product.description && (
+                  <Box pt={3} borderTopWidth="1px" borderColor="gray.200">
+                    <Text
+                      fontSize="sm"
+                      fontWeight="semibold"
+                      color="gray.800"
+                      mb={2}
+                    >
+                      Mô tả sản phẩm
+                    </Text>
+                    <Text
+                      fontSize="sm"
+                      color="gray.600"
+                      lineHeight="tall"
+                      noOfLines={3}
+                    >
+                      {product.description}
+                    </Text>
+                  </Box>
+                )}
+              </VStack>
+            </Box>
+
+            {/* Right: Actions Sidebar */}
+            <Box w="240px" flexShrink={0}>
+              <Box
+                bg="gray.50"
+                p={4}
+                borderRadius="lg"
+                borderWidth="1px"
+                borderColor="gray.200"
+                position="sticky"
+                top={0}
+                boxShadow="sm"
+              >
+                <VStack spacing={4} align="stretch">
+                  {/* Quantity */}
+                  <Box>
+                    <Text
+                      fontSize="sm"
+                      fontWeight="medium"
+                      color="gray.700"
+                      mb={2}
+                    >
+                      Số lượng
+                    </Text>
+                    <Flex
+                      borderWidth="1px"
+                      borderColor="gray.300"
+                      borderRadius="md"
+                      overflow="hidden"
+                    >
+                      <Button
+                        onClick={() => setQuantity((q) => Math.max(1, q - 1))}
+                        flex={1}
+                        borderRadius={0}
+                        fontSize="sm"
+                        h="36px"
+                        _hover={{ bg: "gray.100" }}
+                      >
+                        -
+                      </Button>
+                      <Text
+                        flex={1}
+                        display="flex"
+                        alignItems="center"
+                        justifyContent="center"
+                        borderLeftWidth="1px"
+                        borderRightWidth="1px"
+                        borderColor="gray.300"
+                        fontSize="sm"
+                        fontWeight="medium"
+                      >
+                        {quantity}
+                      </Text>
+                      <Button
+                        onClick={() => setQuantity((q) => q + 1)}
+                        flex={1}
+                        borderRadius={0}
+                        fontSize="sm"
+                        h="36px"
+                        _hover={{ bg: "gray.100" }}
+                      >
+                        +
+                      </Button>
+                    </Flex>
+                  </Box>
+
+                  {/* Subtotal */}
+                  <Box pt={3} borderTopWidth="1px" borderColor="gray.200">
+                    <Flex justify="space-between" align="center" mb={1}>
+                      <Text fontSize="xs" color="gray.600">
+                        Tạm tính
+                      </Text>
+                      <Text fontSize="lg" fontWeight="bold" color="red.600">
+                        {formatPrice(displayPrice * quantity)}
+                      </Text>
+                    </Flex>
+                  </Box>
+
+                  {/* Action Buttons */}
+                  <VStack spacing={2} pt={2}>
+                    <Button
+                      onClick={handleAddToCartClick}
+                      isDisabled={!selectedVariant || isLoadingVariants}
+                      w="full"
+                      bg="red.500"
+                      color="white"
+                      size="md"
+                      fontSize="sm"
+                      fontWeight="medium"
+                      _hover={{ bg: "red.600" }}
+                      _disabled={{ bg: "gray.400", cursor: "not-allowed" }}
+                    >
+                      Mua ngay
+                    </Button>
+                    <Button
+                      onClick={() => {
+                        if (selectedVariant) {
+                          onAddToCart(product, selectedVariant, quantity);
+                        } else {
+                          alert("Vui lòng chọn màu sắc và kích thước");
+                        }
+                      }}
+                      isDisabled={!selectedVariant || isLoadingVariants}
+                      w="full"
+                      bg="white"
+                      color="blue.600"
+                      size="md"
+                      fontSize="sm"
+                      fontWeight="medium"
+                      borderWidth="1px"
+                      borderColor="blue.500"
+                      _hover={{ bg: "blue.50" }}
+                      _disabled={{
+                        bg: "gray.200",
+                        borderColor: "gray.300",
+                        color: "gray.400",
+                        cursor: "not-allowed",
+                      }}
+                    >
+                      Thêm giỏ hàng
+                    </Button>
+                    <Button
+                      onClick={() => onToggleWishlist(productId)}
+                      w="full"
+                      size="md"
+                      fontSize="sm"
+                      fontWeight="medium"
+                      borderWidth="1px"
+                      color={isWishlisted ? "red.500" : "gray.600"}
+                      borderColor={isWishlisted ? "red.500" : "gray.300"}
+                      bg={isWishlisted ? "red.50" : "white"}
+                      _hover={{
+                        borderColor: "red.500",
+                        color: "red.500",
+                      }}
+                    >
+                      <Flex align="center" justify="center" gap={1.5}>
+                        <Heart
+                          className={`w-4 h-4 ${
+                            isWishlisted ? "fill-current" : ""
+                          }`}
+                        />
+                        <Text>Yêu thích</Text>
+                      </Flex>
+                    </Button>
+                  </VStack>
+                </VStack>
+              </Box>
+            </Box>
+          </Flex>
+
+          {/* Related Products */}
+          {relatedProducts.length > 0 && (
+            <Box mt={6} pt={5} borderTopWidth="1px" borderColor="gray.200">
+              <Heading size="sm" mb={4} color="gray.900">
+                Sản phẩm tương tự
+              </Heading>
+              <Box display="grid" gridTemplateColumns="repeat(4, 1fr)" gap={4}>
+                {relatedProducts.slice(0, 4).map((p) => {
+                  const relProductId = p.id || p.product_id || "";
+                  return (
+                    <Box key={relProductId}>
+                      <ProductCard
+                        product={p}
+                        onProductClick={onProductClick}
+                        onToggleWishlist={onToggleWishlist}
+                        isWishlisted={wishlist.includes(relProductId)}
+                      />
+                    </Box>
+                  );
+                })}
+              </Box>
+            </Box>
+          )}
+        </Box>
+      </Box>
+    </Box>
   );
 };
 
