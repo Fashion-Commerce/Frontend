@@ -7,7 +7,7 @@ import {
   LogOut,
   ShieldCheck,
 } from "lucide-react";
-import { Button, Badge, Flex, Box, Text, Portal, Menu } from "@chakra-ui/react";
+import { Button, Badge, Flex, Box, Text, Portal, Menu, Circle } from "@chakra-ui/react";
 
 interface HeaderProps {
   cartItemCount: number;
@@ -33,7 +33,7 @@ const Header: React.FC<HeaderProps> = ({
   handleProfileClick,
 }) => {
   return (
-    <header className="bg-white dark:bg-slate-800 shadow-md sticky top-0 z-20 border-b border-gray-200 dark:border-slate-700">
+    <header className="bg-white dark:bg-slate-800 shadow-md sticky top-0 z-20 border-b border-gray-200 dark:border-slate-700 p-3">
       <div className="container mx-auto px-6 py-3 flex justify-between items-center">
         <div className="flex items-center">
           <h1 className="text-2xl font-bold text-slate-700 dark:text-slate-200">
@@ -47,7 +47,7 @@ const Header: React.FC<HeaderProps> = ({
         <Flex align="center" gap={3}>
           {currentUser ? (
             <Flex align="center" gap={3}>
-              {currentUser.email === "admin@agentfashion.com" && (
+              {currentUser.user_type === "admin" && (
                 <Button
                   onClick={onAdminClick}
                   size="sm"
@@ -140,16 +140,12 @@ const Header: React.FC<HeaderProps> = ({
                 <ShoppingCart className="w-5 h-5 text-green-500" />
               </Button>
               {cartItemCount > 0 && (
-                <Badge
-                  position="absolute"
-                  top="-1"
-                  right="-1"
-                  colorPalette="red"
-                  variant="solid"
-                  fontSize="xs"
+                <Circle
+                  className="absolute -top-1 -right-1 bg-red-500 text-white text-xs"
+                  size="5"
                 >
                   {cartItemCount}
-                </Badge>
+                </Circle>
               )}
             </Box>
           </Flex>

@@ -15,7 +15,7 @@ interface AuthState {
     fullname: string,
     email: string,
     password: string,
-    phone?: string,
+    phone?: string
   ) => Promise<boolean>;
   logout: () => void;
   fetchCurrentUser: () => Promise<void>;
@@ -55,7 +55,7 @@ export const useAuthStore = create<AuthState>()(
               user_id: authResponse.info.user_id,
               email,
               fullname, // Extracted from info.message
-              user_type: "customer",
+              user_type: authResponse.info.user_type, // Use user_type from API response
               is_active: true,
               created_at: new Date().toISOString(),
               updated_at: new Date().toISOString(),
@@ -86,7 +86,7 @@ export const useAuthStore = create<AuthState>()(
           fullname: string,
           email: string,
           password: string,
-          phone?: string,
+          phone?: string
         ) => {
           set({ isLoading: true, error: null });
           try {
@@ -112,7 +112,7 @@ export const useAuthStore = create<AuthState>()(
               fullname,
               email,
               phone,
-              user_type: "customer",
+              user_type: authResponse.info.user_type, // Use user_type from API response
               is_active: true,
               created_at: new Date().toISOString(),
               updated_at: new Date().toISOString(),
@@ -156,7 +156,7 @@ export const useAuthStore = create<AuthState>()(
         },
 
         logout: () => {
-          authApi.logout();
+          authApi.logout(); // This clears token from both http1 and http2
           set({
             user: null,
             isAuthenticated: false,
@@ -193,17 +193,32 @@ export const useAuthStore = create<AuthState>()(
         updateProfile: async (data) => {
           set({ isLoading: true, error: null });
           try {
-            const updatedUser = await authApi.updateProfile(data);
+            const currentUser = get().user;
+            if (!currentUser?.user_id) {
+              throw new Error("User not found");
+            }
+
+            await authApi.updateProfile(currentUser.user_id, data);
+
+            // Fetch updated user data
+            const userDetails = await authApi.getUserDetails(
+              currentUser.user_id
+            );
+
             set({
-              user: updatedUser,
+              user: userDetails.info.user,
               isLoading: false,
             });
+
+            toast.success("Cập nhật thông tin thành công!");
             return true;
           } catch (error: any) {
+            const errorMessage = error.message || "Cập nhật thất bại";
             set({
-              error: error.message || "Update failed",
+              error: errorMessage,
               isLoading: false,
             });
+            toast.error(errorMessage);
             return false;
           }
         },
@@ -213,18 +228,36 @@ export const useAuthStore = create<AuthState>()(
         },
 
         initializeAuth: () => {
-          // Load token from localStorage on app start
+          console.log("🔧 [AuthStore] Initializing auth...");
+
+          // Load token from localStorage and set it to both http clients
+          authApi.initializeToken();
+
           const token = authApi.getToken();
+          console.log("🔑 [AuthStore] Token found:", !!token);
+
           if (token) {
             // Token exists, user is authenticated
             // User data will be loaded from zustand persist
             const state = get();
+            console.log("👤 [AuthStore] User from persist:", state.user?.email);
+            console.log(
+              "✅ [AuthStore] isAuthenticated from persist:",
+              state.isAuthenticated
+            );
+
             if (state.user && state.isAuthenticated) {
               // Already have user data from persist, just verify we're authenticated
               set({ isAuthenticated: true });
+              console.log("✅ [AuthStore] Auth restored from persist");
+            } else {
+              // Have token but no user data, fetch current user
+              console.log("🔄 [AuthStore] Fetching current user...");
+              get().fetchCurrentUser();
             }
           } else {
             // No token, clear everything
+            console.log("❌ [AuthStore] No token found, clearing auth");
             set({
               user: null,
               isAuthenticated: false,
@@ -238,8 +271,8 @@ export const useAuthStore = create<AuthState>()(
           user: state.user,
           isAuthenticated: state.isAuthenticated,
         }),
-      },
+      }
     ),
-    { name: "AuthStore" },
-  ),
+    { name: "AuthStore" }
+  )
 );

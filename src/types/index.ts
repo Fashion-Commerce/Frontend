@@ -111,15 +111,12 @@ export interface UpdatePasswordRequest {
 
 // ========== CART TYPES ==========
 export interface CartItem {
-  cart_item_id?: string;
   id: string;
-  userId: string;
-  user_id?: string;
-  product: Product;
-  variant: ProductVariant;
-  product_variant_id?: string;
+  product_variant_id: string;
   quantity: number;
-  createdAt?: string;
+  user_id: string;
+  product?: Product;
+  variant?: ProductVariant;
   created_at?: string;
   updated_at?: string;
 }

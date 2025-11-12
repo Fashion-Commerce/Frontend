@@ -1,70 +1,195 @@
 import http1 from "@/lib/http1";
 
-export interface Message {
-  message_id: string;
-  id?: string;
-  user_id: string;
-  session_id?: string;
+export interface FileMetadata {
+  file_id: string;
+  file_name: string;
+  file_type: string;
+  file_size: number;
+  storage_url: string;
+  provider_name: string;
+  markdown_content: string;
+}
+
+export interface ChatMessage {
+  id: string;
   content: string;
-  sender: "user" | "bot";
-  agent_type?: string;
+  role: "user" | "assistant";
   created_at: string;
-  updated_at: string;
+  attachments?: FileMetadata[];
 }
 
-export interface SendMessageRequest {
-  content: string;
-  session_id?: string;
+export interface MessagesResponse {
+  message: string;
+  info: {
+    data: {
+      messages: Array<{
+        id: string;
+        user_id: string;
+        sender_type: "user" | "bot";
+        content: string;
+        created_at: string;
+        updated_at: string | null;
+        artifacts: any;
+      }>;
+      total: number;
+      page: number;
+      page_size: number;
+      total_pages: number;
+    };
+    message: string;
+  };
 }
 
-export interface MessagesParams {
-  page?: number;
-  page_size?: number;
-  session_id?: string;
+export interface UploadFileResponse {
+  message: string;
+  info: {
+    file_id: string;
+    markdown_content: string;
+    file_name: string;
+    file_type: string;
+    file_size: number;
+    storage_url: string;
+    processed_at: string;
+    user_id: string;
+    query: string | null;
+    provider_name: string;
+  };
 }
 
-export interface StreamChunk {
-  content?: string;
-  args?: any;
-  name?: string;
-  id?: string;
-  finishReason?: string;
+export interface ChatStreamRequest {
+  message: string;
+  provider_llm?: string;
+  provider_storage?: string;
+  provider_embedding?: string;
+  collection_name?: string;
+  file_metadata?: FileMetadata[];
 }
 
 export const chatApi = {
-  async sendMessage(data: SendMessageRequest): Promise<Message> {
-    return apiClient.post<Message>("/messages", data);
+  /**
+   * Upload file and extract content as markdown
+   */
+  uploadFile: async (
+    file: File,
+    query?: string,
+    providerName: string = "gemini-vision"
+  ): Promise<UploadFileResponse> => {
+    const formData = new FormData();
+    formData.append("file", file);
+    if (query) {
+      formData.append("query", query);
+    }
+    formData.append("provider_name", providerName);
+
+    const response = await http1.post<UploadFileResponse>(
+      "/v1/agents/chat/upload",
+      formData,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      }
+    );
+    return response;
   },
 
-  async getMessages(params?: MessagesParams): Promise<Message[]> {
-    const queryParams = new URLSearchParams();
-    if (params) {
-      Object.entries(params).forEach(([key, value]) => {
-        if (value !== undefined && value !== null) {
-          queryParams.set(key, value.toString());
+  /**
+   * Stream chat with agent - returns abort function
+   */
+  streamChat: (
+    request: ChatStreamRequest,
+    onMessage: (data: string) => void,
+    onError: (error: any) => void,
+    onComplete: () => void
+  ): (() => void) => {
+    const token = http1.getToken();
+    const controller = new AbortController();
+
+    fetch(`${http1.getBaseURL()}/v1/agents/chat/stream`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...(token && { Authorization: `Bearer ${token}` }),
+      },
+      body: JSON.stringify(request),
+      signal: controller.signal,
+    })
+      .then(async (response) => {
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const reader = response.body?.getReader();
+        const decoder = new TextDecoder();
+
+        if (!reader) {
+          throw new Error("No reader available");
+        }
+
+        try {
+          while (true) {
+            const { done, value } = await reader.read();
+
+            if (done) {
+              onComplete();
+              break;
+            }
+
+            const chunk = decoder.decode(value, { stream: true });
+            const lines = chunk.split("\n");
+
+            for (const line of lines) {
+              if (line.startsWith("data: ")) {
+                const data = line.slice(6).trim();
+
+                if (data === "[DONE]") {
+                  onComplete();
+                  return;
+                }
+
+                try {
+                  const parsed = JSON.parse(data);
+                  if (parsed.content) {
+                    onMessage(parsed.content);
+                  }
+                } catch (e) {
+                  // If not JSON, treat as plain text
+                  onMessage(data);
+                }
+              }
+            }
+          }
+        } catch (error) {
+          if (error instanceof Error && error.name !== "AbortError") {
+            onError(error);
+          }
+        }
+      })
+      .catch((error) => {
+        if (error.name !== "AbortError") {
+          onError(error);
         }
       });
-    }
 
-    const url = `/messages${
-      queryParams.toString() ? `?${queryParams.toString()}` : ""
-    }`;
-    return apiClient.get<Message[]>(url);
+    // Return abort function
+    return () => {
+      controller.abort();
+    };
   },
 
-  async streamChat(
-    message: string,
-    onChunk: (chunk: StreamChunk) => void,
-    onError?: (error: Error) => void,
-    onComplete?: () => void,
-  ): Promise<void> {
-    try {
-      await apiClient.stream("/chat/stream", { message }, (chunk) => {
-        onChunk(chunk);
-      });
-      onComplete?.();
-    } catch (error) {
-      onError?.(error instanceof Error ? error : new Error(String(error)));
-    }
+  /**
+   * Get paginated message history
+   */
+  getMessages: async (
+    page: number = 1,
+    pageSize: number = 10
+  ): Promise<MessagesResponse> => {
+    const response = await http1.get<MessagesResponse>("/v1/messages", {
+      params: {
+        page,
+        page_size: pageSize,
+      },
+    });
+    return response;
   },
 };

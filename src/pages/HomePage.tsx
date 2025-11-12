@@ -143,10 +143,17 @@ const HomePage: React.FC = () => {
     variant: ProductVariant,
     quantity: number
   ) => {
+    if (!user) {
+      console.log("Need login");
+      return;
+    }
+
+    const userId = user.user_id || user.id || "";
     const variantId =
       variant.variant_id || variant.product_variant_id || variant.id || "";
-    if (variantId) {
-      await addToCart(variantId, quantity);
+
+    if (userId && variantId) {
+      await addToCart(userId, variantId, quantity);
     }
   };
 

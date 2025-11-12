@@ -1,200 +1,239 @@
 import { create } from "zustand";
 import { devtools } from "zustand/middleware";
-import { chatApi, type Message, type StreamChunk } from "../api/chat.api";
+import {
+  chatApi,
+  type FileMetadata,
+  type ChatStreamRequest,
+} from "../api/chat.api";
 
 export interface ChatMessage {
-  id: number;
-  sender: "user" | "bot";
+  id: string;
+  role: "user" | "assistant";
   content: string;
-  agent?: string;
   timestamp: string;
+  attachments?: FileMetadata[];
+  artifacts?: {
+    data?: any[];
+    tool?: string;
+    type?: string;
+    metadata?: any;
+  };
+}
+
+export interface UploadedFile {
+  file: File;
+  metadata?: FileMetadata;
+  preview?: string;
+  uploading?: boolean;
+  error?: string;
 }
 
 interface ChatState {
   messages: ChatMessage[];
-  isTyping: boolean;
-  activeAgent: string;
-  sessionId: string;
+  isStreaming: boolean;
+  uploadedFiles: UploadedFile[];
   error: string | null;
+  collectionName: string;
+  currentPage: number;
+  totalPages: number;
+  isLoadingHistory: boolean;
+  hasMoreHistory: boolean;
 
-  // Actions
-  sendMessage: (content: string) => Promise<void>;
-  sendStreamMessage: (content: string) => Promise<void>;
-  loadMessages: (sessionId?: string) => Promise<void>;
+  addMessage: (message: ChatMessage) => void;
+  updateLastMessage: (content: string) => void;
+  sendStreamMessage: (
+    content: string,
+    fileMetadata?: FileMetadata[]
+  ) => Promise<() => void>;
+  setIsStreaming: (isStreaming: boolean) => void;
   clearMessages: () => void;
-  generateSessionId: () => string;
-  setSessionId: (sessionId: string) => void;
-  clearError: () => void;
+  setError: (error: string | null) => void;
+  addUploadedFile: (file: UploadedFile) => void;
+  removeUploadedFile: (index: number) => void;
+  updateUploadedFile: (index: number, updates: Partial<UploadedFile>) => void;
+  clearUploadedFiles: () => void;
+  setCollectionName: (name: string) => void;
+  loadMessageHistory: (page?: number) => Promise<void>;
+  prependMessages: (messages: ChatMessage[]) => void;
 }
 
 export const useChatStore = create<ChatState>()(
   devtools(
     (set, get) => ({
       messages: [],
-      isTyping: false,
-      activeAgent: "system",
-      sessionId: "",
+      isStreaming: false,
+      uploadedFiles: [],
       error: null,
+      collectionName: "chatbot-foxai",
+      currentPage: 0,
+      totalPages: 0,
+      isLoadingHistory: false,
+      hasMoreHistory: true,
 
-      sendMessage: async (content: string) => {
-        if (!content.trim()) return;
+      addMessage: (message: ChatMessage) => {
+        set((state) => ({
+          messages: [...state.messages, message],
+        }));
+      },
+
+      updateLastMessage: (content: string) => {
+        set((state) => {
+          const messages = [...state.messages];
+          if (messages.length > 0) {
+            const lastMessage = messages[messages.length - 1];
+            if (lastMessage.role === "assistant") {
+              lastMessage.content += content;
+            }
+          }
+          return { messages };
+        });
+      },
+
+      sendStreamMessage: async (
+        content: string,
+        fileMetadata?: FileMetadata[]
+      ) => {
+        const { collectionName } = get();
 
         const userMessage: ChatMessage = {
-          id: Date.now(),
-          sender: "user",
+          id: `user-${Date.now()}`,
+          role: "user",
           content: content.trim(),
           timestamp: new Date().toISOString(),
+          attachments: fileMetadata,
         };
 
         set((state) => ({
           messages: [...state.messages, userMessage],
-          isTyping: true,
-          error: null,
         }));
 
-        try {
-          const { sessionId } = get();
-          await chatApi.sendMessage({
-            content: content.trim(),
-            session_id: sessionId,
-          });
-
-          // Simulate bot response (in real app, this comes from API)
-          setTimeout(() => {
-            const botMessage: ChatMessage = {
-              id: Date.now() + 1,
-              sender: "bot",
-              content: "Tôi đã nhận được tin nhắn của bạn.",
-              timestamp: new Date().toISOString(),
-            };
-
-            set((state) => ({
-              messages: [...state.messages, botMessage],
-              isTyping: false,
-            }));
-          }, 1000);
-        } catch (error: any) {
-          set({
-            error: error.message || "Failed to send message",
-            isTyping: false,
-          });
-        }
-      },
-
-      sendStreamMessage: async (content: string) => {
-        if (!content.trim()) return;
-
-        const userMessage: ChatMessage = {
-          id: Date.now(),
-          sender: "user",
-          content: content.trim(),
+        const assistantMessage: ChatMessage = {
+          id: `assistant-${Date.now()}`,
+          role: "assistant",
+          content: "",
           timestamp: new Date().toISOString(),
         };
 
         set((state) => ({
-          messages: [...state.messages, userMessage],
-          isTyping: true,
-          activeAgent: "search",
+          messages: [...state.messages, assistantMessage],
+          isStreaming: true,
           error: null,
         }));
 
-        let botMessageContent = "";
-        let currentAgent = "system";
+        const request: ChatStreamRequest = {
+          message: content.trim(),
+          collection_name: collectionName,
+          file_metadata: fileMetadata,
+        };
 
-        try {
-          await chatApi.streamChat(
-            content,
-            (chunk: StreamChunk) => {
-              if (chunk.content) {
-                botMessageContent += chunk.content;
-              }
+        const abortFn = chatApi.streamChat(
+          request,
+          (data: string) => {
+            get().updateLastMessage(data);
+          },
+          (error: any) => {
+            set({
+              error: error.message || "Failed to stream chat",
+              isStreaming: false,
+            });
+          },
+          () => {
+            set({ isStreaming: false });
+          }
+        );
 
-              if (chunk.name) {
-                currentAgent = chunk.name;
-                set({ activeAgent: currentAgent });
-              }
-
-              // Update or add bot message
-              set((state) => {
-                const messages = [...state.messages];
-                const lastMessage = messages[messages.length - 1];
-
-                if (lastMessage && lastMessage.sender === "bot") {
-                  // Update existing bot message
-                  lastMessage.content = botMessageContent;
-                  lastMessage.agent = currentAgent;
-                } else {
-                  // Add new bot message
-                  messages.push({
-                    id: Date.now() + 1,
-                    sender: "bot",
-                    content: botMessageContent,
-                    agent: currentAgent,
-                    timestamp: new Date().toISOString(),
-                  });
-                }
-
-                return { messages };
-              });
-            },
-            (error) => {
-              console.error("Stream error:", error);
-              set({
-                error: error.message || "Stream error",
-                isTyping: false,
-              });
-            },
-            () => {
-              set({ isTyping: false });
-            },
-          );
-        } catch (error: any) {
-          set({
-            error: error.message || "Failed to send message",
-            isTyping: false,
-          });
-        }
+        return abortFn;
       },
 
-      loadMessages: async (sessionId) => {
-        try {
-          const messages = await chatApi.getMessages({
-            session_id: sessionId,
-            page_size: 100,
-          });
-
-          const chatMessages: ChatMessage[] = messages.map((msg, index) => ({
-            id: index,
-            sender: msg.sender,
-            content: msg.content,
-            agent: msg.agent_type,
-            timestamp: msg.created_at,
-          }));
-
-          set({ messages: chatMessages });
-        } catch (error: any) {
-          set({ error: error.message || "Failed to load messages" });
-        }
+      setIsStreaming: (isStreaming: boolean) => {
+        set({ isStreaming });
       },
 
       clearMessages: () => {
-        set({ messages: [], error: null });
+        set({ messages: [] });
       },
 
-      generateSessionId: () => {
-        const sessionId = `session-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-        set({ sessionId });
-        return sessionId;
+      setError: (error: string | null) => {
+        set({ error });
       },
 
-      setSessionId: (sessionId: string) => {
-        set({ sessionId });
+      addUploadedFile: (file: UploadedFile) => {
+        set((state) => ({
+          uploadedFiles: [...state.uploadedFiles, file],
+        }));
       },
 
-      clearError: () => {
-        set({ error: null });
+      removeUploadedFile: (index: number) => {
+        set((state) => ({
+          uploadedFiles: state.uploadedFiles.filter((_, i) => i !== index),
+        }));
+      },
+
+      updateUploadedFile: (index: number, updates: Partial<UploadedFile>) => {
+        set((state) => {
+          const files = [...state.uploadedFiles];
+          files[index] = { ...files[index], ...updates };
+          return { uploadedFiles: files };
+        });
+      },
+
+      clearUploadedFiles: () => {
+        set({ uploadedFiles: [] });
+      },
+
+      setCollectionName: (name: string) => {
+        set({ collectionName: name });
+      },
+
+      loadMessageHistory: async (page?: number) => {
+        const { currentPage, isLoadingHistory, hasMoreHistory } = get();
+
+        if (isLoadingHistory || !hasMoreHistory) return;
+
+        const nextPage = page || currentPage + 1;
+
+        set({ isLoadingHistory: true, error: null });
+
+        try {
+          const response = await chatApi.getMessages(nextPage, 10);
+          const { messages: apiMessages, total_pages } = response.info.data;
+
+          console.log("API Messages:", apiMessages);
+
+          // Transform API messages to ChatMessage format
+          // Note: API returns newest first, we need to reverse for prepending
+          const transformedMessages: ChatMessage[] = apiMessages
+            .reverse()
+            .map((msg) => ({
+              id: msg.id,
+              role: msg.sender_type === "user" ? "user" : "assistant",
+              content: msg.content,
+              timestamp: msg.created_at,
+              attachments: undefined,
+              artifacts: msg.artifacts,
+            }));
+
+          set((state) => ({
+            messages: [...transformedMessages, ...state.messages],
+            currentPage: nextPage,
+            totalPages: total_pages,
+            hasMoreHistory: nextPage < total_pages,
+            isLoadingHistory: false,
+          }));
+        } catch (error: any) {
+          set({
+            error: error.message || "Failed to load message history",
+            isLoadingHistory: false,
+          });
+        }
+      },
+
+      prependMessages: (newMessages: ChatMessage[]) => {
+        set((state) => ({
+          messages: [...newMessages, ...state.messages],
+        }));
       },
     }),
-    { name: "ChatStore" },
-  ),
+    { name: "ChatStore" }
+  )
 );

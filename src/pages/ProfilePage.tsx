@@ -80,7 +80,7 @@ const ProfilePage: React.FC = () => {
         phone: phone.trim(),
       });
       if (response.info.success) {
-        toast.success("✅ Cập nhật thành công!");
+        toast.success("Cập nhật thành công!");
         await loadUserDetails();
         setIsProfileModified(false);
 

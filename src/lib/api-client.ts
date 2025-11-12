@@ -31,7 +31,7 @@ class ApiClient {
       },
       (error) => {
         return Promise.reject(error);
-      },
+      }
     );
 
     // Response interceptor for error handling
@@ -41,11 +41,12 @@ class ApiClient {
         if (error.response?.status === 401) {
           // Unauthorized - clear token
           this.clearToken();
-          // Optionally redirect to login
-          window.location.href = "/";
+          // Let the application handle redirect, don't force reload
+          // Dispatch a custom event for logout
+          window.dispatchEvent(new CustomEvent("auth:unauthorized"));
         }
         return Promise.reject(error);
-      },
+      }
     );
   }
 
@@ -81,7 +82,7 @@ class ApiClient {
   // Generic request methods
   public async get<T = any>(
     url: string,
-    config?: AxiosRequestConfig,
+    config?: AxiosRequestConfig
   ): Promise<T> {
     const response: AxiosResponse<T> = await this.client.get(url, config);
     return this.extractData(response.data);
@@ -90,12 +91,12 @@ class ApiClient {
   public async post<T = any>(
     url: string,
     data?: any,
-    config?: AxiosRequestConfig,
+    config?: AxiosRequestConfig
   ): Promise<T> {
     const response: AxiosResponse<T> = await this.client.post(
       url,
       data,
-      config,
+      config
     );
     return this.extractData(response.data);
   }
@@ -103,7 +104,7 @@ class ApiClient {
   public async put<T = any>(
     url: string,
     data?: any,
-    config?: AxiosRequestConfig,
+    config?: AxiosRequestConfig
   ): Promise<T> {
     const response: AxiosResponse<T> = await this.client.put(url, data, config);
     return this.extractData(response.data);
@@ -111,7 +112,7 @@ class ApiClient {
 
   public async delete<T = any>(
     url: string,
-    config?: AxiosRequestConfig,
+    config?: AxiosRequestConfig
   ): Promise<T> {
     const response: AxiosResponse<T> = await this.client.delete(url, config);
     return this.extractData(response.data);
@@ -120,12 +121,12 @@ class ApiClient {
   public async patch<T = any>(
     url: string,
     data?: any,
-    config?: AxiosRequestConfig,
+    config?: AxiosRequestConfig
   ): Promise<T> {
     const response: AxiosResponse<T> = await this.client.patch(
       url,
       data,
-      config,
+      config
     );
     return this.extractData(response.data);
   }
@@ -150,7 +151,10 @@ class ApiClient {
       if (response.info.product) return response.info.product;
       if (response.info.cart_items) return response.info.cart_items;
       if (response.info.orders) return response.info.orders;
-      if (response.info.messages) return response.info.messages;
+
+      // Handle chat messages response (nested under data)
+      if (response.info.data?.messages) return response as T; // Return full response for pagination data
+
       if (response.info.user) return response as T; // Return full response for user details
       return response.info;
     }
@@ -161,7 +165,7 @@ class ApiClient {
   public async stream(
     url: string,
     data: any,
-    onChunk: (chunk: any) => void,
+    onChunk: (chunk: any) => void
   ): Promise<void> {
     const response = await fetch(`${this.baseURL}${url}`, {
       method: "POST",
