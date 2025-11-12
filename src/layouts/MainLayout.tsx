@@ -14,17 +14,17 @@ interface MainLayoutProps {
 const MainLayout: React.FC<MainLayoutProps> = ({ theme, onThemeToggle }) => {
   const navigate = useNavigate();
   const { user, logout } = useAuthStore();
-  const { items: cartItems } = useCartStore();
+  const { totalCount } = useCartStore();
 
   // Auth modal state
   const [authModal, setAuthModal] = useState<"hidden" | "login" | "register">(
-    "hidden",
+    "hidden"
   );
 
   // Placeholder for wishlist - sẽ có wishlist store sau
   const wishlist: string[] = [];
 
-  const cartItemCount = cartItems.reduce((acc, item) => acc + item.quantity, 0);
+  const cartItemCount = totalCount;
 
   const handleLogout = () => {
     logout();

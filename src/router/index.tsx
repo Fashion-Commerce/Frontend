@@ -7,6 +7,7 @@ import CartPage from "@/pages/CartPage";
 import WishlistPage from "@/pages/WishlistPage";
 import AdminPage from "@/pages/AdminPage";
 import ProfilePage from "@/pages/ProfilePage";
+import ChatInterface from "@/components/chat/ChatInterface";
 import { useAuthStore } from "@/stores/authStore";
 
 // Protected Route Component for Admin
@@ -87,6 +88,10 @@ export const router = createBrowserRouter([
         path: "profile",
         element: <ProfilePage />,
       },
+      {
+        path: "chat",
+        element: <ChatInterface />,
+      }
     ],
   },
   {

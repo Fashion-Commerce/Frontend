@@ -26,7 +26,7 @@ import { useCartStore } from "@/stores/cartStore";
  */
 
 const App: React.FC = () => {
-  const { initializeAuth, isAuthenticated } = useAuthStore();
+  const { initializeAuth, isAuthenticated, user } = useAuthStore();
   const { fetchProducts, fetchCategories, fetchBrands } = useProductStore();
   const { fetchCart } = useCartStore();
 
@@ -39,11 +39,6 @@ const App: React.FC = () => {
 
         // Fetch initial store data
         await Promise.all([fetchProducts(), fetchCategories(), fetchBrands()]);
-
-        // If logged in, fetch cart
-        if (isAuthenticated) {
-          await fetchCart();
-        }
       } catch (error) {
         console.error("Failed to initialize app:", error);
       }
@@ -51,6 +46,13 @@ const App: React.FC = () => {
 
     initializeApp();
   }, []); // Only run once on mount
+
+  // Fetch cart when user logs in
+  useEffect(() => {
+    if (isAuthenticated && user) {
+      fetchCart();
+    }
+  }, [isAuthenticated, user, fetchCart]);
 
   return (
     <Provider>
