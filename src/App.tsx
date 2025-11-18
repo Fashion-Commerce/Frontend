@@ -8,23 +8,6 @@ import { useAuthStore } from "@/stores/authStore";
 import { useProductStore } from "@/stores/productStore";
 import { useCartStore } from "@/stores/cartStore";
 
-/**
- * App Component - Refactored với React Router
- *
- * Thay đổi chính:
- * - Loại bỏ tất cả local state, chuyển sang Zustand stores
- * - Sử dụng React Router thay vì conditional rendering
- * - Layouts và Pages được tách riêng
- * - Chuẩn bị sẵn cho tích hợp API backend thật
- *
- * TODO khi backend sẵn sàng:
- * - Loại bỏ dummy data từ stores
- * - Kết nối API calls trong useEffect của pages
- * - Thêm error handling và loading states
- * - Implement wishlist store
- * - Implement chat store với real AI
- */
-
 const App: React.FC = () => {
   const { initializeAuth, isAuthenticated, user } = useAuthStore();
   const { fetchProducts, fetchCategories, fetchBrands } = useProductStore();

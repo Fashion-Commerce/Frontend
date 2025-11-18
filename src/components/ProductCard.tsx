@@ -66,7 +66,8 @@ const ProductCard: React.FC<ProductCardProps> = ({
   return (
     <Box
       onClick={() => onProductClick(product)}
-      className="bg-white dark:bg-gray-800 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 cursor-pointer"
+      className="bg-white rounded-lg overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1 cursor-pointer"
+      style={{ border: "1px solid #E9ECEF" }}
     >
       {/* Image Container */}
       <Box className="relative">
@@ -113,7 +114,10 @@ const ProductCard: React.FC<ProductCardProps> = ({
         </Box>
 
         {/* Official Badge */}
-        <Badge className="absolute top-2 left-2 bg-blue-500 text-white text-[10px] font-bold px-2 py-0.5 flex items-center gap-1">
+        <Badge
+          className="absolute top-2 left-2 text-white text-[10px] font-bold px-2 py-0.5 flex items-center gap-1"
+          style={{ backgroundColor: "#C89B6D" }}
+        >
           <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
             <path
               fillRule="evenodd"
@@ -121,7 +125,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
               clipRule="evenodd"
             />
           </svg>
-          <span>CHÍNH HÃNG</span>
+          <span>OFFICIAL STORE</span>
         </Badge>
       </Box>
 
@@ -155,7 +159,13 @@ const ProductCard: React.FC<ProductCardProps> = ({
         )}
 
         {/* Price */}
-        <Text className="text-lg font-bold text-red-600 dark:text-red-500">
+        <Text
+          className="text-lg font-bold"
+          style={{
+            color: "#C89B6D",
+            fontFamily: "Montserrat, sans-serif",
+          }}
+        >
           {formatPrice(basePrice)}
         </Text>
       </VStack>

@@ -137,7 +137,7 @@ src/
 
 | Mục đích         | Thư viện khuyên dùng                   |
 | ---------------- | -------------------------------------- |
-| UI Framework     | TailwindCSS / Material UI / Ant Design |
+| UI Framework     | TailwindCSS / Chakra UI v3 |
 | Routing          | React Router DOM                       |
 | State Management | Zustand / Redux Toolkit                |
 | HTTP Client      | Axios                                  |
@@ -145,7 +145,7 @@ src/
 | Validation       | Yup                                    |
 | Animation        | Framer Motion                          |
 | Chart            | Recharts / Chart.js                    |
-| Icon             | Lucide-react / React Icons             |
+| Icon             | Lucide-react          |
 
 ---
 

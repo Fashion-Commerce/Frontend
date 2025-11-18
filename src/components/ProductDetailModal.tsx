@@ -63,6 +63,7 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
   wishlist,
 }) => {
   const [quantity, setQuantity] = useState(1);
+  const [pendingQuantity, setPendingQuantity] = useState<number | string>(1);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [variants, setVariants] = useState<ProductVariant[]>([]);
   const [isLoadingVariants, setIsLoadingVariants] = useState(false);
@@ -135,6 +136,7 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
   // Reset selections when product changes
   useEffect(() => {
     setQuantity(1);
+    setPendingQuantity(1);
     setCurrentImageIndex(0);
   }, [product]);
 
@@ -183,7 +185,6 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
       <Box
         bg="white"
         borderRadius="xl"
-        boxShadow="2xl"
         w="full"
         maxW="5xl"
         maxH="85vh"
@@ -192,6 +193,10 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
         flexDirection="column"
         overflow="hidden"
         onClick={(e) => e.stopPropagation()}
+        style={{
+          border: "2px solid #E9ECEF",
+          boxShadow: "0 4px 6px rgba(26, 42, 78, 0.1)",
+        }}
       >
         {/* Close Button */}
         <Button
@@ -201,13 +206,13 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
           right={3}
           zIndex={10}
           bg="white"
-          _hover={{ bg: "gray.100" }}
           borderRadius="full"
           p={1.5}
           minW="auto"
           h="auto"
-          boxShadow="lg"
           aria-label="Đóng"
+          style={{ border: "1px solid #E9ECEF", color: "#1A2A4E" }}
+          _hover={{ bg: "#C89B6D", color: "white" }}
         >
           <X className="w-4 h-4" />
         </Button>
@@ -222,12 +227,10 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                 <Box
                   position="relative"
                   w="full"
-                  bg="gray.50"
+                  bg="#F4F6F8"
                   borderRadius="lg"
-                  borderWidth="1px"
-                  borderColor="gray.200"
                   overflow="hidden"
-                  boxShadow="sm"
+                  style={{ border: "1px solid #E9ECEF" }}
                 >
                   <AspectRatio ratio={1}>
                     <Box
@@ -255,15 +258,17 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                         left={2}
                         top="50%"
                         transform="translateY(-50%)"
-                        bg="whiteAlpha.900"
-                        backdropFilter="blur(8px)"
                         p={1.5}
                         minW="auto"
                         h="auto"
                         borderRadius="full"
-                        _hover={{ bg: "white" }}
-                        boxShadow="md"
                         aria-label="Ảnh trước"
+                        style={{
+                          backgroundColor: "white",
+                          border: "1px solid #E9ECEF",
+                          color: "#1A2A4E",
+                        }}
+                        _hover={{ bg: "#C89B6D", color: "white" }}
                       >
                         <ChevronLeft className="w-4 h-4" />
                       </Button>
@@ -273,15 +278,17 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                         right={2}
                         top="50%"
                         transform="translateY(-50%)"
-                        bg="whiteAlpha.900"
-                        backdropFilter="blur(8px)"
                         p={1.5}
                         minW="auto"
                         h="auto"
                         borderRadius="full"
-                        _hover={{ bg: "white" }}
-                        boxShadow="md"
                         aria-label="Ảnh sau"
+                        style={{
+                          backgroundColor: "white",
+                          border: "1px solid #E9ECEF",
+                          color: "#1A2A4E",
+                        }}
+                        _hover={{ bg: "#C89B6D", color: "white" }}
                       >
                         <ChevronRight className="w-4 h-4" />
                       </Button>
@@ -349,7 +356,14 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                 )}
 
                 {/* Product Name */}
-                <Heading size="md" color="gray.900" lineHeight="shorter">
+                <Heading
+                  size="md"
+                  lineHeight="shorter"
+                  style={{
+                    color: "#1A2A4E",
+                    fontFamily: "Montserrat, sans-serif",
+                  }}
+                >
                   {product.name}
                 </Heading>
 
@@ -362,14 +376,22 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
 
                 {/* Price */}
                 <Box
-                  bgGradient="linear(to-r, red.50, orange.50)"
                   px={4}
                   py={3}
                   borderRadius="lg"
-                  borderWidth="1px"
-                  borderColor="red.100"
+                  style={{
+                    backgroundColor: "#FFF8F0",
+                    border: "1px solid #C89B6D",
+                  }}
                 >
-                  <Text fontSize="2xl" fontWeight="bold" color="red.600">
+                  <Text
+                    fontSize="2xl"
+                    fontWeight="bold"
+                    style={{
+                      color: "#C89B6D",
+                      fontFamily: "Montserrat, sans-serif",
+                    }}
+                  >
                     {formatPrice(displayPrice)}
                   </Text>
                   {selectedVariant &&
@@ -417,16 +439,16 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                           fontWeight={
                             selectedColor === color ? "medium" : "normal"
                           }
-                          borderColor={
-                            selectedColor === color ? "blue.500" : "gray.300"
-                          }
-                          bg={selectedColor === color ? "blue.50" : "white"}
-                          color={
-                            selectedColor === color ? "blue.600" : "gray.700"
-                          }
-                          _hover={{
+                          bg={selectedColor === color ? "#C89B6D" : "white"}
+                          style={{
                             borderColor:
-                              selectedColor === color ? "blue.500" : "gray.400",
+                              selectedColor === color ? "#C89B6D" : "#E9ECEF",
+                            color:
+                              selectedColor === color ? "white" : "#333333",
+                          }}
+                          _hover={{
+                            borderColor: "#C89B6D",
+                            bg: selectedColor === color ? "#B88A5D" : "#FFF8F0",
                           }}
                         >
                           {color}
@@ -507,14 +529,12 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
             {/* Right: Actions Sidebar */}
             <Box w="240px" flexShrink={0}>
               <Box
-                bg="gray.50"
+                bg="#F4F6F8"
                 p={4}
                 borderRadius="lg"
-                borderWidth="1px"
-                borderColor="gray.200"
                 position="sticky"
                 top={0}
-                boxShadow="sm"
+                style={{ border: "1px solid #E9ECEF" }}
               >
                 <VStack spacing={4} align="stretch">
                   {/* Quantity */}
@@ -534,7 +554,11 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                       overflow="hidden"
                     >
                       <Button
-                        onClick={() => setQuantity((q) => Math.max(1, q - 1))}
+                        onClick={() => {
+                          const newQty = Math.max(1, quantity - 1);
+                          setQuantity(newQty);
+                          setPendingQuantity(newQty);
+                        }}
                         flex={1}
                         borderRadius={0}
                         fontSize="sm"
@@ -543,30 +567,87 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                       >
                         -
                       </Button>
-                      <Text
-                        flex={1}
-                        display="flex"
-                        alignItems="center"
-                        justifyContent="center"
-                        borderLeftWidth="1px"
-                        borderRightWidth="1px"
-                        borderColor="gray.300"
-                        fontSize="sm"
-                        fontWeight="medium"
-                      >
-                        {quantity}
-                      </Text>
+                      <input
+                        type="number"
+                        min={1}
+                        max={selectedVariant?.stock_quantity || 9999}
+                        value={pendingQuantity}
+                        onChange={(e) => {
+                          const inputValue = e.target.value;
+                          // Allow empty string for better UX
+                          if (inputValue === "") {
+                            setPendingQuantity("");
+                            return;
+                          }
+                          const value = parseInt(inputValue, 10);
+                          if (!isNaN(value) && value >= 0) {
+                            setPendingQuantity(value);
+                          }
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            const value = parseInt(e.currentTarget.value);
+                            const maxStock =
+                              selectedVariant?.stock_quantity || 9999;
+                            if (!isNaN(value) && value >= 1) {
+                              const finalQty = Math.min(value, maxStock);
+                              setQuantity(finalQty);
+                              setPendingQuantity(finalQty);
+                            }
+                          }
+                        }}
+                        onBlur={(e) => {
+                          const value = parseInt(e.target.value);
+                          const maxStock =
+                            selectedVariant?.stock_quantity || 9999;
+                          if (isNaN(value) || value < 1) {
+                            // Reset to current quantity if invalid
+                            setPendingQuantity(quantity);
+                          } else {
+                            const finalQty = Math.min(value, maxStock);
+                            setQuantity(finalQty);
+                            setPendingQuantity(finalQty);
+                          }
+                        }}
+                        disabled={isLoadingVariants}
+                        style={{
+                          flex: 1,
+                          textAlign: "center",
+                          borderLeft: "1px solid #D1D5DB",
+                          borderRight: "1px solid #D1D5DB",
+                          fontSize: "0.875rem",
+                          fontWeight: "500",
+                          outline: "none",
+                        }}
+                      />
                       <Button
-                        onClick={() => setQuantity((q) => q + 1)}
+                        onClick={() => {
+                          const maxStock =
+                            selectedVariant?.stock_quantity || 9999;
+                          const newQty = Math.min(quantity + 1, maxStock);
+                          setQuantity(newQty);
+                          setPendingQuantity(newQty);
+                        }}
+                        disabled={
+                          quantity >= (selectedVariant?.stock_quantity || 9999)
+                        }
                         flex={1}
                         borderRadius={0}
                         fontSize="sm"
                         h="36px"
                         _hover={{ bg: "gray.100" }}
+                        _disabled={{ opacity: 0.5, cursor: "not-allowed" }}
                       >
                         +
                       </Button>
                     </Flex>
+                    {selectedVariant &&
+                      selectedVariant.stock_quantity &&
+                      quantity >= selectedVariant.stock_quantity && (
+                        <Text fontSize="xs" color="orange.500" mt={1}>
+                          Đã đạt tối đa số lượng trong kho
+                        </Text>
+                      )}
                   </Box>
 
                   {/* Subtotal */}
@@ -587,12 +668,13 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                       onClick={handleAddToCartClick}
                       isDisabled={!selectedVariant || isLoadingVariants}
                       w="full"
-                      bg="red.500"
+                      bg="#C89B6D"
                       color="white"
                       size="md"
                       fontSize="sm"
                       fontWeight="medium"
-                      _hover={{ bg: "red.600" }}
+                      style={{ fontFamily: "Montserrat, sans-serif" }}
+                      _hover={{ bg: "#B88A5D" }}
                       _disabled={{ bg: "gray.400", cursor: "not-allowed" }}
                     >
                       Mua ngay
@@ -608,13 +690,16 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                       isDisabled={!selectedVariant || isLoadingVariants}
                       w="full"
                       bg="white"
-                      color="blue.600"
                       size="md"
                       fontSize="sm"
                       fontWeight="medium"
                       borderWidth="1px"
-                      borderColor="blue.500"
-                      _hover={{ bg: "blue.50" }}
+                      style={{
+                        borderColor: "#1A2A4E",
+                        color: "#1A2A4E",
+                        fontFamily: "Montserrat, sans-serif",
+                      }}
+                      _hover={{ bg: "#1A2A4E", color: "white" }}
                       _disabled={{
                         bg: "gray.200",
                         borderColor: "gray.300",
@@ -631,9 +716,11 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                       fontSize="sm"
                       fontWeight="medium"
                       borderWidth="1px"
-                      color={isWishlisted ? "red.500" : "gray.600"}
-                      borderColor={isWishlisted ? "red.500" : "gray.300"}
-                      bg={isWishlisted ? "red.50" : "white"}
+                      bg={isWishlisted ? "#FFF8F0" : "white"}
+                      style={{
+                        borderColor: isWishlisted ? "#C89B6D" : "#E9ECEF",
+                        color: isWishlisted ? "#C89B6D" : "#666666",
+                      }}
                       _hover={{
                         borderColor: "red.500",
                         color: "red.500",

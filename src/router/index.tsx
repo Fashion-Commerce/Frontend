@@ -5,8 +5,10 @@ import AdminLayout from "@/layouts/AdminLayout";
 import HomePage from "@/pages/HomePage";
 import CartPage from "@/pages/CartPage";
 import WishlistPage from "@/pages/WishlistPage";
+import OrdersPage from "@/pages/OrdersPage";
 import AdminPage from "@/pages/AdminPage";
 import ProfilePage from "@/pages/ProfilePage";
+import PaymentResultPage from "@/pages/PaymentResultPage";
 import ChatInterface from "@/components/chat/ChatInterface";
 import { useAuthStore } from "@/stores/authStore";
 
@@ -41,6 +43,8 @@ export const setThemeHandlers = (
 
 const MainLayoutWrapper: React.FC = () => {
   const [theme, setTheme] = React.useState<"light" | "dark">("dark");
+  const [searchInput, setSearchInput] = React.useState("");
+  const [searchTerm, setSearchTerm] = React.useState("");
 
   React.useEffect(() => {
     const savedTheme = localStorage.getItem("agentfashion_theme") as
@@ -64,7 +68,24 @@ const MainLayoutWrapper: React.FC = () => {
     setTheme((prev) => (prev === "light" ? "dark" : "light"));
   };
 
-  return <MainLayout theme={theme} onThemeToggle={handleThemeToggle} />;
+  const handleSearchInputChange = (value: string) => {
+    setSearchInput(value);
+  };
+
+  const handleSearchSubmit = () => {
+    setSearchTerm(searchInput);
+  };
+
+  return (
+    <MainLayout
+      theme={theme}
+      onThemeToggle={handleThemeToggle}
+      searchInput={searchInput}
+      searchTerm={searchTerm}
+      onSearchInputChange={handleSearchInputChange}
+      onSearchSubmit={handleSearchSubmit}
+    />
+  );
 };
 
 export const router = createBrowserRouter([
@@ -85,13 +106,21 @@ export const router = createBrowserRouter([
         element: <WishlistPage />,
       },
       {
+        path: "orders",
+        element: <OrdersPage />,
+      },
+      {
         path: "profile",
         element: <ProfilePage />,
       },
       {
         path: "chat",
         element: <ChatInterface />,
-      }
+      },
+      {
+        path: "payment-result",
+        element: <PaymentResultPage />,
+      },
     ],
   },
   {
@@ -128,6 +157,10 @@ export const router = createBrowserRouter([
       },
       {
         path: "categories",
+        element: <AdminPage />,
+      },
+      {
+        path: "resources",
         element: <AdminPage />,
       },
     ],

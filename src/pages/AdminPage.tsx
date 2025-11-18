@@ -7,6 +7,7 @@ import Analytics from "@/components/admin/Analytics";
 import AgentManagement from "@/components/admin/AgentManagement";
 import BrandManagement from "@/components/admin/BrandManagement";
 import CategoryManagement from "@/components/admin/CategoryManagement";
+import ResourceManagement from "@/components/admin/ResourceManagement";
 import { useProductStore } from "@/stores/productStore";
 
 const AdminPage: React.FC = () => {
@@ -35,6 +36,8 @@ const AdminPage: React.FC = () => {
       return <BrandManagement />;
     } else if (path.includes("/admin/categories")) {
       return <CategoryManagement />;
+    } else if (path.includes("/admin/resources")) {
+      return <ResourceManagement />;
     }
 
     return <Outlet />;

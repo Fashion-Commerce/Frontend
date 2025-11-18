@@ -99,6 +99,7 @@ export const chatApi = {
   streamChat: (
     request: ChatStreamRequest,
     onMessage: (data: string) => void,
+    onArtifact: (artifacts: any) => void,
     onError: (error: any) => void,
     onComplete: () => void
   ): (() => void) => {
@@ -149,7 +150,29 @@ export const chatApi = {
 
                 try {
                   const parsed = JSON.parse(data);
-                  if (parsed.content) {
+
+                  // Handle message chunks
+                  if (parsed.type === "message_chunk" && parsed.content) {
+                    onMessage(parsed.content);
+                  }
+
+                  // Handle artifacts (product search results, etc.)
+                  if (
+                    parsed.type === "artifact" ||
+                    parsed.name === "artifact"
+                  ) {
+                    console.log("🎯 Artifact event detected:", parsed);
+                    if (parsed.artifacts) {
+                      console.log(
+                        "📦 Calling onArtifact with:",
+                        parsed.artifacts
+                      );
+                      onArtifact(parsed.artifacts);
+                    }
+                  }
+
+                  // Backward compatibility: if no type field, treat as message
+                  if (!parsed.type && !parsed.name && parsed.content) {
                     onMessage(parsed.content);
                   }
                 } catch (e) {
@@ -191,5 +214,17 @@ export const chatApi = {
       },
     });
     return response;
+  },
+
+  /**
+   * Delete all messages for current user
+   */
+  deleteAllMessages: async (): Promise<{
+    success: boolean;
+    message: string;
+    deleted_count: number;
+  }> => {
+    const response = await http1.delete<any>("/v1/messages");
+    return response.info;
   },
 };

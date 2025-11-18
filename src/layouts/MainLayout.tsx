@@ -9,9 +9,20 @@ import { useCartStore } from "@/stores/cartStore";
 interface MainLayoutProps {
   theme: "light" | "dark";
   onThemeToggle: () => void;
+  searchInput?: string;
+  searchTerm?: string;
+  onSearchInputChange?: (value: string) => void;
+  onSearchSubmit?: () => void;
 }
 
-const MainLayout: React.FC<MainLayoutProps> = ({ theme, onThemeToggle }) => {
+const MainLayout: React.FC<MainLayoutProps> = ({
+  theme,
+  onThemeToggle,
+  searchInput,
+  searchTerm,
+  onSearchInputChange,
+  onSearchSubmit,
+}) => {
   const navigate = useNavigate();
   const { user, logout } = useAuthStore();
   const { totalCount } = useCartStore();
@@ -44,7 +55,13 @@ const MainLayout: React.FC<MainLayoutProps> = ({ theme, onThemeToggle }) => {
   };
 
   return (
-    <div className="h-screen w-screen flex flex-col font-sans text-gray-900 dark:text-gray-100">
+    <div
+      className="h-screen w-screen flex flex-col font-sans"
+      style={{
+        fontFamily: "Inter, sans-serif",
+        color: "#333333",
+      }}
+    >
       <Header
         cartItemCount={cartItemCount}
         wishlistItemCount={wishlist.length}
@@ -55,10 +72,13 @@ const MainLayout: React.FC<MainLayoutProps> = ({ theme, onThemeToggle }) => {
         onAuthClick={handleAuthClick}
         onAdminClick={handleAdminClick}
         handleProfileClick={handleProfileClick}
+        searchInput={searchInput}
+        onSearchInputChange={onSearchInputChange}
+        onSearchSubmit={onSearchSubmit}
       />
 
-      <main className="flex-grow flex overflow-hidden">
-        {/* Chatbot - always visible, takes 1/5 of screen */}
+      <main className="flex-grow flex overflow-hidden w-full">
+        {/* Chatbot - takes 3/10 of screen when normal, full screen when expanded */}
         <Chatbot
           messages={[]}
           onSendMessage={(msg) => console.log("Send:", msg)}
@@ -67,9 +87,12 @@ const MainLayout: React.FC<MainLayoutProps> = ({ theme, onThemeToggle }) => {
           activeAgent={"system" as any}
         />
 
-        {/* Main content area - takes 4/5 of screen */}
-        <div className="flex-grow h-full overflow-y-auto bg-gray-100 dark:bg-slate-900">
-          <Outlet />
+        {/* Main content area - takes 7/10 of screen */}
+        <div
+          className="flex-grow h-full overflow-y-auto"
+          style={{ backgroundColor: "#F4F6F8", width: "100%" }}
+        >
+          <Outlet context={{ searchTerm }} />
         </div>
       </main>
 

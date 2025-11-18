@@ -151,6 +151,7 @@ class ApiClient {
       if (response.info.product) return response.info.product;
       if (response.info.cart_items) return response.info.cart_items;
       if (response.info.orders) return response.info.orders;
+      if (response.info.resources) return response as T; // Return full response for resources with pagination
 
       // Handle chat messages response (nested under data)
       if (response.info.data?.messages) return response as T; // Return full response for pagination data

@@ -41,6 +41,7 @@ interface ChatState {
 
   addMessage: (message: ChatMessage) => void;
   updateLastMessage: (content: string) => void;
+  updateLastMessageArtifacts: (artifacts: any) => void;
   sendStreamMessage: (
     content: string,
     fileMetadata?: FileMetadata[]
@@ -89,6 +90,21 @@ export const useChatStore = create<ChatState>()(
         });
       },
 
+      updateLastMessageArtifacts: (artifacts: any) => {
+        console.log("📦 Received artifacts:", artifacts);
+        set((state) => {
+          const messages = [...state.messages];
+          if (messages.length > 0) {
+            const lastMessage = messages[messages.length - 1];
+            if (lastMessage.role === "assistant") {
+              lastMessage.artifacts = artifacts;
+              console.log("✅ Updated message with artifacts:", lastMessage);
+            }
+          }
+          return { messages };
+        });
+      },
+
       sendStreamMessage: async (
         content: string,
         fileMetadata?: FileMetadata[]
@@ -130,6 +146,9 @@ export const useChatStore = create<ChatState>()(
           request,
           (data: string) => {
             get().updateLastMessage(data);
+          },
+          (artifacts: any) => {
+            get().updateLastMessageArtifacts(artifacts);
           },
           (error: any) => {
             set({
