@@ -1,140 +1,470 @@
-import React, { useState, useRef, useEffect } from "react";
-import type { ChatMessage, Product } from "@/types";
-import { AgentType, MessageSender } from "@/types";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import {
-  SearchAgentIcon,
-  AdvisorAgentIcon,
-  OrderAgentIcon,
-} from "@/components/icons";
+  Send,
+  X,
+  FileText,
+  Mic,
+  MicOff,
+  Paperclip,
+  ChevronLeft,
+  ChevronRight,
+  Star,
+  Trash2,
+  ArrowDown,
+} from "lucide-react";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import { useChatStore } from "@/stores/chatStore";
+import { useCartStore } from "@/stores/cartStore";
+import { useAuthStore } from "@/stores/authStore";
+import { chatApi, type FileMetadata } from "@/api/chat.api";
+import ProductDetailModal from "@/components/ProductDetailModal";
+import type { Product as ProductType } from "@/types";
+import { marked } from "marked";
+import katex from "katex";
+import "katex/dist/katex.min.css";
+import "./chat/markdown.css";
+import { Dialog, Button, Portal, Text, Flex } from "@chakra-ui/react";
 
-interface ChatbotProps {
-  messages: ChatMessage[];
-  onSendMessage: (message: string) => void;
-  isBotTyping: boolean;
-  onProductClick: (product: Product) => void;
-  activeAgent: AgentType;
+// Configure marked
+marked.setOptions({
+  breaks: true,
+  gfm: true,
+});
+
+interface UploadedFileDisplay {
+  file: File;
+  metadata?: FileMetadata;
+  preview?: string;
+  uploading?: boolean;
+  error?: string;
 }
 
-const agentDetails = {
-  [AgentType.SEARCH]: {
-    icon: SearchAgentIcon,
-    text: "Đang tìm kiếm sản phẩm...",
-    color: "text-sky-500 dark:text-sky-400",
-    borderColor: "border-sky-500 dark:border-sky-400",
-    badgeColor: "bg-sky-500",
-  },
-  [AgentType.ADVISOR]: {
-    icon: AdvisorAgentIcon,
-    text: "Đang chuẩn bị lời khuyên...",
-    color: "text-violet-500 dark:text-violet-400",
-    borderColor: "border-violet-500 dark:border-violet-400",
-    badgeColor: "bg-violet-500",
-  },
-  [AgentType.ORDER]: {
-    icon: OrderAgentIcon,
-    text: "Đang xử lý thông tin...",
-    color: "text-teal-500 dark:text-teal-400",
-    borderColor: "border-teal-500 dark:border-teal-400",
-    badgeColor: "bg-teal-500",
-  },
-  [AgentType.SYSTEM]: {
-    icon: AdvisorAgentIcon,
-    text: "AI đang suy nghĩ...",
-    color: "text-gray-500 dark:text-gray-400",
-    borderColor: "border-gray-500 dark:border-gray-400",
-    badgeColor: "bg-gray-500",
-  },
+interface ArtifactProduct {
+  id: string;
+  name: string;
+  base_price: number;
+  image_urls: string[];
+  description: string;
+  review_count: number;
+  average_rating: number;
+  brand_id?: string;
+  category_id?: string;
+}
+
+const renderMarkdown = (content: string): string => {
+  if (!content) return "";
+
+  try {
+    let processed = content;
+
+    // Process math expressions
+    processed = processed.replace(/\\\[(.*?)\\\]/gs, (match, math) => {
+      try {
+        return katex.renderToString(math, {
+          displayMode: true,
+          throwOnError: false,
+        });
+      } catch (e) {
+        return match;
+      }
+    });
+
+    processed = processed.replace(/\\\((.*?)\\\)/gs, (match, math) => {
+      try {
+        return katex.renderToString(math, {
+          displayMode: false,
+          throwOnError: false,
+        });
+      } catch (e) {
+        return match;
+      }
+    });
+
+    const html = marked(processed) as string;
+    return html;
+  } catch (error) {
+    console.error("Markdown rendering error:", error);
+    return content;
+  }
 };
 
-const getAgentDetails = (agent?: AgentType) => {
-  return agentDetails[agent || AgentType.SYSTEM];
-};
+const Chatbot: React.FC = () => {
+  const {
+    messages,
+    isStreaming,
+    uploadedFiles,
+    isLoadingHistory,
+    hasMoreHistory,
+    sendStreamMessage,
+    addUploadedFile,
+    removeUploadedFile,
+    updateUploadedFile,
+    clearUploadedFiles,
+    loadMessageHistory,
+    clearMessages,
+  } = useChatStore();
 
-const AgentTypingIndicator: React.FC<{ activeAgent: AgentType }> = ({
-  activeAgent,
-}) => {
-  const activeDetails = getAgentDetails(activeAgent);
-  const allAgents = [AgentType.SEARCH, AgentType.ADVISOR, AgentType.ORDER];
+  const { addToCart } = useCartStore();
+  const { user } = useAuthStore();
 
-  return (
-    <>
-      <style>{`
-                @keyframes pulse-ring {
-                    0% { transform: scale(0.9); opacity: 1; }
-                    80%, 100% { transform: scale(1.8); opacity: 0; }
-                }
-                .animate-pulse-ring {
-                    animation: pulse-ring 1.5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
-                }
-            `}</style>
-      <div className="flex items-end gap-2 justify-start">
-        <img
-          src="https://picsum.photos/seed/avatar/32/32"
-          alt="Bot Avatar"
-          className="w-8 h-8 rounded-full"
-        />
-        <div className="max-w-xs md:max-w-md rounded-2xl px-4 py-3 bg-gray-200 dark:bg-slate-700 rounded-bl-none">
-          <div className="flex justify-center items-center space-x-6">
-            {allAgents.map((agent) => {
-              const details = getAgentDetails(agent);
-              const Icon = details.icon;
-              const isActive = agent === activeAgent;
-              return (
-                <div
-                  key={agent}
-                  className={`relative flex items-center justify-center transition-opacity duration-300 ${
-                    isActive ? "opacity-100" : "opacity-40"
-                  }`}
-                >
-                  <Icon
-                    className={`w-7 h-7 ${
-                      isActive
-                        ? details.color
-                        : "text-gray-500 dark:text-gray-400"
-                    }`}
-                  />
-                  {isActive && (
-                    <div
-                      className={`absolute w-10 h-10 rounded-full border-2 ${details.borderColor} animate-pulse-ring`}
-                    ></div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-          <p className="text-xs text-center italic text-gray-600 dark:text-gray-400 mt-2.5">
-            {activeDetails.text}
-          </p>
-        </div>
-      </div>
-    </>
-  );
-};
-
-const Chatbot: React.FC<ChatbotProps> = ({
-  messages,
-  onSendMessage,
-  isBotTyping,
-  onProductClick,
-  activeAgent,
-}) => {
   const [inputValue, setInputValue] = useState("");
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [showScrollButton, setShowScrollButton] = useState(false);
+  const [imagePreviewDialog, setImagePreviewDialog] = useState(false);
+  const [previewImageData, setPreviewImageData] = useState<string | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const [isRecording, setIsRecording] = useState(false);
+  const [interimTranscript, setInterimTranscript] = useState("");
+  const [selectedProduct, setSelectedProduct] = useState<ProductType | null>(
+    null
+  );
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [isDeletingMessages, setIsDeletingMessages] = useState(false);
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const recognitionRef = useRef<any>(null);
+  const abortControllerRef = useRef<(() => void) | null>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const isLoadingRef = useRef(false);
+  const previousScrollHeight = useRef(0);
+
+  // Animated placeholder
+  const [animatedPlaceholder, setAnimatedPlaceholder] =
+    useState("Nhập tin nhắn...");
+  const placeholderTexts = [
+    "Tìm sản phẩm theo yêu cầu của bạn",
+    "Hỏi về thông tin sản phẩm",
+    "Tìm kiếm và so sánh sản phẩm",
+    "Hỗ trợ tư vấn mua sắm",
+  ];
+  const [currentPlaceholderIndex, setCurrentPlaceholderIndex] = useState(0);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  // Scroll to bottom
+  const scrollToBottom = useCallback((smooth = true) => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({
+        behavior: smooth ? "smooth" : "auto",
+        block: "end",
+      });
+    }
+  }, []);
+
+  // Handle scroll
+  const handleScroll = useCallback(() => {
+    const container = scrollContainerRef.current;
+    if (!container) return;
+
+    const isNearBottom =
+      container.scrollHeight - container.scrollTop - container.clientHeight <
+      100;
+    setShowScrollButton(!isNearBottom);
+
+    const isNearTop = container.scrollTop < 100;
+    if (
+      isNearTop &&
+      !isLoadingHistory &&
+      hasMoreHistory &&
+      !isLoadingRef.current
+    ) {
+      isLoadingRef.current = true;
+      previousScrollHeight.current = container.scrollHeight;
+      loadMessageHistory().finally(() => {
+        isLoadingRef.current = false;
+        if (scrollContainerRef.current) {
+          const newScrollHeight = scrollContainerRef.current.scrollHeight;
+          const scrollDiff = newScrollHeight - previousScrollHeight.current;
+          scrollContainerRef.current.scrollTop += scrollDiff;
+        }
+      });
+    }
+  }, [isLoadingHistory, hasMoreHistory, loadMessageHistory]);
+
+  // Animated placeholder effect
+  useEffect(() => {
+    const currentText = placeholderTexts[currentPlaceholderIndex];
+    const timeout = setTimeout(
+      () => {
+        if (!isDeleting) {
+          const nextLength = animatedPlaceholder.length + 1;
+          if (nextLength <= currentText.length) {
+            setAnimatedPlaceholder(currentText.substring(0, nextLength));
+          } else {
+            setTimeout(() => setIsDeleting(true), 1500);
+          }
+        } else {
+          const nextLength = animatedPlaceholder.length - 1;
+          if (nextLength >= 0) {
+            setAnimatedPlaceholder(currentText.substring(0, nextLength));
+          } else {
+            setIsDeleting(false);
+            setCurrentPlaceholderIndex(
+              (prev) => (prev + 1) % placeholderTexts.length
+            );
+          }
+        }
+      },
+      isDeleting ? 30 : 50
+    );
+
+    return () => clearTimeout(timeout);
+  }, [
+    animatedPlaceholder,
+    currentPlaceholderIndex,
+    isDeleting,
+    placeholderTexts,
+  ]);
+
+  // Scroll when messages change
+  useEffect(() => {
+    scrollToBottom(true);
+  }, [messages, scrollToBottom]);
+
+  // Load initial history
+  useEffect(() => {
+    loadMessageHistory(1);
+  }, []);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current();
+      }
+      if (recognitionRef.current && isRecording) {
+        recognitionRef.current.stop();
+      }
+    };
+  }, [isRecording]);
+
+  // File upload handling
+  const handleFileSelect = async (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+
+    const maxFiles = 5;
+    const maxTotalSize = 200 * 1024 * 1024;
+
+    if (uploadedFiles.length + files.length > maxFiles) {
+      toast.error(`Tối đa ${maxFiles} tệp`, {
+        position: "top-right",
+        autoClose: 3000,
+      });
+      return;
+    }
+
+    const totalSize = Array.from(files).reduce((sum, f) => sum + f.size, 0);
+    if (totalSize > maxTotalSize) {
+      toast.error("Tổng kích thước tệp phải nhỏ hơn 200MB", {
+        position: "top-right",
+        autoClose: 3000,
+      });
+      return;
+    }
+
+    for (const file of Array.from(files)) {
+      const isImage = file.type.startsWith("image/");
+      const preview = isImage ? URL.createObjectURL(file) : undefined;
+
+      addUploadedFile({ file, preview, uploading: true });
+
+      try {
+        const response = await chatApi.uploadFile(file);
+        const fileIndex = uploadedFiles.length;
+
+        updateUploadedFile(fileIndex, {
+          uploading: false,
+          metadata: {
+            file_id: response.info.file_id,
+            file_name: response.info.file_name,
+            file_type: response.info.file_type,
+            file_size: response.info.file_size,
+            storage_url: response.info.storage_url,
+            provider_name: response.info.provider_name,
+            markdown_content: response.info.markdown_content,
+          },
+        });
+
+        toast.success(`${file.name} đã tải lên`, {
+          position: "top-right",
+          autoClose: 2000,
+        });
+      } catch (error: any) {
+        const fileIndex = uploadedFiles.length;
+        updateUploadedFile(fileIndex, {
+          uploading: false,
+          error: error.message || "Tải lên thất bại",
+        });
+
+        toast.error(error.message || "Tải lên thất bại", {
+          position: "top-right",
+          autoClose: 3000,
+        });
+      }
+    }
   };
 
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages, isBotTyping]);
+  // Send message
+  const handleSendMessage = async () => {
+    const trimmedMessage = inputValue.trim();
+    if (!trimmedMessage || isStreaming) return;
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (inputValue.trim()) {
-      onSendMessage(inputValue.trim());
+    const fileMetadata = uploadedFiles
+      .filter((f) => f.metadata)
+      .map((f) => f.metadata!);
+
+    try {
+      const abortFn = await sendStreamMessage(trimmedMessage, fileMetadata);
+      abortControllerRef.current = abortFn;
+
       setInputValue("");
+      clearUploadedFiles();
+      if (textareaRef.current) {
+        textareaRef.current.style.height = "auto";
+      }
+    } catch (error: any) {
+      toast.error(error.message || "Gửi tin nhắn thất bại", {
+        position: "top-right",
+        autoClose: 3000,
+      });
     }
+  };
+
+  // Textarea auto-resize
+  const handleTextareaChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setInputValue(e.target.value);
+    e.target.style.height = "auto";
+    e.target.style.height = Math.min(e.target.scrollHeight, 120) + "px";
+  };
+
+  // Handle Enter key
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleSendMessage();
+    }
+  };
+
+  // Voice recording
+  const initSpeechRecognition = () => {
+    if (
+      !("webkitSpeechRecognition" in window) &&
+      !("SpeechRecognition" in window)
+    ) {
+      toast.error("Trình duyệt không hỗ trợ nhận dạng giọng nói", {
+        position: "top-right",
+        autoClose: 3000,
+      });
+      return null;
+    }
+
+    const SpeechRecognition =
+      (window as any).SpeechRecognition ||
+      (window as any).webkitSpeechRecognition;
+    const recognition = new SpeechRecognition();
+    recognition.continuous = true;
+    recognition.interimResults = true;
+    recognition.lang = "vi-VN";
+
+    recognition.onresult = (event: any) => {
+      let interimText = "";
+      let finalText = "";
+
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        const transcript = event.results[i][0].transcript;
+        if (event.results[i].isFinal) {
+          finalText += transcript + " ";
+        } else {
+          interimText += transcript;
+        }
+      }
+
+      if (finalText) {
+        setInputValue((prev) => prev + finalText);
+        setInterimTranscript("");
+      } else {
+        setInterimTranscript(interimText);
+      }
+    };
+
+    recognition.onerror = () => {
+      setIsRecording(false);
+    };
+
+    recognition.onend = () => {
+      setIsRecording(false);
+    };
+
+    return recognition;
+  };
+
+  // Delete all messages handler
+  const handleDeleteAllMessages = async () => {
+    setIsDeletingMessages(true);
+    try {
+      const result = await chatApi.deleteAllMessages();
+      if (result.success) {
+        clearMessages();
+        toast.success(`Đã xóa ${result.deleted_count} tin nhắn`, {
+          position: "top-right",
+          autoClose: 2000,
+        });
+      }
+    } catch (error: any) {
+      toast.error(error.message || "Không thể xóa tin nhắn", {
+        position: "top-right",
+        autoClose: 3000,
+      });
+    } finally {
+      setIsDeletingMessages(false);
+      setDeleteDialogOpen(false);
+    }
+  };
+
+  const toggleVoiceRecording = () => {
+    if (isRecording) {
+      recognitionRef.current?.stop();
+      setIsRecording(false);
+    } else {
+      if (!recognitionRef.current) {
+        recognitionRef.current = initSpeechRecognition();
+      }
+      if (recognitionRef.current) {
+        recognitionRef.current.start();
+        setIsRecording(true);
+      }
+    }
+  };
+
+  // Drag and drop
+  const handleDragEnter = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.currentTarget === e.target) {
+      setIsDragging(false);
+    }
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+
+    const files = e.dataTransfer.files;
+    handleFileSelect(files);
   };
 
   const formatPrice = (price: number) => {
@@ -145,123 +475,648 @@ const Chatbot: React.FC<ChatbotProps> = ({
   };
 
   return (
-    <div
-      id="chatbot-panel"
-      className="md:w-1/5 h-full bg-white dark:bg-slate-800 border-r border-gray-200 dark:border-slate-700 flex flex-col shadow-lg flex-shrink-0"
-    >
-      <div className="p-4 border-b border-slate-700 flex items-center space-x-3 bg-gradient-to-br from-slate-900 to-slate-700 text-white">
-        <div className="relative">
-          <img
-            src="https://picsum.photos/seed/avatar/40/40"
-            alt="Chatbot Avatar"
-            className="w-10 h-10 rounded-full border-2 border-white"
-          />
-          <span className="absolute bottom-0 right-0 block h-2.5 w-2.5 rounded-full bg-green-400 ring-2 ring-white dark:ring-slate-800"></span>
-        </div>
-        <div>
-          <h2 className="text-lg font-semibold">AgentFashion AI</h2>
-          <p className="text-sm text-slate-300">Online</p>
-        </div>
-      </div>
-      <div className="flex-grow p-4 overflow-y-auto space-y-4">
-        {messages.map((msg) => (
-          <div
-            key={msg.id}
-            className={`flex items-end gap-2 ${
-              msg.sender === MessageSender.USER
-                ? "justify-end"
-                : "justify-start"
-            }`}
-          >
-            {msg.sender === MessageSender.BOT && (
-              <img
-                src="https://picsum.photos/seed/avatar/32/32"
-                alt="Bot Avatar"
-                className="w-8 h-8 rounded-full self-start flex-shrink-0"
-              />
-            )}
-            <div
-              className={`flex flex-col items-start ${
-                msg.sender === MessageSender.USER ? "items-end" : ""
-              }`}
-            >
+    <>
+      <ToastContainer />
+      <div
+        id="chatbot-panel"
+        className={`${
+          isExpanded
+            ? "fixed inset-0 z-50 w-full h-full"
+            : "w-[30%] h-full flex-shrink-0"
+        } flex flex-col shadow-2xl transition-all duration-300`}
+        style={{
+          backgroundColor: "#1A2A4E",
+          borderRight: "1px solid rgba(200, 155, 109, 0.2)",
+        }}
+        onDragEnter={handleDragEnter}
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
+      >
+        {/* Header */}
+        <div
+          className="p-4 flex items-center justify-between text-white shadow-md"
+          style={{ borderBottom: "1px solid rgba(200, 155, 109, 0.3)" }}
+        >
+          <div className="flex items-center space-x-3">
+            <div className="relative">
               <div
-                className={`
-                max-w-xs md:max-w-md rounded-2xl px-4 py-2 
-                ${
-                  msg.sender === MessageSender.USER
-                    ? "bg-slate-600 text-white rounded-br-none"
-                    : `bg-gray-200 text-gray-800 rounded-bl-none dark:bg-slate-700 dark:text-gray-200 border-l-4 ${
-                        getAgentDetails(msg.agent).borderColor
-                      }`
-                }
-              `}
+                className="w-10 h-10 rounded-full flex items-center justify-center shadow-lg"
+                style={{
+                  backgroundColor: "#C89B6D",
+                  border: "2px solid rgba(255, 255, 255, 0.3)",
+                }}
               >
-                {msg.sender === MessageSender.BOT && msg.agent && (
-                  <span
-                    className={`px-2 py-0.5 text-xs rounded-full text-white mb-2 inline-block ${
-                      getAgentDetails(msg.agent).badgeColor
-                    }`}
-                  >
-                    {msg.agent}
-                  </span>
-                )}
-                <p className="text-sm">{msg.content}</p>
-                {msg.suggestedProducts && (
-                  <div className="mt-2 grid grid-cols-1 gap-2">
-                    {msg.suggestedProducts.map((p) => (
-                      <div
-                        key={p.id}
-                        onClick={() => onProductClick(p)}
-                        className="flex items-center gap-2 p-2 bg-white dark:bg-slate-800 rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-slate-600"
-                      >
-                        <img
-                          src={p.imageUrls[0]}
-                          alt={p.name}
-                          className="w-12 h-12 object-cover rounded-md"
-                        />
-                        <div>
-                          <p className="text-xs font-semibold dark:text-gray-200">
-                            {p.name}
-                          </p>
-                          <p className="text-xs text-slate-600 dark:text-slate-400 font-bold">
-                            {formatPrice(p.basePrice)}
-                          </p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
+                <span className="text-2xl">🤖</span>
+              </div>
+              <span className="absolute bottom-0 right-0 block h-3 w-3 rounded-full bg-lime-400 ring-2 ring-white"></span>
+            </div>
+            <div>
+              <h2
+                className="text-lg font-bold"
+                style={{
+                  fontFamily: "Montserrat, sans-serif",
+                  color: "#C89B6D",
+                }}
+              >
+                AgentFashion AI
+              </h2>
+              <p
+                className="text-xs"
+                style={{ color: "rgba(255, 255, 255, 0.7)" }}
+              >
+                Smart Fashion Assistant
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setDeleteDialogOpen(true)}
+              className="p-2 hover:bg-white/20 rounded-lg transition-colors"
+              title="Xóa tất cả tin nhắn"
+            >
+              <Trash2 className="h-5 w-5" />
+            </button>
+            <button
+              onClick={() => setIsExpanded(!isExpanded)}
+              className="p-2 hover:bg-white/20 rounded-lg transition-colors"
+              title={isExpanded ? "Thu nhỏ" : "Mở rộng"}
+            >
+              {isExpanded ? (
+                <X className="h-6 w-6" />
+              ) : (
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-6 w-6"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"
+                  />
+                </svg>
+              )}
+            </button>
+          </div>
+        </div>
+
+        {/* Messages Area */}
+        <div
+          ref={scrollContainerRef}
+          className="flex-1 overflow-y-auto p-4 space-y-4"
+          onScroll={handleScroll}
+        >
+          {isLoadingHistory && (
+            <div className="flex justify-center py-4">
+              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-orange-600"></div>
+            </div>
+          )}
+
+          {messages.length === 0 && !isLoadingHistory ? (
+            <div className="text-center py-20">
+              <div className="text-6xl mb-4">👋</div>
+              <h3
+                className="text-xl font-bold mb-2"
+                style={{
+                  fontFamily: "Montserrat, sans-serif",
+                  color: "#C89B6D",
+                }}
+              >
+                Chào mừng bạn!
+              </h3>
+              <p className="text-sm" style={{ color: "#FFFFFF" }}>
+                Tôi có thể giúp bạn tìm kiếm và tư vấn sản phẩm
+              </p>
+            </div>
+          ) : (
+            messages.map((msg) => (
+              <MessageBubble
+                key={msg.id}
+                message={msg}
+                onProductClick={(product) => {
+                  const productType: ProductType = {
+                    ...product,
+                    id: product.id,
+                    product_id: product.id,
+                    name: product.name,
+                    price: product.base_price,
+                    base_price: product.base_price,
+                    imageUrls: product.image_urls,
+                    image_urls: product.image_urls,
+                    description: product.description,
+                    reviewCount: product.review_count,
+                    review_count: product.review_count,
+                    averageRating: product.average_rating,
+                    average_rating: product.average_rating,
+                  } as ProductType;
+                  setSelectedProduct(productType);
+                }}
+                formatPrice={formatPrice}
+              />
+            ))
+          )}
+
+          {isStreaming && (
+            <div className="flex items-center gap-2">
+              <div
+                className="w-8 h-8 rounded-full flex items-center justify-center shadow-md"
+                style={{ backgroundColor: "#C89B6D" }}
+              >
+                <span className="text-white text-sm font-bold">AI</span>
+              </div>
+              <div
+                className="rounded-2xl px-4 py-3 shadow-md"
+                style={{ backgroundColor: "rgba(200, 155, 109, 0.15)" }}
+              >
+                <div className="flex gap-1">
+                  <div className="w-2 h-2 bg-orange-600 rounded-full animate-bounce"></div>
+                  <div
+                    className="w-2 h-2 bg-orange-600 rounded-full animate-bounce"
+                    style={{ animationDelay: "0.2s" }}
+                  ></div>
+                  <div
+                    className="w-2 h-2 bg-orange-600 rounded-full animate-bounce"
+                    style={{ animationDelay: "0.4s" }}
+                  ></div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          <div ref={messagesEndRef} />
+        </div>
+
+        {/* Scroll to bottom button */}
+        {showScrollButton && (
+          <button
+            onClick={() => scrollToBottom(true)}
+            className={`absolute ${
+              isExpanded ? "bottom-32 right-8" : "bottom-32 right-6"
+            } bg-orange-600 hover:bg-orange-700 text-white rounded-full p-3 shadow-lg transition-all duration-300`}
+            title="Cuộn xuống cuối"
+          >
+            <ArrowDown className="h-5 w-5" />
+          </button>
+        )}
+
+        {/* File Upload Preview */}
+        {uploadedFiles.length > 0 && (
+          <div className="px-4 pb-2">
+            <div className="bg-amber-100 dark:bg-orange-900 rounded-lg p-3 shadow-md border border-orange-300 dark:border-orange-700">
+              <div className="flex gap-2 overflow-x-auto">
+                {uploadedFiles.map((f, idx) => (
+                  <FilePreview
+                    key={idx}
+                    file={f}
+                    onRemove={() => removeUploadedFile(idx)}
+                    onPreview={() => {
+                      if (f.preview) {
+                        setPreviewImageData(f.preview);
+                        setImagePreviewDialog(true);
+                      }
+                    }}
+                  />
+                ))}
               </div>
             </div>
           </div>
-        ))}
-        {isBotTyping && <AgentTypingIndicator activeAgent={activeAgent} />}
-        <div ref={messagesEndRef} />
-      </div>
-      <div className="p-4 border-t border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800">
-        <form onSubmit={handleSubmit} className="flex items-center space-x-2">
-          <input
-            type="text"
-            value={inputValue}
-            onChange={(e) => setInputValue(e.target.value)}
-            placeholder="Bạn cần tìm gì?"
-            className="w-full px-4 py-2 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-slate-500 dark:bg-slate-700 dark:border-slate-600 dark:text-white dark:placeholder-gray-400"
-          />
-          <button
-            type="submit"
-            className="bg-slate-600 text-white p-2 rounded-full hover:bg-slate-700 dark:hover:bg-slate-500 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-500"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-6 w-6"
-              viewBox="0 0 20 20"
-              fill="currentColor"
+        )}
+
+        {/* Input Area */}
+        <div
+          className="p-3 shadow-lg rounded-2xl m-2"
+          style={{ backgroundColor: "#FFFFFF" }}
+        >
+          <div className="flex items-end gap-2">
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              className="p-2 rounded-lg transition-colors hover:opacity-80"
+              style={{ color: "#C89B6D" }}
+              title="Đính kèm tệp"
             >
-              <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" />
-            </svg>
-          </button>
-        </form>
+              <Paperclip className="h-5 w-5" />
+            </button>
+
+            <textarea
+              ref={textareaRef}
+              value={
+                isRecording && interimTranscript
+                  ? interimTranscript
+                  : inputValue
+              }
+              onChange={handleTextareaChange}
+              onKeyDown={handleKeyDown}
+              placeholder={
+                isRecording && interimTranscript
+                  ? interimTranscript
+                  : animatedPlaceholder
+              }
+              className="flex-1 resize-none rounded-lg px-4 py-2 focus:outline-none focus:ring-2 max-h-32"
+              style={{
+                backgroundColor: "#F4F6F8",
+                color: "#333333",
+                borderColor: "#E9ECEF",
+                border: "1px solid #E9ECEF",
+              }}
+              rows={1}
+            />
+
+            <button
+              onClick={toggleVoiceRecording}
+              className={`p-2 rounded-lg transition-colors ${
+                isRecording
+                  ? "bg-red-600 text-white hover:bg-red-700"
+                  : "hover:opacity-80"
+              }`}
+              style={!isRecording ? { color: "#C89B6D" } : {}}
+              title={isRecording ? "Dừng ghi âm" : "Ghi âm"}
+            >
+              {isRecording ? (
+                <MicOff className="h-5 w-5" />
+              ) : (
+                <Mic className="h-5 w-5" />
+              )}
+            </button>
+
+            <button
+              onClick={handleSendMessage}
+              disabled={!inputValue.trim() || isStreaming}
+              className="text-white p-2 rounded-full disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-md hover:opacity-90"
+              style={{ backgroundColor: "#C89B6D" }}
+              title="Gửi tin nhắn"
+            >
+              <Send className="h-5 w-5" />
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Drag Drop Overlay */}
+      {isDragging && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 backdrop-blur-sm">
+          <div className="bg-amber-50 dark:bg-orange-950 rounded-xl p-10 shadow-2xl border-2 border-dashed border-orange-500">
+            <Paperclip
+              size={64}
+              className="mx-auto mb-4 text-orange-600 animate-bounce"
+            />
+            <p className="text-2xl font-bold text-orange-900 dark:text-amber-100 mb-2">
+              Thả tệp vào đây
+            </p>
+            <p className="text-sm text-orange-700 dark:text-orange-300">
+              Hỗ trợ PDF, DOCX, XLSX và ảnh (tối đa 5 tệp, 200MB)
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Hidden File Input */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        multiple
+        accept=".pdf,.docx,.xlsx,.jpg,.jpeg,.png,.gif,.bmp,.webp,.tiff"
+        onChange={(e) => handleFileSelect(e.target.files)}
+        className="hidden"
+      />
+
+      {/* Image Preview Dialog */}
+      {imagePreviewDialog && previewImageData && (
+        <div
+          className="fixed inset-0 bg-black/70 flex items-center justify-center z-50"
+          onClick={() => setImagePreviewDialog(false)}
+        >
+          <div className="max-w-4xl max-h-[90vh] p-4">
+            <img
+              src={previewImageData}
+              alt="Preview"
+              className="rounded-lg shadow-2xl"
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Product Detail Modal */}
+      {selectedProduct && (
+        <ProductDetailModal
+          product={selectedProduct}
+          relatedProducts={[]}
+          onClose={() => setSelectedProduct(null)}
+          onAddToCart={async (product, variant, quantity) => {
+            if (!user?.user_id) {
+              toast.error("Vui lòng đăng nhập để thêm vào giỏ hàng", {
+                position: "top-right",
+                autoClose: 2000,
+              });
+              return;
+            }
+
+            await addToCart(user.user_id, variant.variant_id, quantity);
+          }}
+          onProductClick={(product) =>
+            setSelectedProduct(product as ProductType)
+          }
+          onToggleWishlist={() => {}}
+          isWishlisted={false}
+          wishlist={[]}
+        />
+      )}
+
+      {/* Delete Messages Confirmation Dialog */}
+      <Dialog.Root
+        open={deleteDialogOpen}
+        onOpenChange={(e) => {
+          setDeleteDialogOpen(e.open);
+        }}
+      >
+        <Portal>
+          <Dialog.Backdrop className="!bg-black/50" />
+          <Dialog.Positioner className="flex items-center justify-center">
+            <Dialog.Content className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-md w-full mx-4">
+              <Dialog.Header className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+                <Dialog.Title className="text-2xl font-bold text-red-600">
+                  Xác nhận xóa tin nhắn
+                </Dialog.Title>
+              </Dialog.Header>
+
+              <Dialog.Body className="px-6 py-6">
+                <Text>
+                  Bạn có chắc chắn muốn xóa{" "}
+                  <span className="font-bold">tất cả tin nhắn</span> không?
+                </Text>
+                <Text color="red.500" fontSize="sm" mt={2}>
+                  Hành động này không thể hoàn tác!
+                </Text>
+              </Dialog.Body>
+
+              <Dialog.Footer className="px-6 py-4 border-t border-gray-200 dark:border-gray-700">
+                <Flex justify="flex-end" gap={3}>
+                  <Dialog.CloseTrigger asChild>
+                    <Button
+                      variant="outline"
+                      onClick={() => setDeleteDialogOpen(false)}
+                      className="border-2 border-gray-200 hover:border-gray-300 rounded-lg px-4 py-2"
+                    >
+                      Hủy
+                    </Button>
+                  </Dialog.CloseTrigger>
+                  <Button
+                    className="bg-red-500 hover:bg-red-600 text-white rounded-lg px-4 py-2"
+                    onClick={handleDeleteAllMessages}
+                    loading={isDeletingMessages}
+                    disabled={isDeletingMessages}
+                  >
+                    Xóa tất cả
+                  </Button>
+                </Flex>
+              </Dialog.Footer>
+            </Dialog.Content>
+          </Dialog.Positioner>
+        </Portal>
+      </Dialog.Root>
+    </>
+  );
+};
+
+// Message Bubble Component
+const MessageBubble: React.FC<{
+  message: any;
+  onProductClick?: (product: ArtifactProduct) => void;
+  formatPrice: (price: number) => string;
+}> = ({ message, onProductClick, formatPrice }) => {
+  const isUser = message.role === "user";
+  const [currentPage, setCurrentPage] = useState(1);
+  const PRODUCTS_PER_PAGE = 6;
+
+  // Extract products from artifacts
+  const products = React.useMemo(() => {
+    if (!message.artifacts) return undefined;
+
+    let rawProducts: ArtifactProduct[] | undefined;
+
+    if (Array.isArray(message.artifacts)) {
+      const productArtifact = message.artifacts.find(
+        (artifact: any) => artifact.type === "product_search_results"
+      );
+      rawProducts = productArtifact?.data as ArtifactProduct[] | undefined;
+    } else if (
+      message.artifacts.type === "product_search_results" &&
+      message.artifacts.data
+    ) {
+      rawProducts = message.artifacts.data as ArtifactProduct[] | undefined;
+    }
+
+    if (rawProducts && Array.isArray(rawProducts)) {
+      const uniqueProducts = rawProducts.filter(
+        (product, index, self) =>
+          index === self.findIndex((p) => p.id === product.id)
+      );
+      return uniqueProducts;
+    }
+
+    return rawProducts;
+  }, [message.artifacts]);
+
+  const totalPages = products
+    ? Math.ceil(products.length / PRODUCTS_PER_PAGE)
+    : 0;
+  const startIndex = (currentPage - 1) * PRODUCTS_PER_PAGE;
+  const endIndex = startIndex + PRODUCTS_PER_PAGE;
+  const currentProducts = products?.slice(startIndex, endIndex);
+
+  React.useEffect(() => {
+    setCurrentPage(1);
+  }, [products]);
+
+  return (
+    <div className={`flex ${isUser ? "justify-end" : "justify-start"} group`}>
+      <div
+        className={`flex flex-col ${
+          isUser ? "items-end" : "items-start"
+        } max-w-[80%]`}
+      >
+        {!isUser && (
+          <div
+            className="w-8 h-8 ml-3 rounded-full flex items-center justify-center flex-shrink-0 shadow-md"
+            style={{
+              backgroundColor: "#C89B6D",
+              border: "2px solid rgba(255, 255, 255, 0.3)",
+            }}
+          >
+            <span className="text-white text-sm font-bold">AI</span>
+          </div>
+        )}
+        {/* Message Card */}
+        <div
+          className={`rounded-2xl px-4 py-3 ${
+            isUser ? "text-white rounded-br-none shadow-md" : "rounded-bl-none"
+          }`}
+          style={isUser ? { backgroundColor: "#C89B6D" } : {}}
+        >
+          {/* File Attachments */}
+          {message.attachments && message.attachments.length > 0 && (
+            <div className="flex flex-wrap gap-2 mb-3">
+              {message.attachments.map((att: any, idx: number) => (
+                <span
+                  key={idx}
+                  className="inline-flex items-center gap-1 bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 px-2 py-1 rounded-full text-xs font-medium"
+                >
+                  <FileText size={12} />
+                  {att.file_name}
+                </span>
+              ))}
+            </div>
+          )}
+
+          {/* Message Content */}
+          <div
+            className="markdown-content text-sm"
+            style={{ color: isUser ? "#FFFFFF" : "#FFFFFF" }}
+            dangerouslySetInnerHTML={{
+              __html: renderMarkdown(message.content),
+            }}
+          />
+
+          {/* Timestamp */}
+          <p
+            className={`text-xs mt-2`}
+            style={{ color: isUser ? "rgba(255, 255, 255, 0.8)" : "#C89B6D" }}
+          >
+            {new Date(message.timestamp).toLocaleTimeString("vi-VN")}
+          </p>
+        </div>
+
+        {/* Product Artifacts Grid */}
+        {products && products.length > 0 && (
+          <div className="w-full mt-2">
+            <div className="flex justify-between items-center mb-2">
+              <span
+                className="text-xs font-semibold"
+                style={{ color: "#C89B6D" }}
+              >
+                Sản phẩm tìm được ({products.length})
+              </span>
+              {totalPages > 1 && (
+                <span className="text-xs" style={{ color: "#FFFFFF" }}>
+                  Trang {currentPage}/{totalPages}
+                </span>
+              )}
+            </div>
+
+            <div className="relative">
+              {totalPages > 1 && currentPage > 1 && (
+                <button
+                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                  className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-3 z-10 bg-orange-600 text-white rounded-full p-1 shadow-lg hover:bg-orange-700"
+                >
+                  <ChevronLeft size={16} />
+                </button>
+              )}
+
+              <div className="grid grid-cols-3 md:grid-cols-2 gap-3 md:gap-4">
+                {currentProducts?.map((product) => (
+                  <div
+                    key={product.id}
+                    onClick={() => onProductClick?.(product)}
+                    className="bg-white dark:bg-orange-950 rounded-lg p-3 cursor-pointer hover:shadow-lg transition-all border border-orange-300 dark:border-orange-700 group w-full"
+                  >
+                    <img
+                      src={product.image_urls[0]}
+                      alt={product.name}
+                      className="w-full aspect-square object-cover rounded-md mb-2"
+                    />
+                    <h4 className="text-sm font-semibold text-orange-900 dark:text-amber-100 line-clamp-2 mb-2 min-h-[2.5rem]">
+                      {product.name}
+                    </h4>
+                    <div className="flex items-center justify-between">
+                      <p className="text-sm font-bold text-orange-700 dark:text-orange-400">
+                        {formatPrice(product.base_price)}
+                      </p>
+                      <div className="flex items-center gap-1">
+                        <Star
+                          size={12}
+                          className="fill-yellow-400 text-yellow-400"
+                        />
+                        <span className="text-xs text-orange-600 dark:text-orange-400">
+                          {product.average_rating.toFixed(1)}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {totalPages > 1 && currentPage < totalPages && (
+                <button
+                  onClick={() =>
+                    setCurrentPage((p) => Math.min(totalPages, p + 1))
+                  }
+                  className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-3 z-10 bg-orange-600 text-white rounded-full p-1 shadow-lg hover:bg-orange-700"
+                >
+                  <ChevronRight size={16} />
+                </button>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+// File Preview Component
+const FilePreview: React.FC<{
+  file: UploadedFileDisplay;
+  onRemove: () => void;
+  onPreview: () => void;
+}> = ({ file, onRemove, onPreview }) => {
+  const isImage = file.file.type.startsWith("image/");
+
+  return (
+    <div className="relative inline-block border border-orange-300 dark:border-orange-700 rounded-lg p-2 bg-amber-50 dark:bg-orange-950">
+      <div className="flex items-center gap-2">
+        {isImage && file.preview ? (
+          <img
+            src={file.preview}
+            alt={file.file.name}
+            className="w-12 h-12 object-cover rounded cursor-pointer hover:opacity-80"
+            onClick={onPreview}
+          />
+        ) : (
+          <div className="w-12 h-12 flex items-center justify-center bg-amber-100 dark:bg-orange-900 rounded">
+            <FileText
+              size={24}
+              className="text-orange-600 dark:text-orange-400"
+            />
+          </div>
+        )}
+        <div className="flex-1 min-w-0">
+          <p className="text-xs font-medium text-orange-900 dark:text-amber-100 truncate max-w-[100px]">
+            {file.file.name}
+          </p>
+          <p className="text-xs text-orange-600 dark:text-orange-400">
+            {(file.file.size / 1024).toFixed(2)} KB
+          </p>
+          {file.uploading && (
+            <div className="w-full h-1 bg-orange-200 dark:bg-orange-800 rounded-full mt-1 overflow-hidden">
+              <div className="h-full bg-orange-600 animate-pulse"></div>
+            </div>
+          )}
+          {file.error && (
+            <p className="text-xs text-red-500 dark:text-red-400 mt-1">
+              {file.error}
+            </p>
+          )}
+        </div>
+        <button
+          onClick={onRemove}
+          className="text-orange-600 hover:text-red-600 transition-colors"
+        >
+          <X size={16} />
+        </button>
       </div>
     </div>
   );

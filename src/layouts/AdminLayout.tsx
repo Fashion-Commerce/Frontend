@@ -38,6 +38,12 @@ const AdminLayout: React.FC = () => {
               Danh mục
             </button>
             <button
+              onClick={() => navigate("/admin/resources")}
+              className="flex items-center w-full px-4 py-3 text-left rounded-md hover:bg-slate-700"
+            >
+              Kho tri thức
+            </button>
+            <button
               onClick={() => navigate("/admin/chat-logs")}
               className="flex items-center w-full px-4 py-3 text-left rounded-md hover:bg-slate-700"
             >

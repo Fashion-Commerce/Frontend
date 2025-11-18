@@ -4,6 +4,7 @@ import type { Product, ChatMessage } from "../../types/index";
 import {
   DashboardIcon,
   ProductsIcon,
+  ResourcesIcon,
   ChatIcon,
   LogoutIcon,
   SettingsIcon,
@@ -14,8 +15,15 @@ import ProductManagement from "./ProductManagement";
 import ChatLogs from "./ChatLogs";
 import AgentManagement from "./AgentManagement";
 import Analytics from "./Analytics";
+import ResourceManagement from "./ResourceManagement";
 
-type AdminView = "dashboard" | "products" | "chat" | "agents" | "analytics";
+type AdminView =
+  | "dashboard"
+  | "products"
+  | "resources"
+  | "chat"
+  | "agents"
+  | "analytics";
 
 interface AdminDashboardProps {
   onExitAdmin: () => void;
@@ -32,7 +40,11 @@ const NavItem: React.FC<{
 }> = ({ icon, label, isActive, onClick }) => (
   <button
     onClick={onClick}
-    className={`flex items-center w-full px-4 py-3 text-left transition-colors duration-200 rounded-md ${isActive ? "bg-slate-700 text-white" : "text-gray-400 hover:bg-slate-700 hover:text-white"}`}
+    className={`flex items-center w-full px-4 py-3 text-left transition-colors duration-200 rounded-md ${
+      isActive
+        ? "bg-slate-700 text-white"
+        : "text-gray-400 hover:bg-slate-700 hover:text-white"
+    }`}
   >
     {icon}
     <span className="mx-4 font-medium">{label}</span>
@@ -55,6 +67,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
         return (
           <ProductManagement products={products} setProducts={setProducts} />
         );
+      case "resources":
+        return <ResourceManagement />;
       case "chat":
         return <ChatLogs messages={chatMessages} />;
       case "agents":
@@ -85,6 +99,12 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
               icon={<ProductsIcon className="w-6 h-6" />}
               isActive={currentView === "products"}
               onClick={() => setCurrentView("products")}
+            />
+            <NavItem
+              label="Tài nguyên"
+              icon={<ResourcesIcon className="w-6 h-6" />}
+              isActive={currentView === "resources"}
+              onClick={() => setCurrentView("resources")}
             />
             <NavItem
               label="Lịch sử Chat"

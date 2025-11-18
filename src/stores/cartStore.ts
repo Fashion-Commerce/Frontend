@@ -7,11 +7,20 @@ interface CartState {
   items: CartItem[];
   totalCount: number;
   totalAmount: number;
+  currentPage: number;
+  totalPages: number;
+  hasNext: boolean;
+  hasPrevious: boolean;
   isLoading: boolean;
   error: string | null;
+  successMessage: string | null;
 
   // Actions
-  fetchCart: () => Promise<void>;
+  fetchCart: (
+    page?: number,
+    sortBy?: "created_at" | "updated_at" | "quantity",
+    sortOrder?: "asc" | "desc"
+  ) => Promise<void>;
   addToCart: (
     userId: string,
     productVariantId: string,
@@ -31,17 +40,36 @@ export const useCartStore = create<CartState>()(
       items: [],
       totalCount: 0,
       totalAmount: 0,
+      currentPage: 1,
+      totalPages: 1,
+      hasNext: false,
+      hasPrevious: false,
       isLoading: false,
       error: null,
+      successMessage: null,
 
-      fetchCart: async () => {
+      fetchCart: async (
+        page = 1,
+        sortBy?: "created_at" | "updated_at" | "quantity",
+        sortOrder?: "asc" | "desc"
+      ) => {
         set({ isLoading: true, error: null });
         try {
-          const response = await cartApi.getCartItems();
+          const response = await cartApi.getCartItems({
+            page,
+            page_size: 10,
+            sort_by: sortBy,
+            sort_order: sortOrder,
+          });
           set({
             items: response.info.cart_items,
             totalCount: response.info.total_count,
             totalAmount: response.info.total_amount,
+            currentPage: response.info.current_page,
+            totalPages: response.info.total_pages,
+            hasNext: response.info.has_next,
+            hasPrevious: response.info.has_previous,
+            successMessage: response.info.message,
             isLoading: false,
           });
         } catch (error: any) {
@@ -142,7 +170,17 @@ export const useCartStore = create<CartState>()(
       },
 
       clearCart: () => {
-        set({ items: [], totalCount: 0, totalAmount: 0, error: null });
+        set({
+          items: [],
+          totalCount: 0,
+          totalAmount: 0,
+          currentPage: 1,
+          totalPages: 1,
+          hasNext: false,
+          hasPrevious: false,
+          error: null,
+          successMessage: null,
+        });
       },
 
       getTotalPrice: () => {

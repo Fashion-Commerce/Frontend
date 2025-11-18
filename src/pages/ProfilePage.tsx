@@ -13,6 +13,7 @@ import {
 import { toast } from "react-toastify";
 import { useAuthStore } from "../stores/authStore";
 import { authApi, User } from "../api/auth.api";
+import AddressManagement from "../components/AddressManagement";
 
 const ProfilePage: React.FC = () => {
   const { user: authUser } = useAuthStore();
@@ -181,18 +182,30 @@ const ProfilePage: React.FC = () => {
       <div className="max-w-4xl mx-auto space-y-6">
         {/* Header */}
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+          <h1
+            className="text-3xl font-bold mb-2"
+            style={{ fontFamily: "Montserrat, sans-serif", color: "#1A2A4E" }}
+          >
             Tài khoản của tôi
           </h1>
-          <p className="text-gray-600 dark:text-gray-400">
+          <p style={{ color: "#666666" }}>
             Quản lý thông tin cá nhân và bảo mật
           </p>
         </div>
 
         {/* Thông tin cơ bản */}
-        <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-gray-200 dark:border-slate-700">
-          <div className="border-b border-gray-200 dark:border-slate-700 px-6 py-4">
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+        <div
+          className="bg-white rounded-xl shadow-sm"
+          style={{ border: "1px solid #E9ECEF" }}
+        >
+          <div
+            className="px-6 py-4"
+            style={{ borderBottom: "2px solid #C89B6D" }}
+          >
+            <h2
+              className="text-lg font-semibold"
+              style={{ fontFamily: "Montserrat, sans-serif", color: "#1A2A4E" }}
+            >
               Thông tin cá nhân
             </h2>
           </div>
@@ -200,30 +213,49 @@ const ProfilePage: React.FC = () => {
           <div className="p-6 space-y-5">
             {/* Họ tên - EDITABLE */}
             <div className="grid grid-cols-3 gap-4 items-start">
-              <label className="text-sm font-medium text-gray-700 dark:text-gray-300 pt-2">
+              <label
+                className="text-sm font-medium pt-2"
+                style={{ color: "#333333" }}
+              >
                 Họ và tên
               </label>
               <div className="col-span-2 relative">
                 <Input
                   value={fullname}
                   onChange={(e) => setFullname(e.target.value)}
-                  className="w-full border-2 border-blue-200 dark:border-blue-800 hover:border-blue-400 dark:hover:border-blue-600 focus:border-blue-500 dark:focus:border-blue-500 transition-colors px-4 py-2.5"
+                  className="w-full px-4 py-2.5"
                   size="md"
                   placeholder="Nhập họ và tên"
+                  style={{ borderColor: "#E9ECEF" }}
+                  _hover={{ borderColor: "#C89B6D" }}
+                  _focus={{
+                    borderColor: "#C89B6D",
+                    boxShadow: "0 0 0 1px #C89B6D",
+                  }}
                 />
               </div>
             </div>
 
             {/* Email - READ ONLY */}
             <div className="grid grid-cols-3 gap-4 items-start">
-              <label className="text-sm font-medium text-gray-700 dark:text-gray-300 pt-2">
+              <label
+                className="text-sm font-medium pt-2"
+                style={{ color: "#333333" }}
+              >
                 Email
               </label>
               <div className="col-span-2">
-                <div className="text-gray-900 dark:text-gray-100 py-2.5 px-4 bg-gray-50 dark:bg-slate-900 rounded-md border border-gray-200 dark:border-slate-700">
+                <div
+                  className="py-2.5 px-4 rounded-md"
+                  style={{
+                    backgroundColor: "#F4F6F8",
+                    border: "1px solid #E9ECEF",
+                    color: "#333333",
+                  }}
+                >
                   {userDetails?.email}
                 </div>
-                <p className="text-xs text-red-500 mt-1 italic">
+                <p className="text-xs mt-1 italic" style={{ color: "#C89B6D" }}>
                   Email không được phép thay đổi
                 </p>
               </div>
@@ -231,7 +263,10 @@ const ProfilePage: React.FC = () => {
 
             {/* Số điện thoại - EDITABLE */}
             <div className="grid grid-cols-3 gap-4 items-start">
-              <label className="text-sm font-medium text-gray-700 dark:text-gray-300 pt-2">
+              <label
+                className="text-sm font-medium pt-2"
+                style={{ color: "#333333" }}
+              >
                 Số điện thoại
               </label>
               <div className="col-span-2 relative">
@@ -239,26 +274,39 @@ const ProfilePage: React.FC = () => {
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
                   placeholder="Chưa cập nhật"
-                  className="w-full border-2 border-blue-200 dark:border-blue-800 hover:border-blue-400 dark:hover:border-blue-600 focus:border-blue-500 dark:focus:border-blue-500 transition-colors px-4 py-2.5"
+                  className="w-full px-4 py-2.5"
                   size="md"
+                  style={{ borderColor: "#E9ECEF" }}
+                  _hover={{ borderColor: "#C89B6D" }}
+                  _focus={{
+                    borderColor: "#C89B6D",
+                    boxShadow: "0 0 0 1px #C89B6D",
+                  }}
                 />
               </div>
             </div>
 
             {/* Loại tài khoản - READ ONLY */}
             <div className="grid grid-cols-3 gap-4 items-start">
-              <label className="text-sm font-medium text-gray-700 dark:text-gray-300 pt-2">
+              <label
+                className="text-sm font-medium pt-2"
+                style={{ color: "#333333" }}
+              >
                 Loại tài khoản
               </label>
               <div className="col-span-2 pt-2">
                 <Badge
-                  colorScheme={
-                    userDetails?.user_type === "admin" ? "red" : "blue"
-                  }
                   size="sm"
                   px={3}
                   py={1}
                   className="rounded-md"
+                  style={{
+                    backgroundColor:
+                      userDetails?.user_type === "admin"
+                        ? "#C89B6D"
+                        : "#1A2A4E",
+                    color: "white",
+                  }}
                 >
                   {userDetails?.user_type === "admin" ? "Admin" : "Khách hàng"}
                 </Badge>
@@ -267,7 +315,10 @@ const ProfilePage: React.FC = () => {
 
             {/* Trạng thái - READ ONLY with dynamic color */}
             <div className="grid grid-cols-3 gap-4 items-start">
-              <label className="text-sm font-medium text-gray-700 dark:text-gray-300 pt-2">
+              <label
+                className="text-sm font-medium pt-2"
+                style={{ color: "#333333" }}
+              >
                 Trạng thái
               </label>
               <div className="col-span-2 pt-2">
@@ -287,27 +338,36 @@ const ProfilePage: React.FC = () => {
 
             {/* Ngày tạo - READ ONLY */}
             <div className="grid grid-cols-3 gap-4 items-start">
-              <label className="text-sm font-medium text-gray-700 dark:text-gray-300 pt-2">
+              <label
+                className="text-sm font-medium pt-2"
+                style={{ color: "#333333" }}
+              >
                 Ngày tạo
               </label>
-              <div className="col-span-2 text-gray-900 dark:text-gray-100 py-2">
+              <div className="col-span-2 py-2" style={{ color: "#333333" }}>
                 {userDetails && formatDate(userDetails.created_at)}
               </div>
             </div>
 
             {/* Cập nhật - READ ONLY */}
             <div className="grid grid-cols-3 gap-4 items-start">
-              <label className="text-sm font-medium text-gray-700 dark:text-gray-300 pt-2">
+              <label
+                className="text-sm font-medium pt-2"
+                style={{ color: "#333333" }}
+              >
                 Cập nhật
               </label>
-              <div className="col-span-2 text-gray-900 dark:text-gray-100 py-2">
+              <div className="col-span-2 py-2" style={{ color: "#333333" }}>
                 {userDetails && formatDate(userDetails.updated_at)}
               </div>
             </div>
 
             {/* Save/Cancel buttons - only show when modified */}
             {isProfileModified && (
-              <div className="grid grid-cols-3 gap-4 items-start pt-4 border-t border-gray-200 dark:border-slate-700">
+              <div
+                className="grid grid-cols-3 gap-4 items-start pt-4"
+                style={{ borderTop: "1px solid #E9ECEF" }}
+              >
                 <div></div>
                 <div className="col-span-2">
                   <HStack gap={3}>
@@ -315,14 +375,21 @@ const ProfilePage: React.FC = () => {
                       onClick={handleProfileUpdate}
                       loading={isUpdatingProfile}
                       disabled={!fullname.trim() || isUpdatingProfile}
-                      className="bg-blue-600 hover:bg-blue-700 text-white font-medium px-6 py-2 rounded-lg border-2 border-blue-600 hover:border-blue-700 transition-all shadow-sm hover:shadow-md"
+                      className="text-white font-medium px-6 py-2 rounded-lg transition-all shadow-sm hover:shadow-md"
+                      style={{
+                        backgroundColor: "#C89B6D",
+                        fontFamily: "Montserrat, sans-serif",
+                      }}
+                      _hover={{ backgroundColor: "#B88A5D" }}
                     >
                       Lưu thay đổi
                     </Button>
                     <Button
                       onClick={handleCancelProfileEdit}
                       disabled={isUpdatingProfile}
-                      className="bg-white dark:bg-slate-700 text-gray-700 dark:text-gray-300 font-medium px-6 py-2 rounded-lg border-2 border-gray-300 dark:border-slate-600 hover:bg-gray-50 dark:hover:bg-slate-600 transition-all"
+                      className="bg-white font-medium px-6 py-2 rounded-lg transition-all"
+                      style={{ border: "1px solid #E9ECEF", color: "#333333" }}
+                      _hover={{ backgroundColor: "#F4F6F8" }}
                     >
                       Hủy
                     </Button>
@@ -334,9 +401,18 @@ const ProfilePage: React.FC = () => {
         </div>
 
         {/* Đổi mật khẩu */}
-        <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-gray-200 dark:border-slate-700">
-          <div className="border-b border-gray-200 dark:border-slate-700 px-6 py-4">
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+        <div
+          className="bg-white rounded-xl shadow-sm"
+          style={{ border: "1px solid #E9ECEF" }}
+        >
+          <div
+            className="px-6 py-4"
+            style={{ borderBottom: "2px solid #C89B6D" }}
+          >
+            <h2
+              className="text-lg font-semibold"
+              style={{ fontFamily: "Montserrat, sans-serif", color: "#1A2A4E" }}
+            >
               Đổi mật khẩu
             </h2>
           </div>
@@ -344,7 +420,10 @@ const ProfilePage: React.FC = () => {
           <div className="p-6 space-y-5">
             {/* Mật khẩu hiện tại */}
             <div className="grid grid-cols-3 gap-4 items-start">
-              <label className="text-sm font-medium text-gray-700 dark:text-gray-300 pt-2">
+              <label
+                className="text-sm font-medium pt-2"
+                style={{ color: "#333333" }}
+              >
                 Mật khẩu hiện tại
               </label>
               <div className="col-span-2 relative">
@@ -354,14 +433,23 @@ const ProfilePage: React.FC = () => {
                   onChange={(e) => setCurrentPassword(e.target.value)}
                   placeholder="Nhập mật khẩu hiện tại"
                   size="md"
-                  className="border-2 border-purple-200 dark:border-purple-800 hover:border-purple-400 dark:hover:border-purple-600 focus:border-purple-500 dark:focus:border-purple-500 transition-colors px-4 py-2.5"
+                  className="px-4 py-2.5"
+                  style={{ borderColor: "#E9ECEF" }}
+                  _hover={{ borderColor: "#C89B6D" }}
+                  _focus={{
+                    borderColor: "#C89B6D",
+                    boxShadow: "0 0 0 1px #C89B6D",
+                  }}
                 />
               </div>
             </div>
 
             {/* Mật khẩu mới */}
             <div className="grid grid-cols-3 gap-4 items-start">
-              <label className="text-sm font-medium text-gray-700 dark:text-gray-300 pt-2">
+              <label
+                className="text-sm font-medium pt-2"
+                style={{ color: "#333333" }}
+              >
                 Mật khẩu mới
               </label>
               <div className="col-span-2 relative">
@@ -371,14 +459,23 @@ const ProfilePage: React.FC = () => {
                   onChange={(e) => setNewPassword(e.target.value)}
                   placeholder="Tối thiểu 6 ký tự"
                   size="md"
-                  className="border-2 border-purple-200 dark:border-purple-800 hover:border-purple-400 dark:hover:border-purple-600 focus:border-purple-500 dark:focus:border-purple-500 transition-colors px-4 py-2.5"
+                  className="px-4 py-2.5"
+                  style={{ borderColor: "#E9ECEF" }}
+                  _hover={{ borderColor: "#C89B6D" }}
+                  _focus={{
+                    borderColor: "#C89B6D",
+                    boxShadow: "0 0 0 1px #C89B6D",
+                  }}
                 />
               </div>
             </div>
 
             {/* Xác nhận mật khẩu */}
             <div className="grid grid-cols-3 gap-4 items-start">
-              <label className="text-sm font-medium text-gray-700 dark:text-gray-300 pt-2">
+              <label
+                className="text-sm font-medium pt-2"
+                style={{ color: "#333333" }}
+              >
                 Xác nhận mật khẩu
               </label>
               <div className="col-span-2 relative">
@@ -388,13 +485,22 @@ const ProfilePage: React.FC = () => {
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   placeholder="Nhập lại mật khẩu mới"
                   size="md"
-                  className="border-2 border-purple-200 dark:border-purple-800 hover:border-purple-400 dark:hover:border-purple-600 focus:border-purple-500 dark:focus:border-purple-500 transition-colors px-4 py-2.5"
+                  className="px-4 py-2.5"
+                  style={{ borderColor: "#E9ECEF" }}
+                  _hover={{ borderColor: "#C89B6D" }}
+                  _focus={{
+                    borderColor: "#C89B6D",
+                    boxShadow: "0 0 0 1px #C89B6D",
+                  }}
                 />
               </div>
             </div>
 
             {/* Button */}
-            <div className="grid grid-cols-3 gap-4 items-start pt-4 border-t border-gray-200 dark:border-slate-700">
+            <div
+              className="grid grid-cols-3 gap-4 items-start pt-4"
+              style={{ borderTop: "1px solid #E9ECEF" }}
+            >
               <div></div>
               <div className="col-span-2">
                 <Button
@@ -406,12 +512,38 @@ const ProfilePage: React.FC = () => {
                     !confirmPassword ||
                     isUpdatingPassword
                   }
-                  className="bg-purple-600 hover:bg-purple-700 text-white font-medium px-6 py-2 rounded-lg border-2 border-purple-600 hover:border-purple-700 transition-all shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="text-white font-medium px-6 py-2 rounded-lg transition-all shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+                  style={{
+                    backgroundColor: "#C89B6D",
+                    fontFamily: "Montserrat, sans-serif",
+                  }}
+                  _hover={{ backgroundColor: "#B88A5D" }}
                 >
                   Cập nhật mật khẩu
                 </Button>
               </div>
             </div>
+          </div>
+        </div>
+
+        {/* Địa chỉ giao hàng */}
+        <div
+          className="bg-white rounded-xl shadow-sm"
+          style={{ border: "1px solid #E9ECEF" }}
+        >
+          <div
+            className="px-6 py-4"
+            style={{ borderBottom: "2px solid #C89B6D" }}
+          >
+            <h2
+              className="text-lg font-semibold"
+              style={{ fontFamily: "Montserrat, sans-serif", color: "#1A2A4E" }}
+            >
+              Địa chỉ giao hàng
+            </h2>
+          </div>
+          <div className="p-6">
+            <AddressManagement />
           </div>
         </div>
       </div>

@@ -12,6 +12,7 @@ export interface CartItem {
   variant_color: string;
   brand_name: string;
   category_name: string;
+  image_urls: string[];
   created_at: string;
   updated_at: string | null;
 }
@@ -66,12 +67,28 @@ export interface RemoveCartItemResponse {
   };
 }
 
+export interface CartItemsParams {
+  page?: number;
+  page_size?: number;
+  sort_by?: "created_at" | "updated_at" | "quantity";
+  sort_order?: "asc" | "desc";
+}
+
 export const cartApi = {
   /**
    * GET /v1/cart/items - Get all cart items
+   * @param params - Query parameters for pagination and sorting
    */
-  async getCartItems(): Promise<CartResponse> {
-    const response = await http2.get<CartResponse>("/v1/cart/items");
+  async getCartItems(params?: CartItemsParams): Promise<CartResponse> {
+    const queryParams = new URLSearchParams();
+    queryParams.set("page", String(params?.page || 1));
+    queryParams.set("page_size", String(params?.page_size || 10));
+    if (params?.sort_by) queryParams.set("sort_by", params.sort_by);
+    if (params?.sort_order) queryParams.set("sort_order", params.sort_order);
+
+    const response = await http2.get<CartResponse>(
+      `/v1/cart/items?${queryParams.toString()}`
+    );
     return response;
   },
 

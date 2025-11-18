@@ -8,9 +8,9 @@ export * from "./product.api";
 export * from "./cart.api";
 export * from "./order.api";
 export * from "./chat.api";
-
-// Re-export API client
-export { apiClient } from "@/lib/api-client";
+export * from "./address.api";
+export * from "./resource.api";
+export * from "./payment.api";
 
 // Re-export individual API services for convenience
 import { productApi } from "./product.api";
@@ -18,8 +18,18 @@ import { authApi } from "./auth.api";
 import { cartApi } from "./cart.api";
 import { orderApi } from "./order.api";
 import { chatApi } from "./chat.api";
+import { resourceApi } from "./resource.api";
+import { paymentApi } from "./payment.api";
 
-export { productApi, authApi, cartApi, orderApi, chatApi };
+export {
+  productApi,
+  authApi,
+  cartApi,
+  orderApi,
+  chatApi,
+  resourceApi,
+  paymentApi,
+};
 
 // Helper functions for backward compatibility
 export const fetchProducts = productApi.getProducts;

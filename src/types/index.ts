@@ -98,6 +98,122 @@ export interface AuthResponse {
   token_type: string;
 }
 
+// ========== RESOURCE TYPES ==========
+export interface Resource {
+  created_at: string;
+  updated_at: string;
+  id: string;
+  resource_name: string;
+  resource_type: "document" | "link";
+  description?: string | null;
+  resource_path: string;
+  file_type?: string | null;
+  file_size?: number | null;
+  processing_status:
+    | "draft"
+    | "pending"
+    | "processing"
+    | "completed"
+    | "failed";
+  progress: number;
+  current_step: string;
+  error_message?: string | null;
+  processing_type?:
+    | "document_structured_llm"
+    | "sentence_based"
+    | "excel"
+    | null;
+  effective_from?: string | null;
+  effective_to?: string | null;
+  status: boolean;
+  issuing_unit?: string | null;
+  access_scope?: string | null;
+  version?: string | null;
+  completed_at?: string | null;
+  resource_metadata?: any | null;
+  user_id: string;
+}
+
+export interface ResourcesParams {
+  page?: number;
+  page_size?: number;
+  resource_type?: "document" | "link" | null;
+  resource_name_search?: string | null;
+  user_id?: string | null;
+  processing_status?:
+    | "draft"
+    | "pending"
+    | "processing"
+    | "completed"
+    | "failed"
+    | null;
+  processing_type?:
+    | "document_structured_llm"
+    | "sentence_based"
+    | "excel"
+    | null;
+  sort_by?: "created_at" | "updated_at" | "resource_name";
+  sort_order?: "asc" | "desc";
+}
+
+export interface ResourcesResponse {
+  message: string;
+  info: {
+    resources: Resource[];
+    total: number;
+    page: number;
+    page_size: number;
+    total_pages: number;
+  };
+}
+
+export interface ResourceDetailResponse {
+  message: string;
+  info: {
+    resource: Resource;
+    success: boolean;
+    message: string;
+  };
+}
+
+export interface UploadedResourceFile {
+  success: boolean;
+  resource_id: string;
+  file_name: string;
+  resource_name: string;
+  resource_path: string;
+  file_size: number;
+  status: string;
+}
+
+export interface BatchUploadResponse {
+  message: string;
+  info: {
+    message: string;
+    resources: UploadedResourceFile[];
+    successful_count: number;
+    failed_count: number;
+    total_count: number;
+  };
+}
+
+export interface BatchProcessRequest {
+  resource_ids: string[];
+  processing_type: "document_structured_llm" | "sentence_based" | "excel";
+  effective_from?: string | null;
+  effective_to?: string | null;
+}
+
+export interface BatchProcessResponse {
+  message: string;
+  info: {
+    message: string;
+    resource_ids: string[];
+    processing_status: string;
+    total_count: number;
+  };
+}
+
 export interface UpdateProfileRequest {
   fullname?: string;
   phone?: string;
@@ -189,6 +305,25 @@ export enum PaymentStatus {
   REFUNDED = "refunded",
 }
 
+export enum PaymentMethod {
+  COD = "cod",
+  VNPAY = "vnpay",
+}
+
+// ========== PAYMENT TYPES ==========
+export interface CreatePaymentRequest {
+  order_id: string;
+  payment_method: "cod" | "vnpay";
+}
+
+export interface CreatePaymentResponse {
+  success: boolean;
+  message: string;
+  payment_id: string;
+  payment_url?: string;
+  amount: number;
+}
+
 // ========== API REQUEST PARAMS ==========
 export interface ProductsParams {
   page?: number;
@@ -224,4 +359,20 @@ export interface OrdersParams {
   payment_status_filter?: PaymentStatus;
   sort_by?: string;
   sort_order?: "asc" | "desc";
+}
+
+// ========== ADDRESS TYPES ==========
+export interface Address {
+  id: string;
+  user_id: string;
+  address_label: string;
+  recipient_name: string;
+  recipient_phone: string;
+  address_line: string;
+  ward: string;
+  district: string;
+  city: string;
+  is_default: boolean;
+  created_at?: string;
+  updated_at?: string;
 }

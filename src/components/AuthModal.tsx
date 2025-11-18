@@ -49,7 +49,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ initialView, onClose }) => {
           name,
           email,
           password,
-          phone || undefined,
+          phone || undefined
         );
         if (success) {
           await fetchCart();
@@ -63,42 +63,57 @@ const AuthModal: React.FC<AuthModalProps> = ({ initialView, onClose }) => {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white dark:bg-slate-800 rounded-lg shadow-2xl w-full max-w-md relative animate-fade-in-up">
+      <div className="bg-white rounded-lg shadow-2xl w-full max-w-md relative animate-fade-in-up">
         <button
           onClick={onClose}
-          className="absolute top-3 right-3 text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
+          className="absolute top-3 right-3 hover:opacity-70 transition-opacity"
+          style={{ color: "#333333" }}
           aria-label="Đóng"
         >
           <CloseIcon className="w-6 h-6" />
         </button>
         <div className="p-8">
-          <h2 className="text-2xl font-bold text-center text-gray-800 dark:text-gray-200 mb-2">
+          <h2
+            className="text-2xl font-bold text-center mb-2"
+            style={{
+              fontFamily: "Montserrat, sans-serif",
+              color: "#333333",
+            }}
+          >
             {view === "login" ? "Chào mừng trở lại!" : "Tạo tài khoản mới"}
           </h2>
-          <p className="text-center text-gray-500 dark:text-gray-400 mb-6">
+          <p className="text-center mb-6" style={{ color: "#666666" }}>
             {view === "login"
               ? "Đăng nhập để tiếp tục mua sắm"
               : "Tham gia cùng AgentFashion ngay"}
           </p>
 
-          <div className="flex border-b border-gray-200 dark:border-slate-700 mb-6">
+          <div
+            className="flex mb-6"
+            style={{ borderBottom: "2px solid #E9ECEF" }}
+          >
             <button
               onClick={() => setView("login")}
-              className={`flex-1 py-2 font-medium transition-colors ${
-                view === "login"
-                  ? "text-slate-600 dark:text-slate-300 border-b-2 border-slate-600 dark:border-slate-300"
-                  : "text-gray-500 dark:text-gray-400"
-              }`}
+              className={`flex-1 py-2 font-medium transition-colors`}
+              style={{
+                color: view === "login" ? "#C89B6D" : "#999999",
+                borderBottom: view === "login" ? "2px solid #C89B6D" : "none",
+                marginBottom: "-2px",
+                fontFamily: "Montserrat, sans-serif",
+              }}
             >
               Đăng nhập
             </button>
             <button
               onClick={() => setView("register")}
-              className={`flex-1 py-2 font-medium transition-colors ${
-                view === "register"
-                  ? "text-slate-600 dark:text-slate-300 border-b-2 border-slate-600 dark:border-slate-300"
-                  : "text-gray-500 dark:text-gray-400"
-              }`}
+              className={`flex-1 py-2 font-medium transition-colors`}
+              style={{
+                color: view === "register" ? "#C89B6D" : "#999999",
+                borderBottom:
+                  view === "register" ? "2px solid #C89B6D" : "none",
+                marginBottom: "-2px",
+                fontFamily: "Montserrat, sans-serif",
+              }}
             >
               Đăng ký
             </button>
@@ -181,7 +196,11 @@ const AuthModal: React.FC<AuthModalProps> = ({ initialView, onClose }) => {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full bg-slate-600 text-white py-2.5 rounded-md font-semibold hover:bg-slate-700 transition-colors disabled:bg-gray-400 dark:hover:bg-slate-500 dark:disabled:bg-gray-600 flex items-center justify-center"
+              className="w-full text-white py-2.5 rounded-md font-semibold transition-all disabled:opacity-50 flex items-center justify-center hover:opacity-90"
+              style={{
+                backgroundColor: "#C89B6D",
+                fontFamily: "Montserrat, sans-serif",
+              }}
             >
               {isLoading ? (
                 <svg
