@@ -1,4 +1,5 @@
 import http1 from "@/lib/http1";
+import { http2 } from "@/lib/http2";
 
 export interface FileMetadata {
   file_id: string;
@@ -18,18 +19,91 @@ export interface ChatMessage {
   attachments?: FileMetadata[];
 }
 
+// Admin Chat Logs Types
+export interface AdminConversation {
+  user_id: string;
+  user_email: string;
+  user_fullname: string;
+  total_messages: number;
+  last_message_content: string;
+  last_message_sender: "user" | "bot";
+  last_message_at: string;
+  first_message_at: string;
+  has_attachments: boolean;
+}
+
+export interface AdminChatMessage {
+  message_id: string;
+  sender_type: "user" | "bot";
+  content: string;
+  artifacts: any;
+  attachments: any[];
+  created_at: string;
+  updated_at: string | null;
+}
+
+export interface AdminUserInfo {
+  user_id: string;
+  email: string;
+  fullname: string;
+  total_messages: number;
+  first_message_at: string;
+  last_message_at: string;
+}
+
+export interface AdminChatLogsParams {
+  page?: number;
+  page_size?: number;
+  sort_by?: string;
+  sort_order?: "asc" | "desc";
+}
+
+export interface AdminChatDetailParams {
+  page?: number;
+  page_size?: number;
+  sender_type_filter?: "user" | "bot";
+}
+
+export interface AdminChatLogsResponse {
+  conversations: AdminConversation[];
+  total_count: number;
+  current_page: number;
+  total_pages: number;
+  has_next: boolean;
+  has_previous: boolean;
+  success: boolean;
+  message: string;
+}
+
+export interface AdminChatDetailResponse {
+  user_info: AdminUserInfo;
+  messages: AdminChatMessage[];
+  total_count: number;
+  current_page: number;
+  total_pages: number;
+  has_next: boolean;
+  has_previous: boolean;
+  success: boolean;
+  message: string;
+}
+
 export interface MessagesResponse {
   message: string;
   info: {
     data: {
       messages: Array<{
-        id: string;
-        user_id: string;
+        message_id: string;
         sender_type: "user" | "bot";
         content: string;
         created_at: string;
         updated_at: string | null;
         artifacts: any;
+        attachments: Array<{
+          file_name: string;
+          file_type: string;
+          file_size: number;
+          storage_path: string;
+        }>;
       }>;
       total: number;
       page: number;
@@ -225,6 +299,43 @@ export const chatApi = {
     deleted_count: number;
   }> => {
     const response = await http1.delete<any>("/v1/messages");
+    return response.info;
+  },
+
+  /**
+   * Get all chat logs for admin - conversation summaries
+   */
+  getAdminChatLogs: async (
+    params?: AdminChatLogsParams
+  ): Promise<AdminChatLogsResponse> => {
+    const response = await http1.get<any>("/v1/admin/messages/chat-logs", {
+      params: {
+        page: params?.page || 1,
+        page_size: params?.page_size || 20,
+        sort_by: params?.sort_by || "last_message_at",
+        sort_order: params?.sort_order || "desc",
+      },
+    });
+    return response.info;
+  },
+
+  /**
+   * Get detailed chat history for a specific user (Admin only)
+   */
+  getAdminChatDetail: async (
+    userId: string,
+    params?: AdminChatDetailParams
+  ): Promise<AdminChatDetailResponse> => {
+    const response = await http1.get<any>(
+      `/v1/admin/messages/chat-logs/${userId}`,
+      {
+        params: {
+          page: params?.page || 1,
+          page_size: params?.page_size || 10,
+          sender_type_filter: params?.sender_type_filter,
+        },
+      }
+    );
     return response.info;
   },
 };

@@ -39,7 +39,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({
 
   const handleLogout = () => {
     logout();
-    navigate("/");
+    window.location.href = "/";
   };
 
   const handleAdminClick = () => {

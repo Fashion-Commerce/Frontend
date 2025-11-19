@@ -67,13 +67,19 @@ const Header: React.FC<HeaderProps> = ({
         {/* Logo */}
         <Link to="/" className="flex items-center gap-3 flex-shrink-0">
           <img
-            src="/img/logo.png"
+            src="/img/logobg.png"
             alt="AgentFashion"
-            className="h-10 w-auto"
+            className="h-12 w-auto"
             onError={(e) => {
               e.currentTarget.style.display = "none";
             }}
           />
+          <Text
+            className="text-white font-bold text-2xl "
+            style={{ fontFamily: "Montserrat, sans-serif", color: "#C89B6D" }}
+          >
+            AgentFashion
+          </Text>
         </Link>
 
         {/* Search Bar - Center */}
