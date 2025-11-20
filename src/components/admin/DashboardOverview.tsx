@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
   LineChart,
   Line,
@@ -11,42 +11,50 @@ import {
 } from "recharts";
 // FIX: Changed import path to be explicit to avoid a path resolution conflict.
 import type { Product } from "../../types/index";
+import { adminApi, type DashboardOverviewData } from "@/api/admin.api";
 
 interface DashboardOverviewProps {
   products: Product[];
 }
 
-// Mock data for the chart
-const salesData = [
-  { name: "7 ngày trước", DoanhThu: 4000000, "Đơn hàng": 24 },
-  { name: "6 ngày trước", DoanhThu: 3000000, "Đơn hàng": 13 },
-  { name: "5 ngày trước", DoanhThu: 2000000, "Đơn hàng": 58 },
-  { name: "4 ngày trước", DoanhThu: 2780000, "Đơn hàng": 39 },
-  { name: "3 ngày trước", DoanhThu: 1890000, "Đơn hàng": 48 },
-  { name: "Hôm qua", DoanhThu: 2390000, "Đơn hàng": 38 },
-  { name: "Hôm nay", DoanhThu: 3490000, "Đơn hàng": 43 },
-];
-
-const StatCard: React.FC<{ title: string; value: string; subtext: string }> = ({
-  title,
-  value,
-  subtext,
-}) => (
+const StatCard: React.FC<{
+  title: string;
+  value: string;
+  subtext: string;
+  subtextColor?: string;
+}> = ({ title, value, subtext, subtextColor = "text-green-500" }) => (
   <div className="bg-white p-6 rounded-lg shadow">
     <h3 className="text-sm font-medium text-gray-500">{title}</h3>
     <p className="text-3xl font-bold text-gray-800 mt-2">{value}</p>
-    <p className="text-xs text-green-500 mt-1">{subtext}</p>
+    <p className={`text-xs ${subtextColor} mt-1`}>{subtext}</p>
   </div>
 );
 
 const DashboardOverview: React.FC<DashboardOverviewProps> = ({
   products = [],
 }) => {
-  const totalRevenue = salesData.reduce((acc, item) => acc + item.DoanhThu, 0);
-  const totalOrders = salesData.reduce(
-    (acc, item) => acc + item["Đơn hàng"],
-    0
-  );
+  const [dashboardData, setDashboardData] =
+    useState<DashboardOverviewData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [selectedMonths, setSelectedMonths] = useState(1);
+
+  useEffect(() => {
+    loadDashboardData();
+  }, [selectedMonths]);
+
+  const loadDashboardData = async () => {
+    try {
+      setLoading(true);
+      const response = await adminApi.getDashboardOverview({
+        months: selectedMonths,
+      });
+      setDashboardData(response.info.data);
+    } catch (error) {
+      console.error("Failed to load dashboard data:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat("vi-VN", {
@@ -55,45 +63,117 @@ const DashboardOverview: React.FC<DashboardOverviewProps> = ({
     }).format(price);
   };
 
+  const formatDate = (dateStr: string) => {
+    const date = new Date(dateStr);
+    return date.toLocaleDateString("vi-VN", { month: "short", day: "numeric" });
+  };
+
+  const formatChangePercent = (percent: number) => {
+    const sign = percent >= 0 ? "+" : "";
+    return `${sign}${percent.toFixed(1)}%`;
+  };
+
   // Safe product count
   const productCount = Array.isArray(products) ? products.length : 0;
 
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-96">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-800"></div>
+      </div>
+    );
+  }
+
+  if (!dashboardData) {
+    return (
+      <div className="text-center text-gray-500 py-8">
+        Không thể tải dữ liệu dashboard
+      </div>
+    );
+  }
+
+  const { metrics, charts } = dashboardData;
+
+  // Transform chart data for recharts
+  const chartData = charts.revenue_orders_timeline.map((item) => ({
+    name: formatDate(item.date),
+    DoanhThu: item.revenue,
+    "Đơn hàng": item.order_count,
+  }));
+
   return (
     <div>
-      <h2 className="text-3xl font-bold text-gray-800 mb-6">
-        Bảng điều khiển AgentFashion
-      </h2>
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-3xl font-bold text-gray-800">
+          Bảng điều khiển AgentFashion
+        </h2>
+        <select
+          value={selectedMonths}
+          onChange={(e) => setSelectedMonths(Number(e.target.value))}
+          className="px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          aria-label="Chọn khoảng thời gian"
+        >
+          <option value={1}>1 tháng</option>
+          <option value={3}>3 tháng</option>
+          <option value={6}>6 tháng</option>
+          <option value={12}>12 tháng</option>
+        </select>
+      </div>
+
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <StatCard
-          title="Tổng doanh thu (7 ngày)"
-          value={formatPrice(totalRevenue)}
-          subtext="+5.4% so với tuần trước"
+          title={`Tổng doanh thu (${selectedMonths} tháng)`}
+          value={formatPrice(metrics.revenue.current)}
+          subtext={`${formatChangePercent(
+            metrics.revenue.change_percent
+          )} so với kỳ trước`}
+          subtextColor={
+            metrics.revenue.change_percent >= 0
+              ? "text-green-500"
+              : "text-red-500"
+          }
         />
         <StatCard
-          title="Tổng đơn hàng (7 ngày)"
-          value={totalOrders.toLocaleString("vi-VN")}
-          subtext="+2.1% so với tuần trước"
+          title={`Tổng đơn hàng (${selectedMonths} tháng)`}
+          value={metrics.orders.current.toLocaleString("vi-VN")}
+          subtext={`${formatChangePercent(
+            metrics.orders.change_percent
+          )} so với kỳ trước`}
+          subtextColor={
+            metrics.orders.change_percent >= 0
+              ? "text-green-500"
+              : "text-red-500"
+          }
         />
         <StatCard
           title="Tổng sản phẩm"
-          value={productCount.toString()}
-          subtext="Sản phẩm đang bán"
+          value={metrics.products.total.toLocaleString("vi-VN")}
+          subtext={`${metrics.products.active.toLocaleString(
+            "vi-VN"
+          )} sản phẩm đang bán`}
         />
         <StatCard
           title="Tổng người dùng"
-          value="128"
-          subtext="+12 người dùng mới"
+          value={metrics.users.total.toLocaleString("vi-VN")}
+          subtext={`${formatChangePercent(metrics.users.change_percent)} (${
+            metrics.users.new_users
+          } người mới)`}
+          subtextColor={
+            metrics.users.change_percent >= 0
+              ? "text-green-500"
+              : "text-red-500"
+          }
         />
       </div>
 
       <div className="bg-white p-6 rounded-lg shadow">
         <h3 className="text-lg font-semibold text-gray-700 mb-4">
-          Phân tích doanh thu
+          Phân tích doanh thu & đơn hàng
         </h3>
         <div className="w-full h-96">
           <ResponsiveContainer>
             <LineChart
-              data={salesData}
+              data={chartData}
               margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
             >
               <CartesianGrid strokeDasharray="3 3" />

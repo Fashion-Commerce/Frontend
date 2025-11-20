@@ -144,10 +144,6 @@ export const router = createBrowserRouter([
         element: <AdminPage />,
       },
       {
-        path: "analytics",
-        element: <AdminPage />,
-      },
-      {
         path: "agents",
         element: <AdminPage />,
       },
