@@ -8,13 +8,11 @@ import {
   ChatIcon,
   LogoutIcon,
   SettingsIcon,
-  AnalyticsIcon,
 } from "./AdminIcons";
 import DashboardOverview from "./DashboardOverview";
 import ProductManagement from "./ProductManagement";
 import ChatLogs from "./ChatLogs";
 import AgentManagement from "./AgentManagement";
-import Analytics from "./Analytics";
 import ResourceManagement from "./ResourceManagement";
 
 type AdminView =
@@ -23,7 +21,6 @@ type AdminView =
   | "resources"
   | "chat"
   | "agents"
-  | "analytics";
 
 interface AdminDashboardProps {
   onExitAdmin: () => void;
@@ -73,8 +70,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
         return <ChatLogs messages={chatMessages} />;
       case "agents":
         return <AgentManagement />;
-      case "analytics":
-        return <Analytics />;
       default:
         return <DashboardOverview products={products} />;
     }
@@ -117,12 +112,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
               icon={<SettingsIcon className="w-6 h-6" />}
               isActive={currentView === "agents"}
               onClick={() => setCurrentView("agents")}
-            />
-            <NavItem
-              label="Phân tích"
-              icon={<AnalyticsIcon className="w-6 h-6" />}
-              isActive={currentView === "analytics"}
-              onClick={() => setCurrentView("analytics")}
             />
           </nav>
           <div className="mt-auto">

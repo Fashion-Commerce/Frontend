@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useOutletContext } from "react-router-dom";
+import { Box, Flex, Button, Spinner } from "@chakra-ui/react";
 import ProductGrid from "@/components/ProductGrid";
 import ProductDetailModal from "@/components/ProductDetailModal";
 import { useProductStore } from "@/stores/productStore";
@@ -40,6 +41,11 @@ const HomePage: React.FC = () => {
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [loadingProductDetail, setLoadingProductDetail] = useState(false);
 
+  // Parent categories state for filter beans
+  const [parentCategories, setParentCategories] = useState<Category[]>([]);
+  const [selectedParentId, setSelectedParentId] = useState<string | null>(null);
+  const [loadingParentCategories, setLoadingParentCategories] = useState(true);
+
   // Category sections state - now with accumulated products
   const [categorySections, setCategorySections] = useState<CategorySection[]>(
     []
@@ -58,9 +64,19 @@ const HomePage: React.FC = () => {
   const [searchTotalPages, setSearchTotalPages] = useState(1);
 
   useEffect(() => {
-    // Load initial categories from API
+    // Load parent categories first
+    loadParentCategories();
+    // Load initial categories from API (all categories or filtered by parent)
     loadCategoriesPage(1);
   }, []);
+
+  useEffect(() => {
+    // Reload categories when parent filter changes
+    if (!isSearching) {
+      setCurrentCategoryPage(1);
+      loadCategoriesPage(1);
+    }
+  }, [selectedParentId]);
 
   // Handle search - load direct results instead of categories
   useEffect(() => {
@@ -80,6 +96,20 @@ const HomePage: React.FC = () => {
       }
     }
   }, [searchTerm]);
+
+  const loadParentCategories = async () => {
+    try {
+      setLoadingParentCategories(true);
+      const response = await categoryApi.getParentCategories({
+        page_size: 100, // Get all parent categories
+      });
+      setParentCategories(response.info.categories);
+    } catch (error) {
+      console.error("Failed to load parent categories:", error);
+    } finally {
+      setLoadingParentCategories(false);
+    }
+  };
 
   const loadSearchResults = async (page: number, reset: boolean = false) => {
     try {
@@ -116,6 +146,7 @@ const HomePage: React.FC = () => {
       const response = await categoryApi.getCategories({
         page,
         page_size: categoryPageSize,
+        parent_id_filter: selectedParentId || undefined,
       });
 
       const newCategories = response.info.categories;
@@ -269,6 +300,10 @@ const HomePage: React.FC = () => {
     loadCategoryProducts(categoryIndex, page);
   };
 
+  const handleParentCategorySelect = (categoryId: string | null) => {
+    setSelectedParentId(categoryId);
+  };
+
   const handleToggleWishlist = (productId: string) => {
     if (!user) {
       // Show auth modal
@@ -322,6 +357,76 @@ const HomePage: React.FC = () => {
 
   return (
     <>
+      {/* Category Filter Beans */}
+      {!isSearching && (
+        <Box
+          className="sticky top-0 z-10"
+          style={{
+            padding: "1rem",
+          }}
+        >
+          <Flex
+            className="overflow-x-auto gap-2 pb-2 scrollbar-hide"
+            style={{ maxWidth: "100%" }}
+          >
+            {/* All Categories Button */}
+            <Button
+              onClick={() => handleParentCategorySelect(null)}
+              size="md"
+              borderRadius="full"
+              className="flex-shrink-0"
+              style={{
+                backgroundColor:
+                  selectedParentId === null ? "#C89B6D" : "#F4F6F8",
+                color: selectedParentId === null ? "white" : "#333333",
+                fontWeight: "600",
+                border: "none",
+                transition: "all 0.2s",
+                padding: "0.5rem 1.5rem",
+              }}
+              _hover={{
+                backgroundColor:
+                  selectedParentId === null ? "#B88A5E" : "#E9ECEF",
+              }}
+            >
+              Tất cả
+            </Button>
+
+            {/* Parent Category Buttons */}
+            {loadingParentCategories ? (
+              <Spinner size="sm" style={{ color: "#C89B6D" }} />
+            ) : (
+              parentCategories.map((category) => {
+                const categoryId = category.category_id || "";
+                const isSelected = selectedParentId === categoryId;
+                return (
+                  <Button
+                    key={categoryId}
+                    onClick={() => handleParentCategorySelect(categoryId)}
+                    size="md"
+                    borderRadius="full"
+                    className="flex-shrink-0"
+                    style={{
+                      backgroundColor: isSelected ? "#C89B6D" : "#F4F6F8",
+                      color: isSelected ? "white" : "#333333",
+                      fontWeight: "600",
+                      border: "none",
+                      transition: "all 0.2s",
+                      padding: "0.5rem 1.5rem",
+                    }}
+                    _hover={{
+                      backgroundColor: isSelected ? "#B88A5E" : "#E9ECEF",
+                    }}
+                  >
+                    {category.name}
+                  </Button>
+                );
+              })
+            )}
+          </Flex>
+        </Box>
+      )}
+
       <ProductGrid
         categorySections={categorySections}
         recommendations={recommendedProducts}
@@ -353,11 +458,6 @@ const HomePage: React.FC = () => {
           onClose={() => setSelectedProduct(null)}
           onAddToCart={handleAddToCart}
           onProductClick={handleProductClick}
-          onToggleWishlist={handleToggleWishlist}
-          isWishlisted={wishlist.includes(
-            selectedProduct.id || selectedProduct.product_id || ""
-          )}
-          wishlist={wishlist}
         />
       )}
     </>

@@ -62,6 +62,9 @@ export const categoryApi = {
   getCategories: (params?: CategoriesParams) =>
     http2.get<CategoriesResponse>("/v1/categories", { params }),
 
+  getParentCategories: (params?: CategoriesParams) =>
+    http2.get<CategoriesResponse>("/v1/categories/parents", { params }),
+
   createCategory: (data: CreateCategoryRequest) =>
     http2.post<CreateCategoryResponse>("/v1/categories", data),
 

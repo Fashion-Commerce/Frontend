@@ -49,12 +49,6 @@ const AdminLayout: React.FC = () => {
             >
               Chat Logs
             </button>
-            <button
-              onClick={() => navigate("/admin/analytics")}
-              className="flex items-center w-full px-4 py-3 text-left rounded-md hover:bg-slate-700"
-            >
-              Analytics
-            </button>
           </nav>
 
           <div className="mt-auto">

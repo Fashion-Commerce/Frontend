@@ -11,6 +11,7 @@ export * from "./chat.api";
 export * from "./address.api";
 export * from "./resource.api";
 export * from "./payment.api";
+export * from "./admin.api";
 
 // Re-export individual API services for convenience
 import { productApi } from "./product.api";
@@ -20,6 +21,7 @@ import { orderApi } from "./order.api";
 import { chatApi } from "./chat.api";
 import { resourceApi } from "./resource.api";
 import { paymentApi } from "./payment.api";
+import { adminApi } from "./admin.api";
 
 export {
   productApi,
@@ -29,6 +31,7 @@ export {
   chatApi,
   resourceApi,
   paymentApi,
+  adminApi,
 };
 
 // Helper functions for backward compatibility
