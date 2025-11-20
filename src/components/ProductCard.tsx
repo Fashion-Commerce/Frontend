@@ -38,7 +38,6 @@ const ProductCard: React.FC<ProductCardProps> = ({
   product,
   onProductClick,
   onToggleWishlist,
-  isWishlisted,
 }) => {
   const [imageError, setImageError] = React.useState(false);
 
@@ -99,19 +98,6 @@ const ProductCard: React.FC<ProductCardProps> = ({
             </Box>
           )}
         </AspectRatio>
-
-        {/* Wishlist Button */}
-        <Box
-          as="button"
-          onClick={handleWishlistClick}
-          className={`absolute top-2 right-2 p-2 rounded-full bg-white/90 dark:bg-black/90 backdrop-blur-sm z-10 transition-all ${
-            isWishlisted
-              ? "text-red-500 scale-110"
-              : "text-gray-500 dark:text-gray-300 hover:text-red-500 hover:scale-110"
-          }`}
-        >
-          <HeartIcon className="w-4 h-4" isFilled={isWishlisted} />
-        </Box>
 
         {/* Official Badge */}
         <Badge

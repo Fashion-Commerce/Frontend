@@ -8,9 +8,9 @@ import {
   Paperclip,
   ChevronLeft,
   ChevronRight,
-  Star,
   Trash2,
   ArrowDown,
+  Sparkles,
 } from "lucide-react";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -37,6 +37,7 @@ interface UploadedFileDisplay {
   metadata?: FileMetadata;
   preview?: string;
   uploading?: boolean;
+  uploadProgress?: number;
   error?: string;
 }
 
@@ -106,14 +107,13 @@ const Chatbot: React.FC = () => {
   } = useChatStore();
 
   const { addToCart } = useCartStore();
-  const { user } = useAuthStore();
+  const { user, isAuthenticated } = useAuthStore();
 
   const [inputValue, setInputValue] = useState("");
   const [isExpanded, setIsExpanded] = useState(false);
   const [showScrollButton, setShowScrollButton] = useState(false);
   const [imagePreviewDialog, setImagePreviewDialog] = useState(false);
   const [previewImageData, setPreviewImageData] = useState<string | null>(null);
-  const [isDragging, setIsDragging] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const [interimTranscript, setInterimTranscript] = useState("");
   const [selectedProduct, setSelectedProduct] = useState<ProductType | null>(
@@ -223,10 +223,20 @@ const Chatbot: React.FC = () => {
     scrollToBottom(true);
   }, [messages, scrollToBottom]);
 
-  // Load initial history
+  // Load initial history when authenticated
   useEffect(() => {
-    loadMessageHistory(1);
-  }, []);
+    if (isAuthenticated) {
+      loadMessageHistory(1);
+    }
+  }, [isAuthenticated, loadMessageHistory]);
+
+  // Clear messages when user logs out
+  useEffect(() => {
+    if (!isAuthenticated) {
+      clearMessages();
+      clearUploadedFiles();
+    }
+  }, [isAuthenticated, clearMessages, clearUploadedFiles]);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -239,6 +249,31 @@ const Chatbot: React.FC = () => {
       }
     };
   }, [isRecording]);
+
+  // Handle paste event for images
+  useEffect(() => {
+    const handlePaste = async (e: ClipboardEvent) => {
+      if (!isAuthenticated) return;
+
+      const items = e.clipboardData?.items;
+      if (!items) return;
+
+      for (const item of Array.from(items)) {
+        if (item.type.startsWith("image/")) {
+          e.preventDefault();
+          const file = item.getAsFile();
+          if (file) {
+            const fileList = new DataTransfer();
+            fileList.items.add(file);
+            await handleFileSelect(fileList.files);
+          }
+        }
+      }
+    };
+
+    document.addEventListener("paste", handlePaste);
+    return () => document.removeEventListener("paste", handlePaste);
+  }, [isAuthenticated, uploadedFiles]);
 
   // File upload handling
   const handleFileSelect = async (files: FileList | null) => {
@@ -264,18 +299,29 @@ const Chatbot: React.FC = () => {
       return;
     }
 
-    for (const file of Array.from(files)) {
+    // Upload all files in parallel
+    const uploadPromises = Array.from(files).map(async (file, i) => {
       const isImage = file.type.startsWith("image/");
       const preview = isImage ? URL.createObjectURL(file) : undefined;
 
-      addUploadedFile({ file, preview, uploading: true });
+      addUploadedFile({ file, preview, uploading: true, uploadProgress: 0 });
+      const currentIndex = uploadedFiles.length + i;
+
+      // Simulate upload progress gradually to 99%
+      let progress = 0;
+      const progressInterval = setInterval(() => {
+        progress = Math.min(progress + Math.random() * 10 + 5, 99);
+        updateUploadedFile(currentIndex, { uploadProgress: progress });
+      }, 200);
 
       try {
         const response = await chatApi.uploadFile(file);
-        const fileIndex = uploadedFiles.length;
+        clearInterval(progressInterval);
 
-        updateUploadedFile(fileIndex, {
+        // Complete progress to 100%
+        updateUploadedFile(currentIndex, {
           uploading: false,
+          uploadProgress: 100,
           metadata: {
             file_id: response.info.file_id,
             file_name: response.info.file_name,
@@ -287,14 +333,20 @@ const Chatbot: React.FC = () => {
           },
         });
 
+        // Remove progress indicator after 500ms
+        setTimeout(() => {
+          updateUploadedFile(currentIndex, { uploadProgress: undefined });
+        }, 500);
+
         toast.success(`${file.name} đã tải lên`, {
           position: "top-right",
           autoClose: 2000,
         });
       } catch (error: any) {
-        const fileIndex = uploadedFiles.length;
-        updateUploadedFile(fileIndex, {
+        clearInterval(progressInterval);
+        updateUploadedFile(currentIndex, {
           uploading: false,
+          uploadProgress: undefined,
           error: error.message || "Tải lên thất bại",
         });
 
@@ -303,7 +355,10 @@ const Chatbot: React.FC = () => {
           autoClose: 3000,
         });
       }
-    }
+    });
+
+    // Wait for all uploads to complete
+    await Promise.all(uploadPromises);
   };
 
   // Send message
@@ -311,9 +366,26 @@ const Chatbot: React.FC = () => {
     const trimmedMessage = inputValue.trim();
     if (!trimmedMessage || isStreaming) return;
 
+    // Check if any file is still uploading
+    const hasUploadingFiles = uploadedFiles.some(
+      (f) =>
+        f.uploading ||
+        (f.uploadProgress !== undefined && f.uploadProgress < 100)
+    );
+
+    if (hasUploadingFiles) {
+      toast.warning("Vui lòng đợi file tải lên hoàn tất", {
+        position: "top-right",
+        autoClose: 2000,
+      });
+      return;
+    }
+
     const fileMetadata = uploadedFiles
       .filter((f) => f.metadata)
       .map((f) => f.metadata!);
+
+    console.log("Sending message with fileMetadata:", fileMetadata);
 
     try {
       const abortFn = await sendStreamMessage(trimmedMessage, fileMetadata);
@@ -438,35 +510,6 @@ const Chatbot: React.FC = () => {
     }
   };
 
-  // Drag and drop
-  const handleDragEnter = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragging(true);
-  };
-
-  const handleDragLeave = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (e.currentTarget === e.target) {
-      setIsDragging(false);
-    }
-  };
-
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-  };
-
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragging(false);
-
-    const files = e.dataTransfer.files;
-    handleFileSelect(files);
-  };
-
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat("vi-VN", {
       style: "currency",
@@ -488,10 +531,6 @@ const Chatbot: React.FC = () => {
           backgroundColor: "#1A2A4E",
           borderRight: "1px solid rgba(200, 155, 109, 0.2)",
         }}
-        onDragEnter={handleDragEnter}
-        onDragOver={handleDragOver}
-        onDragLeave={handleDragLeave}
-        onDrop={handleDrop}
       >
         {/* Header */}
         <div
@@ -503,23 +542,31 @@ const Chatbot: React.FC = () => {
               <div
                 className="w-10 h-10 rounded-full flex items-center justify-center shadow-lg"
                 style={{
-                  backgroundColor: "#C89B6D",
-                  border: "2px solid rgba(255, 255, 255, 0.3)",
+                  backgroundColor: "#0F1A2E",
+                  border: "3px solid #C89B6D",
                 }}
               >
-                <span className="text-2xl">🤖</span>
+                <img
+                  src="/img/logobg.png"
+                  alt="AgentFashion"
+                  className="h-6 w-auto"
+                  onError={(e) => {
+                    e.currentTarget.style.display = "none";
+                  }}
+                />
               </div>
               <span className="absolute bottom-0 right-0 block h-3 w-3 rounded-full bg-lime-400 ring-2 ring-white"></span>
             </div>
             <div>
               <h2
-                className="text-lg font-bold"
+                className="text-lg font-bold flex items-center gap-2"
                 style={{
                   fontFamily: "Montserrat, sans-serif",
                   color: "#C89B6D",
                 }}
               >
                 AgentFashion AI
+                <Sparkles className="h-4 w-4" />
               </h2>
               <p
                 className="text-xs"
@@ -576,7 +623,23 @@ const Chatbot: React.FC = () => {
             </div>
           )}
 
-          {messages.length === 0 && !isLoadingHistory ? (
+          {!isAuthenticated ? (
+            <div className="text-center py-20">
+              <div className="text-6xl mb-4">🔒</div>
+              <h3
+                className="text-xl font-bold mb-2"
+                style={{
+                  fontFamily: "Montserrat, sans-serif",
+                  color: "#C89B6D",
+                }}
+              >
+                Vui lòng đăng nhập
+              </h3>
+              <p className="text-sm" style={{ color: "#FFFFFF" }}>
+                Bạn cần đăng nhập để trò chuyện với Agent
+              </p>
+            </div>
+          ) : messages.length === 0 && !isLoadingHistory ? (
             <div className="text-center py-20">
               <div className="text-6xl mb-4">👋</div>
               <h3
@@ -666,8 +729,11 @@ const Chatbot: React.FC = () => {
         {/* File Upload Preview */}
         {uploadedFiles.length > 0 && (
           <div className="px-4 pb-2">
-            <div className="bg-amber-100 dark:bg-orange-900 rounded-lg p-3 shadow-md border border-orange-300 dark:border-orange-700">
-              <div className="flex gap-2 overflow-x-auto">
+            <div
+              className="rounded-lg p-3"
+              style={{ backgroundColor: "rgba(200, 155, 109, 0.1)" }}
+            >
+              <div className="flex gap-3 overflow-x-auto">
                 {uploadedFiles.map((f, idx) => (
                   <FilePreview
                     key={idx}
@@ -694,9 +760,10 @@ const Chatbot: React.FC = () => {
           <div className="flex items-end gap-2">
             <button
               onClick={() => fileInputRef.current?.click()}
-              className="p-2 rounded-lg transition-colors hover:opacity-80"
+              disabled={!isAuthenticated}
+              className="p-2 rounded-lg transition-colors hover:opacity-80 disabled:opacity-50 disabled:cursor-not-allowed"
               style={{ color: "#C89B6D" }}
-              title="Đính kèm tệp"
+              title={isAuthenticated ? "Đính kèm tệp" : "Vui lòng đăng nhập"}
             >
               <Paperclip className="h-5 w-5" />
             </button>
@@ -710,12 +777,15 @@ const Chatbot: React.FC = () => {
               }
               onChange={handleTextareaChange}
               onKeyDown={handleKeyDown}
+              disabled={!isAuthenticated}
               placeholder={
-                isRecording && interimTranscript
+                !isAuthenticated
+                  ? "Vui lòng đăng nhập để trò chuyện..."
+                  : isRecording && interimTranscript
                   ? interimTranscript
                   : animatedPlaceholder
               }
-              className="flex-1 resize-none rounded-lg px-4 py-2 focus:outline-none focus:ring-2 max-h-32"
+              className="flex-1 resize-none rounded-lg px-4 py-2 focus:outline-none focus:ring-2 max-h-32 disabled:opacity-60 disabled:cursor-not-allowed"
               style={{
                 backgroundColor: "#F4F6F8",
                 color: "#333333",
@@ -727,13 +797,20 @@ const Chatbot: React.FC = () => {
 
             <button
               onClick={toggleVoiceRecording}
-              className={`p-2 rounded-lg transition-colors ${
+              disabled={!isAuthenticated}
+              className={`p-2 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
                 isRecording
                   ? "bg-red-600 text-white hover:bg-red-700"
                   : "hover:opacity-80"
               }`}
               style={!isRecording ? { color: "#C89B6D" } : {}}
-              title={isRecording ? "Dừng ghi âm" : "Ghi âm"}
+              title={
+                !isAuthenticated
+                  ? "Vui lòng đăng nhập"
+                  : isRecording
+                  ? "Dừng ghi âm"
+                  : "Ghi âm"
+              }
             >
               {isRecording ? (
                 <MicOff className="h-5 w-5" />
@@ -744,34 +821,36 @@ const Chatbot: React.FC = () => {
 
             <button
               onClick={handleSendMessage}
-              disabled={!inputValue.trim() || isStreaming}
+              disabled={
+                !isAuthenticated ||
+                !inputValue.trim() ||
+                isStreaming ||
+                uploadedFiles.some(
+                  (f) =>
+                    f.uploading ||
+                    (f.uploadProgress !== undefined && f.uploadProgress < 100)
+                )
+              }
               className="text-white p-2 rounded-full disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-md hover:opacity-90"
               style={{ backgroundColor: "#C89B6D" }}
-              title="Gửi tin nhắn"
+              title={
+                !isAuthenticated
+                  ? "Vui lòng đăng nhập"
+                  : uploadedFiles.some(
+                      (f) =>
+                        f.uploading ||
+                        (f.uploadProgress !== undefined &&
+                          f.uploadProgress < 100)
+                    )
+                  ? "Đang tải file lên..."
+                  : "Gửi tin nhắn"
+              }
             >
               <Send className="h-5 w-5" />
             </button>
           </div>
         </div>
       </div>
-
-      {/* Drag Drop Overlay */}
-      {isDragging && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 backdrop-blur-sm">
-          <div className="bg-amber-50 dark:bg-orange-950 rounded-xl p-10 shadow-2xl border-2 border-dashed border-orange-500">
-            <Paperclip
-              size={64}
-              className="mx-auto mb-4 text-orange-600 animate-bounce"
-            />
-            <p className="text-2xl font-bold text-orange-900 dark:text-amber-100 mb-2">
-              Thả tệp vào đây
-            </p>
-            <p className="text-sm text-orange-700 dark:text-orange-300">
-              Hỗ trợ PDF, DOCX, XLSX và ảnh (tối đa 5 tệp, 200MB)
-            </p>
-          </div>
-        </div>
-      )}
 
       {/* Hidden File Input */}
       <input
@@ -931,6 +1010,54 @@ const MessageBubble: React.FC<{
     setCurrentPage(1);
   }, [products]);
 
+  // Filter image attachments
+  const imageAttachments = React.useMemo(() => {
+    if (!message.attachments || message.attachments.length === 0) return [];
+
+    console.log(
+      "Processing attachments for message:",
+      message.id,
+      message.attachments
+    );
+
+    const images = message.attachments
+      .filter((att: any) => {
+        const ext = (att.file_type?.toLowerCase() || "").replace(/^\./, "");
+        const isImage = [
+          "jpg",
+          "jpeg",
+          "png",
+          "gif",
+          "webp",
+          "bmp",
+          "tiff",
+        ].includes(ext);
+        console.log(
+          "Attachment:",
+          att.file_name,
+          "ext:",
+          ext,
+          "isImage:",
+          isImage
+        );
+        return isImage;
+      })
+      .slice(0, 5);
+
+    console.log("Filtered image attachments:", images);
+    return images;
+  }, [message.attachments, message.id]);
+
+  const nonImageAttachments = React.useMemo(() => {
+    if (!message.attachments || message.attachments.length === 0) return [];
+    return message.attachments.filter((att: any) => {
+      const ext = (att.file_type?.toLowerCase() || "").replace(/^\./, "");
+      return !["jpg", "jpeg", "png", "gif", "webp", "bmp", "tiff"].includes(
+        ext
+      );
+    });
+  }, [message.attachments]);
+
   return (
     <div className={`flex ${isUser ? "justify-end" : "justify-start"} group`}>
       <div
@@ -942,13 +1069,44 @@ const MessageBubble: React.FC<{
           <div
             className="w-8 h-8 ml-3 rounded-full flex items-center justify-center flex-shrink-0 shadow-md"
             style={{
-              backgroundColor: "#C89B6D",
-              border: "2px solid rgba(255, 255, 255, 0.3)",
+              backgroundColor: "#0F1A2E",
+              border: "2px solid #C89B6D",
             }}
           >
-            <span className="text-white text-sm font-bold">AI</span>
+            <img
+              src="/img/logobg.png"
+              alt="AgentFashion"
+              className="h-4 w-auto"
+              onError={(e) => {
+                e.currentTarget.style.display = "none";
+              }}
+            />
           </div>
         )}
+
+        {/* Image Attachments - Outside bubble */}
+        {imageAttachments.length > 0 && (
+          <div className="w-full mb-2 overflow-x-auto">
+            <div className="flex gap-2 pb-1">
+              {imageAttachments.map((att: any, idx: number) => {
+                const imageUrl = att.storage_url || att.storage_path;
+                return (
+                  <img
+                    key={idx}
+                    src={imageUrl}
+                    alt={att.file_name}
+                    className="h-32 w-auto object-cover rounded-lg shadow-md cursor-pointer hover:opacity-90 transition-opacity flex-shrink-0"
+                    onClick={() => window.open(imageUrl, "_blank")}
+                    onError={(e) => {
+                      e.currentTarget.style.display = "none";
+                    }}
+                  />
+                );
+              })}
+            </div>
+          </div>
+        )}
+
         {/* Message Card */}
         <div
           className={`rounded-2xl px-4 py-3 ${
@@ -956,10 +1114,10 @@ const MessageBubble: React.FC<{
           }`}
           style={isUser ? { backgroundColor: "#C89B6D" } : {}}
         >
-          {/* File Attachments */}
-          {message.attachments && message.attachments.length > 0 && (
+          {/* Non-Image File Attachments */}
+          {nonImageAttachments.length > 0 && (
             <div className="flex flex-wrap gap-2 mb-3">
-              {message.attachments.map((att: any, idx: number) => (
+              {nonImageAttachments.map((att: any, idx: number) => (
                 <span
                   key={idx}
                   className="inline-flex items-center gap-1 bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 px-2 py-1 rounded-full text-xs font-medium"
@@ -1035,15 +1193,9 @@ const MessageBubble: React.FC<{
                       <p className="text-sm font-bold text-orange-700 dark:text-orange-400">
                         {formatPrice(product.base_price)}
                       </p>
-                      <div className="flex items-center gap-1">
-                        <Star
-                          size={12}
-                          className="fill-yellow-400 text-yellow-400"
-                        />
-                        <span className="text-xs text-orange-600 dark:text-orange-400">
-                          {product.average_rating.toFixed(1)}
-                        </span>
-                      </div>
+                      <span className="text-xs text-orange-600 dark:text-orange-400">
+                        ⭐ {product.average_rating.toFixed(1)}
+                      </span>
                     </div>
                   </div>
                 ))}
@@ -1067,53 +1219,95 @@ const MessageBubble: React.FC<{
   );
 };
 
-// File Preview Component
+// File Preview Component with Circular Progress
 const FilePreview: React.FC<{
   file: UploadedFileDisplay;
   onRemove: () => void;
   onPreview: () => void;
 }> = ({ file, onRemove, onPreview }) => {
   const isImage = file.file.type.startsWith("image/");
+  const progress = file.uploadProgress || 0;
+  const radius = 20;
+  const circumference = 2 * Math.PI * radius;
+  const strokeDashoffset = circumference - (progress / 100) * circumference;
 
   return (
-    <div className="relative inline-block border border-orange-300 dark:border-orange-700 rounded-lg p-2 bg-amber-50 dark:bg-orange-950">
+    <div
+      className="relative inline-block rounded-lg p-2"
+      style={{
+        backgroundColor: "rgba(200, 155, 109, 0.15)",
+        border: "1px solid rgba(200, 155, 109, 0.3)",
+      }}
+    >
       <div className="flex items-center gap-2">
-        {isImage && file.preview ? (
-          <img
-            src={file.preview}
-            alt={file.file.name}
-            className="w-12 h-12 object-cover rounded cursor-pointer hover:opacity-80"
-            onClick={onPreview}
-          />
-        ) : (
-          <div className="w-12 h-12 flex items-center justify-center bg-amber-100 dark:bg-orange-900 rounded">
-            <FileText
-              size={24}
-              className="text-orange-600 dark:text-orange-400"
+        <div className="relative w-12 h-12">
+          {isImage && file.preview ? (
+            <img
+              src={file.preview}
+              alt={file.file.name}
+              className="w-12 h-12 object-cover rounded cursor-pointer hover:opacity-80"
+              onClick={onPreview}
             />
-          </div>
-        )}
-        <div className="flex-1 min-w-0">
-          <p className="text-xs font-medium text-orange-900 dark:text-amber-100 truncate max-w-[100px]">
-            {file.file.name}
-          </p>
-          <p className="text-xs text-orange-600 dark:text-orange-400">
-            {(file.file.size / 1024).toFixed(2)} KB
-          </p>
-          {file.uploading && (
-            <div className="w-full h-1 bg-orange-200 dark:bg-orange-800 rounded-full mt-1 overflow-hidden">
-              <div className="h-full bg-orange-600 animate-pulse"></div>
+          ) : (
+            <div
+              className="w-12 h-12 flex items-center justify-center rounded"
+              style={{ backgroundColor: "rgba(200, 155, 109, 0.2)" }}
+            >
+              <FileText size={24} style={{ color: "#C89B6D" }} />
             </div>
           )}
-          {file.error && (
-            <p className="text-xs text-red-500 dark:text-red-400 mt-1">
-              {file.error}
-            </p>
+
+          {/* Circular Progress Overlay */}
+          {file.uploadProgress !== undefined && file.uploadProgress < 100 && (
+            <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 rounded">
+              <svg className="w-12 h-12 transform -rotate-90">
+                <circle
+                  cx="24"
+                  cy="24"
+                  r={radius}
+                  stroke="rgba(255, 255, 255, 0.3)"
+                  strokeWidth="3"
+                  fill="none"
+                />
+                <circle
+                  cx="24"
+                  cy="24"
+                  r={radius}
+                  stroke="#C89B6D"
+                  strokeWidth="3"
+                  fill="none"
+                  strokeDasharray={circumference}
+                  strokeDashoffset={strokeDashoffset}
+                  strokeLinecap="round"
+                  style={{ transition: "stroke-dashoffset 0.3s ease" }}
+                />
+              </svg>
+              <span className="absolute text-white text-xs font-bold">
+                {Math.round(progress)}%
+              </span>
+            </div>
           )}
         </div>
+
+        <div className="flex-1 min-w-0">
+          <p
+            className="text-xs font-medium truncate max-w-[100px]"
+            style={{ color: "#C89B6D" }}
+          >
+            {file.file.name}
+          </p>
+          <p className="text-xs" style={{ color: "rgba(200, 155, 109, 0.7)" }}>
+            {(file.file.size / 1024).toFixed(2)} KB
+          </p>
+          {file.error && (
+            <p className="text-xs text-red-500 mt-1">{file.error}</p>
+          )}
+        </div>
+
         <button
           onClick={onRemove}
-          className="text-orange-600 hover:text-red-600 transition-colors"
+          className="transition-colors hover:opacity-80"
+          style={{ color: "#C89B6D" }}
         >
           <X size={16} />
         </button>

@@ -12,7 +12,7 @@ import {
   Badge,
   Spinner,
 } from "@chakra-ui/react";
-import { ChevronLeft, ChevronRight, X, Heart } from "lucide-react";
+import { ChevronLeft, ChevronRight, X } from "lucide-react";
 import type { Product, ProductVariant } from "@/types";
 import { StarIcon } from "@/components/icons";
 import ProductCard from "@/components/ProductCard";
@@ -28,9 +28,6 @@ interface ProductDetailModalProps {
     quantity: number
   ) => void;
   onProductClick: (product: Product) => void;
-  onToggleWishlist: (productId: string) => void;
-  isWishlisted: boolean;
-  wishlist: string[];
 }
 
 const ProductRating: React.FC<{
@@ -58,9 +55,6 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
   onClose,
   onAddToCart,
   onProductClick,
-  onToggleWishlist,
-  isWishlisted,
-  wishlist,
 }) => {
   const [quantity, setQuantity] = useState(1);
   const [pendingQuantity, setPendingQuantity] = useState<number | string>(1);
@@ -709,32 +703,6 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                     >
                       Thêm giỏ hàng
                     </Button>
-                    <Button
-                      onClick={() => onToggleWishlist(productId)}
-                      w="full"
-                      size="md"
-                      fontSize="sm"
-                      fontWeight="medium"
-                      borderWidth="1px"
-                      bg={isWishlisted ? "#FFF8F0" : "white"}
-                      style={{
-                        borderColor: isWishlisted ? "#C89B6D" : "#E9ECEF",
-                        color: isWishlisted ? "#C89B6D" : "#666666",
-                      }}
-                      _hover={{
-                        borderColor: "red.500",
-                        color: "red.500",
-                      }}
-                    >
-                      <Flex align="center" justify="center" gap={1.5}>
-                        <Heart
-                          className={`w-4 h-4 ${
-                            isWishlisted ? "fill-current" : ""
-                          }`}
-                        />
-                        <Text>Yêu thích</Text>
-                      </Flex>
-                    </Button>
                   </VStack>
                 </VStack>
               </Box>
@@ -755,8 +723,6 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                       <ProductCard
                         product={p}
                         onProductClick={onProductClick}
-                        onToggleWishlist={onToggleWishlist}
-                        isWishlisted={wishlist.includes(relProductId)}
                       />
                     </Box>
                   );

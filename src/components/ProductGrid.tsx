@@ -26,8 +26,6 @@ interface ProductGridProps {
   recommendations: Product[];
   forYouProducts: Product[];
   onProductClick: (product: Product) => void;
-  onToggleWishlist: (productId: string) => void;
-  wishlist: string[];
   onCategoryPageChange: (categoryIndex: number, page: number) => void;
   onSearchChange?: (searchTerm: string) => void;
   onLoadMoreCategories?: () => void;
@@ -45,8 +43,6 @@ const ProductGrid: React.FC<ProductGridProps> = ({
   recommendations,
   forYouProducts,
   onProductClick,
-  onToggleWishlist,
-  wishlist,
   onCategoryPageChange,
   onSearchChange,
   onLoadMoreCategories,
@@ -142,8 +138,6 @@ const ProductGrid: React.FC<ProductGridProps> = ({
                     <ProductCard
                       product={product}
                       onProductClick={onProductClick}
-                      onToggleWishlist={onToggleWishlist}
-                      isWishlisted={wishlist.includes(productId)}
                     />
                   </Box>
                 );
@@ -173,8 +167,6 @@ const ProductGrid: React.FC<ProductGridProps> = ({
                     <ProductCard
                       product={product}
                       onProductClick={onProductClick}
-                      onToggleWishlist={onToggleWishlist}
-                      isWishlisted={wishlist.includes(productId)}
                     />
                   </Box>
                 );
@@ -223,8 +215,6 @@ const ProductGrid: React.FC<ProductGridProps> = ({
                     <ProductCard
                       product={product}
                       onProductClick={onProductClick}
-                      onToggleWishlist={onToggleWishlist}
-                      isWishlisted={wishlist.includes(productId)}
                     />
                   </Box>
                 );
@@ -307,8 +297,6 @@ const ProductGrid: React.FC<ProductGridProps> = ({
                           <ProductCard
                             product={product}
                             onProductClick={onProductClick}
-                            onToggleWishlist={onToggleWishlist}
-                            isWishlisted={wishlist.includes(productId)}
                           />
                         </Box>
                       );
