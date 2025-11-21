@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Send,
   X,
@@ -19,6 +20,7 @@ import { useCartStore } from "@/stores/cartStore";
 import { useAuthStore } from "@/stores/authStore";
 import { chatApi, type FileMetadata } from "@/api/chat.api";
 import ProductDetailModal from "@/components/ProductDetailModal";
+import ArtifactCarousel from "@/components/ArtifactCarousel";
 import type { Product as ProductType } from "@/types";
 import { marked } from "marked";
 import katex from "katex";
@@ -91,6 +93,7 @@ const renderMarkdown = (content: string): string => {
 };
 
 const Chatbot: React.FC = () => {
+  const navigate = useNavigate();
   const {
     messages,
     isStreaming,
@@ -222,6 +225,40 @@ const Chatbot: React.FC = () => {
   useEffect(() => {
     scrollToBottom(true);
   }, [messages, scrollToBottom]);
+
+  // Auto-navigate when stream finishes with artifacts
+  useEffect(() => {
+    if (!isStreaming && messages.length > 0) {
+      const lastMessage = messages[messages.length - 1];
+
+      // Check if last message is from assistant and has product artifacts
+      if (lastMessage.role === "assistant" && lastMessage.artifacts) {
+        let products: any[] | undefined;
+
+        if (Array.isArray(lastMessage.artifacts)) {
+          const productArtifact = lastMessage.artifacts.find(
+            (artifact: any) => artifact.type === "product_search_results"
+          );
+          products = productArtifact?.data;
+        } else if (
+          lastMessage.artifacts.type === "product_search_results" &&
+          lastMessage.artifacts.data
+        ) {
+          products = lastMessage.artifacts.data;
+        }
+
+        if (products && Array.isArray(products) && products.length > 0) {
+          // Auto-navigate to artifact products page
+          navigate(`/artifact/${Date.now()}`, {
+            state: {
+              products,
+              title: "Sản phẩm gợi ý từ AgentFashion",
+            },
+          });
+        }
+      }
+    }
+  }, [isStreaming, messages, navigate]);
 
   // Load initial history when authenticated
   useEffect(() => {
@@ -678,6 +715,11 @@ const Chatbot: React.FC = () => {
                   } as ProductType;
                   setSelectedProduct(productType);
                 }}
+                onViewAll={(products, title) => {
+                  navigate(`/artifact/${Date.now()}`, {
+                    state: { products, title },
+                  });
+                }}
                 formatPrice={formatPrice}
               />
             ))
@@ -964,11 +1006,10 @@ const Chatbot: React.FC = () => {
 const MessageBubble: React.FC<{
   message: any;
   onProductClick?: (product: ArtifactProduct) => void;
+  onViewAll?: (products: ArtifactProduct[], title: string) => void;
   formatPrice: (price: number) => string;
-}> = ({ message, onProductClick, formatPrice }) => {
+}> = ({ message, onProductClick, onViewAll, formatPrice }) => {
   const isUser = message.role === "user";
-  const [currentPage, setCurrentPage] = useState(1);
-  const PRODUCTS_PER_PAGE = 6;
 
   // Extract products from artifacts
   const products = React.useMemo(() => {
@@ -998,17 +1039,6 @@ const MessageBubble: React.FC<{
 
     return rawProducts;
   }, [message.artifacts]);
-
-  const totalPages = products
-    ? Math.ceil(products.length / PRODUCTS_PER_PAGE)
-    : 0;
-  const startIndex = (currentPage - 1) * PRODUCTS_PER_PAGE;
-  const endIndex = startIndex + PRODUCTS_PER_PAGE;
-  const currentProducts = products?.slice(startIndex, endIndex);
-
-  React.useEffect(() => {
-    setCurrentPage(1);
-  }, [products]);
 
   // Filter image attachments
   const imageAttachments = React.useMemo(() => {
@@ -1147,71 +1177,15 @@ const MessageBubble: React.FC<{
           </p>
         </div>
 
-        {/* Product Artifacts Grid */}
+        {/* Product Artifacts Carousel */}
         {products && products.length > 0 && (
           <div className="w-full mt-2">
-            <div className="flex justify-between items-center mb-2">
-              <span
-                className="text-xs font-semibold"
-                style={{ color: "#C89B6D" }}
-              >
-                Sản phẩm tìm được ({products.length})
-              </span>
-              {totalPages > 1 && (
-                <span className="text-xs" style={{ color: "#FFFFFF" }}>
-                  Trang {currentPage}/{totalPages}
-                </span>
-              )}
-            </div>
-
-            <div className="relative">
-              {totalPages > 1 && currentPage > 1 && (
-                <button
-                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                  className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-3 z-10 bg-orange-600 text-white rounded-full p-1 shadow-lg hover:bg-orange-700"
-                >
-                  <ChevronLeft size={16} />
-                </button>
-              )}
-
-              <div className="grid grid-cols-3 md:grid-cols-2 gap-3 md:gap-4">
-                {currentProducts?.map((product) => (
-                  <div
-                    key={product.id}
-                    onClick={() => onProductClick?.(product)}
-                    className="bg-white dark:bg-orange-950 rounded-lg p-3 cursor-pointer hover:shadow-lg transition-all border border-orange-300 dark:border-orange-700 group w-full"
-                  >
-                    <img
-                      src={product.image_urls[0]}
-                      alt={product.name}
-                      className="w-full aspect-square object-cover rounded-md mb-2"
-                    />
-                    <h4 className="text-sm font-semibold text-orange-900 dark:text-amber-100 line-clamp-2 mb-2 min-h-[2.5rem]">
-                      {product.name}
-                    </h4>
-                    <div className="flex items-center justify-between">
-                      <p className="text-sm font-bold text-orange-700 dark:text-orange-400">
-                        {formatPrice(product.base_price)}
-                      </p>
-                      <span className="text-xs text-orange-600 dark:text-orange-400">
-                        ⭐ {product.average_rating.toFixed(1)}
-                      </span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              {totalPages > 1 && currentPage < totalPages && (
-                <button
-                  onClick={() =>
-                    setCurrentPage((p) => Math.min(totalPages, p + 1))
-                  }
-                  className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-3 z-10 bg-orange-600 text-white rounded-full p-1 shadow-lg hover:bg-orange-700"
-                >
-                  <ChevronRight size={16} />
-                </button>
-              )}
-            </div>
+            <ArtifactCarousel
+              products={products}
+              onViewAll={() =>
+                onViewAll?.(products, "Sản phẩm gợi ý từ AgentFashion")
+              }
+            />
           </div>
         )}
       </div>
