@@ -9,7 +9,7 @@ import OrdersPage from "@/pages/OrdersPage";
 import AdminPage from "@/pages/AdminPage";
 import ProfilePage from "@/pages/ProfilePage";
 import PaymentResultPage from "@/pages/PaymentResultPage";
-import ChatInterface from "@/components/chat/ChatInterface";
+import ArtifactProductsPage from "@/pages/ArtifactProductsPage";
 import { useAuthStore } from "@/stores/authStore";
 
 // Protected Route Component for Admin
@@ -114,12 +114,12 @@ export const router = createBrowserRouter([
         element: <ProfilePage />,
       },
       {
-        path: "chat",
-        element: <ChatInterface />,
-      },
-      {
         path: "payment-result",
         element: <PaymentResultPage />,
+      },
+      {
+        path: "artifact/:artifactId",
+        element: <ArtifactProductsPage />,
       },
     ],
   },
