@@ -1,10 +1,11 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Outlet, useNavigate } from "react-router-dom";
 import Header from "@/components/Header";
 import Chatbot from "@/components/Chatbot";
 import AuthModal from "@/components/AuthModal";
 import { useAuthStore } from "@/stores/authStore";
 import { useCartStore } from "@/stores/cartStore";
+import { MessageCircle, X } from "lucide-react";
 
 interface MainLayoutProps {
   theme: "light" | "dark";
@@ -32,8 +33,24 @@ const MainLayout: React.FC<MainLayoutProps> = ({
     "hidden"
   );
 
+  // Mobile chatbot dialog state
+  const [isMobile, setIsMobile] = useState(false);
+  const [chatbotOpen, setChatbotOpen] = useState(false);
+
   // Placeholder for wishlist - sẽ có wishlist store sau
   const wishlist: string[] = [];
+
+  // Detect mobile screen size
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 640); // sm breakpoint
+    };
+
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
 
   const cartItemCount = totalCount;
 
@@ -78,23 +95,36 @@ const MainLayout: React.FC<MainLayoutProps> = ({
       />
 
       <main className="flex-grow flex overflow-hidden w-full">
-        {/* Chatbot - takes 3/10 of screen when normal, full screen when expanded */}
-        <Chatbot
-          messages={[]}
-          onSendMessage={(msg) => console.log("Send:", msg)}
-          isBotTyping={false}
-          onProductClick={(product) => console.log("Product:", product)}
-          activeAgent={"system" as any}
-        />
+        {/* Desktop Chatbot - hidden on mobile */}
+        {!isMobile && <Chatbot isMobile={false} />}
 
-        {/* Main content area - takes 7/10 of screen */}
+        {/* Main content area */}
         <div
-          className="flex-grow h-full overflow-y-auto"
-          style={{ backgroundColor: "#F4F6F8", width: "100%" }}
+          className="flex-grow h-full overflow-y-auto w-full"
+          style={{ backgroundColor: "#F4F6F8" }}
         >
           <Outlet context={{ searchTerm }} />
         </div>
       </main>
+
+      {/* Mobile Chatbot Floating Button */}
+      {isMobile && !chatbotOpen && (
+        <button
+          onClick={() => setChatbotOpen(true)}
+          className="fixed bottom-6 right-6 w-14 h-14 rounded-full shadow-2xl flex items-center justify-center z-40 transition-transform hover:scale-110 active:scale-95"
+          style={{ backgroundColor: "#C89B6D" }}
+          aria-label="Mở chatbot"
+        >
+          <MessageCircle className="w-7 h-7 text-white" />
+        </button>
+      )}
+
+      {/* Mobile Chatbot Dialog */}
+      {isMobile && chatbotOpen && (
+        <div className="fixed inset-0 z-50 bg-white">
+          <Chatbot isMobile={true} onClose={() => setChatbotOpen(false)} />
+        </div>
+      )}
 
       {/* Auth Modal */}
       {authModal !== "hidden" && (

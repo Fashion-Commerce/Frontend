@@ -92,19 +92,11 @@ const ArtifactProductsPage: React.FC = () => {
   return (
     <>
       <Box
-        style={{
-          backgroundColor: "#F4F6F8",
-          minHeight: "100vh",
-          padding: "2rem 1rem",
-        }}
+        className="w-full"
+        style={{ backgroundColor: "#F4F6F8", padding: "1rem", width: "100%" }}
       >
         {/* Header */}
-        <Flex
-          align="center"
-          gap={3}
-          mb={6}
-          style={{ maxWidth: "1400px", margin: "0 auto" }}
-        >
+        <Flex align="center" gap={3} mb={4}>
           <IconButton
             aria-label="Quay lại"
             onClick={() => navigate("/")}
@@ -122,36 +114,30 @@ const ArtifactProductsPage: React.FC = () => {
           >
             <ArrowLeft size={20} />
           </IconButton>
-          <Box>
-            <Heading
-              size="lg"
-              style={{
-                fontFamily: "Montserrat, sans-serif",
-                color: "#333333",
-              }}
-            >
-              {artifactTitle}
-            </Heading>
-            <Text fontSize="sm" style={{ color: "#666666", marginTop: "4px" }}>
-              {products.length} sản phẩm
-            </Text>
-          </Box>
+          <Heading
+            className="text-xl md:text-2xl font-bold"
+            style={{
+              fontFamily: "Montserrat, sans-serif",
+              color: "#1A2A4E",
+            }}
+          >
+            {artifactTitle} ({products.length} sản phẩm)
+          </Heading>
         </Flex>
 
         {/* Products Grid using ProductCard */}
-        <Box style={{ maxWidth: "1400px", margin: "0 auto" }}>
+        <Box className="mb-8" style={{ width: "100%" }}>
           {products.length === 0 ? (
             <Flex justify="center" align="center" py={20}>
-              <Text style={{ color: "#666666", fontSize: "18px" }}>
+              <Text style={{ color: "#1A2A4E", fontSize: "18px" }}>
                 Không có sản phẩm nào
               </Text>
             </Flex>
           ) : (
-            <Box
+            <div
+              className="grid gap-3 sm:gap-4 w-full responsive-product-grid"
               style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))",
-                gap: "16px",
+                gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))",
               }}
             >
               {products.map((product) => {
@@ -187,7 +173,7 @@ const ArtifactProductsPage: React.FC = () => {
                   />
                 );
               })}
-            </Box>
+            </div>
           )}
         </Box>
       </Box>

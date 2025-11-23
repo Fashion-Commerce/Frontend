@@ -173,15 +173,16 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
       alignItems="center"
       justifyContent="center"
       zIndex="40"
-      p={4}
+      p={{ base: 0, sm: 4 }}
       onClick={onClose}
     >
       <Box
         bg="white"
-        borderRadius="xl"
+        borderRadius={{ base: "none", sm: "xl" }}
         w="full"
-        maxW="5xl"
-        maxH="85vh"
+        maxW={{ base: "full", sm: "5xl" }}
+        maxH={{ base: "full", sm: "85vh" }}
+        h={{ base: "full", sm: "auto" }}
         position="relative"
         display="flex"
         flexDirection="column"
@@ -212,10 +213,13 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
         </Button>
 
         {/* Content */}
-        <Box flex="1" overflowY="auto" p={6}>
-          <Flex gap={6}>
-            {/* Left: Images - Thu nhỏ xuống 1/3 */}
-            <Box w="280px" flexShrink={0}>
+        <Box flex="1" overflowY="auto" p={{ base: 3, sm: 4, md: 6 }}>
+          <Flex
+            gap={{ base: 3, sm: 4, md: 6 }}
+            direction={{ base: "column", lg: "row" }}
+          >
+            {/* Left: Images */}
+            <Box w={{ base: "full", lg: "280px" }} flexShrink={0}>
               <VStack spacing={3} position="sticky" top={0}>
                 {/* Main Image - Compact */}
                 <Box
@@ -331,8 +335,8 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
             </Box>
 
             {/* Middle: Product Info */}
-            <Box flex="1" minW={0}>
-              <VStack gap={4} align="stretch">
+            <Box flex="1" minW={0} w={{ base: "full", lg: "auto" }}>
+              <VStack gap={{ base: 3, sm: 4 }} align="stretch">
                 {/* Brand */}
                 {brandName && (
                   <Badge
@@ -521,12 +525,12 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
             </Box>
 
             {/* Right: Actions Sidebar */}
-            <Box w="240px" flexShrink={0}>
+            <Box w={{ base: "full", lg: "240px" }} flexShrink={0}>
               <Box
                 bg="#F4F6F8"
-                p={4}
+                p={{ base: 3, sm: 4 }}
                 borderRadius="lg"
-                position="sticky"
+                position={{ base: "static", lg: "sticky" }}
                 top={0}
                 style={{ border: "1px solid #E9ECEF" }}
               >

@@ -63,29 +63,34 @@ const Header: React.FC<HeaderProps> = ({
       }}
     >
       {/* Top Row: Logo, Search, Actions */}
-      <div className="w-full px-6 py-3 flex items-center justify-between gap-6">
+      <div className="w-full px-3 sm:px-6 py-2 sm:py-3 flex items-center justify-between gap-2 sm:gap-4 md:gap-6">
         {/* Logo */}
-        <Link to="/" className="flex items-center gap-3 flex-shrink-0">
+        <Link to="/" className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
           <img
             src="/img/logobg.png"
             alt="AgentFashion"
-            className="h-12 w-auto"
+            className="h-8 sm:h-10 md:h-12 w-auto"
             onError={(e) => {
               e.currentTarget.style.display = "none";
             }}
           />
           <Text
-            className="text-white font-bold text-2xl "
+            className="text-white font-bold text-base sm:text-xl md:text-2xl hidden xs:block"
             style={{ fontFamily: "Montserrat, sans-serif", color: "#C89B6D" }}
           >
             AgentFashion
           </Text>
         </Link>
 
-        {/* Search Bar - Center */}
+        {/* Search Bar - Center - Hidden on mobile */}
         {onSearchInputChange && onSearchSubmit && (
-          <Box className="flex-1" style={{ maxWidth: "600px" }}>
-            <Box className="relative flex items-center">
+          <Box flex="1" maxW="600px" display={{ base: "none", md: "block" }}>
+            <Box
+              position="relative"
+              display="flex"
+              alignItems="center"
+              w="full"
+            >
               <Search
                 className="pointer-events-none"
                 size={18}
@@ -139,19 +144,22 @@ const Header: React.FC<HeaderProps> = ({
         )}
 
         {/* Right Actions */}
-        <Flex align="center" gap={3} className="flex-shrink-0">
+        <Flex align="center" gap={{ base: 2, sm: 3 }} className="flex-shrink-0">
           {currentUser ? (
-            <Flex align="center" gap={3}>
+            <Flex align="center" gap={{ base: 2, sm: 3 }}>
               {currentUser.user_type === "admin" && (
                 <Button
                   onClick={onAdminClick}
-                  size="sm"
+                  size={{ base: "sm", md: "sm" }}
                   colorPalette="purple"
                   variant="subtle"
-                  className="text-white"
+                  className="text-white flex items-center gap-1 sm:gap-2"
                 >
-                  <ShieldCheck className="w-4 h-4" />
-                  Admin Panel
+                  <ShieldCheck className="w-3 h-3 sm:w-4 sm:h-4" />
+                  <span className="hidden sm:inline text-xs sm:text-sm">
+                    Admin
+                  </span>
+                  <span className="hidden lg:inline"> Panel</span>
                 </Button>
               )}
 
@@ -160,12 +168,12 @@ const Header: React.FC<HeaderProps> = ({
                   <Button
                     variant="outline"
                     size="sm"
-                    className="gap-2 border-white/30 text-white hover:bg-white/10"
+                    className="gap-1 sm:gap-2 border-white/30 text-white hover:bg-white/10 px-2 sm:px-3"
                   >
                     <UserRound className="w-4 h-4" />
                     <Text
-                      display={{ base: "none", sm: "inline" }}
-                      className="font-medium"
+                      display={{ base: "none", md: "inline" }}
+                      className="font-medium text-sm"
                     >
                       {currentUser.fullname}
                     </Text>
@@ -204,45 +212,52 @@ const Header: React.FC<HeaderProps> = ({
               </Menu.Root>
             </Flex>
           ) : (
-            <Flex gap={2}>
+            <Flex gap={{ base: 1, sm: 2 }}>
               <Button
                 onClick={() => onAuthClick("login")}
                 variant="ghost"
                 size="sm"
-                className="font-medium px-4 text-white hover:bg-white/10"
+                className="font-medium text-white hover:bg-white/10"
+                px={{ base: 2, sm: 3, md: 4 }}
+                fontSize={{ base: "xs", sm: "sm" }}
               >
-                Đăng nhập
+                <Text display={{ base: "none", sm: "inline" }}>Đăng nhập</Text>
+                <Text display={{ base: "inline", sm: "none" }}>Login</Text>
               </Button>
               <Button
                 onClick={() => onAuthClick("register")}
                 size="sm"
-                className="font-semibold px-4 text-white hover:opacity-90"
+                className="font-semibold text-white hover:opacity-90"
+                px={{ base: 2, sm: 3, md: 4 }}
+                fontSize={{ base: "xs", sm: "sm" }}
                 style={{ backgroundColor: "#C89B6D" }}
               >
-                Đăng ký
+                <Text display={{ base: "none", sm: "inline" }}>Đăng ký</Text>
+                <Text display={{ base: "inline", sm: "none" }}>Sign up</Text>
               </Button>
             </Flex>
           )}
 
-          <Flex gap={3}>
+          <Flex gap={{ base: 2, sm: 3 }}>
             <Box position="relative">
               <Button
                 onClick={onCartClick}
                 variant="ghost"
                 size="sm"
-                p={2}
+                p={1.5}
+                sm={{ p: 2 }}
                 className="hover:bg-white/10"
               >
                 <ShoppingCart
-                  className="w-5 h-5"
+                  className="w-4 h-4 sm:w-5 sm:h-5"
                   style={{ color: "#C89B6D" }}
                 />
               </Button>
               {cartItemCount > 0 && (
                 <Circle
-                  className="absolute -top-1 -right-1 text-white text-xs font-bold"
+                  className="absolute -top-1 -right-1 text-white font-bold"
                   size="4"
-                  style={{ backgroundColor: "#C89B6D" }}
+                  style={{ backgroundColor: "#C89B6D", fontSize: "10px" }}
                 >
                   {cartItemCount}
                 </Circle>
@@ -251,6 +266,62 @@ const Header: React.FC<HeaderProps> = ({
           </Flex>
         </Flex>
       </div>
+
+      {/* Mobile Search Bar - Separate row */}
+      {onSearchInputChange && onSearchSubmit && (
+        <div className="md:hidden w-full px-3 pb-2">
+          <Box className="relative flex items-center">
+            <Search
+              className="pointer-events-none"
+              size={16}
+              style={{
+                position: "absolute",
+                left: "12px",
+                top: "50%",
+                transform: "translateY(-50%)",
+                zIndex: 10,
+                color: "#C89B6D",
+              }}
+            />
+            <Input
+              placeholder="Tìm kiếm sản phẩm..."
+              value={searchInput}
+              onChange={(e) => onSearchInputChange(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  onSearchSubmit();
+                }
+              }}
+              paddingLeft="40px"
+              paddingRight="40px"
+              size="sm"
+              style={{
+                borderColor: "#E9ECEF",
+                backgroundColor: "white",
+                fontFamily: "Inter, sans-serif",
+              }}
+              _focus={{
+                borderColor: "#C89B6D",
+                boxShadow: "0 0 0 1px #C89B6D",
+              }}
+              borderRadius="full"
+            />
+            <Button
+              onClick={onSearchSubmit}
+              position="absolute"
+              right="4px"
+              size="xs"
+              borderRadius="full"
+              style={{ backgroundColor: "#C89B6D", color: "white" }}
+              _hover={{ backgroundColor: "#B88A5D" }}
+              p={1.5}
+              minW="auto"
+            >
+              <Search size={14} />
+            </Button>
+          </Box>
+        </div>
+      )}
     </header>
   );
 };

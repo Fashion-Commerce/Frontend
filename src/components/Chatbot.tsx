@@ -92,7 +92,12 @@ const renderMarkdown = (content: string): string => {
   }
 };
 
-const Chatbot: React.FC = () => {
+interface ChatbotProps {
+  isMobile?: boolean;
+  onClose?: () => void;
+}
+
+const Chatbot: React.FC<ChatbotProps> = ({ isMobile = false, onClose }) => {
   const navigate = useNavigate();
   const {
     messages,
@@ -560,13 +565,15 @@ const Chatbot: React.FC = () => {
       <div
         id="chatbot-panel"
         className={`${
-          isExpanded
+          isMobile
+            ? "w-full h-full"
+            : isExpanded
             ? "fixed inset-0 z-50 w-full h-full"
             : "w-[30%] h-full flex-shrink-0"
         } flex flex-col shadow-2xl transition-all duration-300`}
         style={{
           backgroundColor: "#1A2A4E",
-          borderRight: "1px solid rgba(200, 155, 109, 0.2)",
+          borderRight: isMobile ? "none" : "1px solid rgba(200, 155, 109, 0.2)",
         }}
       >
         {/* Header */}
@@ -614,37 +621,49 @@ const Chatbot: React.FC = () => {
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <button
-              onClick={() => setDeleteDialogOpen(true)}
-              className="p-2 hover:bg-white/20 rounded-lg transition-colors"
-              title="Xóa tất cả tin nhắn"
-            >
-              <Trash2 className="h-5 w-5" />
-            </button>
-            <button
-              onClick={() => setIsExpanded(!isExpanded)}
-              className="p-2 hover:bg-white/20 rounded-lg transition-colors"
-              title={isExpanded ? "Thu nhỏ" : "Mở rộng"}
-            >
-              {isExpanded ? (
+            {!isMobile && (
+              <button
+                onClick={() => setDeleteDialogOpen(true)}
+                className="p-2 hover:bg-white/20 rounded-lg transition-colors"
+                title="Xóa tất cả tin nhắn"
+              >
+                <Trash2 className="h-5 w-5" />
+              </button>
+            )}
+            {isMobile ? (
+              <button
+                onClick={onClose}
+                className="p-2 hover:bg-white/20 rounded-lg transition-colors"
+                title="Đóng"
+              >
                 <X className="h-6 w-6" />
-              ) : (
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-6 w-6"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"
-                  />
-                </svg>
-              )}
-            </button>
+              </button>
+            ) : (
+              <button
+                onClick={() => setIsExpanded(!isExpanded)}
+                className="p-2 hover:bg-white/20 rounded-lg transition-colors"
+                title={isExpanded ? "Thu nhỏ" : "Mở rộng"}
+              >
+                {isExpanded ? (
+                  <X className="h-6 w-6" />
+                ) : (
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-6 w-6"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"
+                    />
+                  </svg>
+                )}
+              </button>
+            )}
           </div>
         </div>
 
@@ -697,6 +716,9 @@ const Chatbot: React.FC = () => {
               <MessageBubble
                 key={msg.id}
                 message={msg}
+                isStreaming={
+                  isStreaming && msg.id === messages[messages.length - 1]?.id
+                }
                 onProductClick={(product) => {
                   const productType: ProductType = {
                     ...product,
@@ -723,33 +745,6 @@ const Chatbot: React.FC = () => {
                 formatPrice={formatPrice}
               />
             ))
-          )}
-
-          {isStreaming && (
-            <div className="flex items-center gap-2">
-              <div
-                className="w-8 h-8 rounded-full flex items-center justify-center shadow-md"
-                style={{ backgroundColor: "#C89B6D" }}
-              >
-                <span className="text-white text-sm font-bold">AI</span>
-              </div>
-              <div
-                className="rounded-2xl px-4 py-3 shadow-md"
-                style={{ backgroundColor: "rgba(200, 155, 109, 0.15)" }}
-              >
-                <div className="flex gap-1">
-                  <div className="w-2 h-2 bg-orange-600 rounded-full animate-bounce"></div>
-                  <div
-                    className="w-2 h-2 bg-orange-600 rounded-full animate-bounce"
-                    style={{ animationDelay: "0.2s" }}
-                  ></div>
-                  <div
-                    className="w-2 h-2 bg-orange-600 rounded-full animate-bounce"
-                    style={{ animationDelay: "0.4s" }}
-                  ></div>
-                </div>
-              </div>
-            </div>
           )}
 
           <div ref={messagesEndRef} />
@@ -1005,10 +1000,17 @@ const Chatbot: React.FC = () => {
 // Message Bubble Component
 const MessageBubble: React.FC<{
   message: any;
+  isStreaming?: boolean;
   onProductClick?: (product: ArtifactProduct) => void;
   onViewAll?: (products: ArtifactProduct[], title: string) => void;
   formatPrice: (price: number) => string;
-}> = ({ message, onProductClick, onViewAll, formatPrice }) => {
+}> = ({
+  message,
+  isStreaming = false,
+  onProductClick,
+  onViewAll,
+  formatPrice,
+}) => {
   const isUser = message.role === "user";
 
   // Extract products from artifacts
@@ -1159,22 +1161,43 @@ const MessageBubble: React.FC<{
             </div>
           )}
 
-          {/* Message Content */}
-          <div
-            className="markdown-content text-sm"
-            style={{ color: isUser ? "#FFFFFF" : "#FFFFFF" }}
-            dangerouslySetInnerHTML={{
-              __html: renderMarkdown(message.content),
-            }}
-          />
+          {/* Skeleton Loading for Streaming */}
+          {isStreaming && !message.content && (
+            <div className="flex gap-1">
+              <div className="w-2 h-2 bg-orange-600 rounded-full animate-bounce"></div>
+              <div
+                className="w-2 h-2 bg-orange-600 rounded-full animate-bounce"
+                style={{ animationDelay: "0.2s" }}
+              ></div>
+              <div
+                className="w-2 h-2 bg-orange-600 rounded-full animate-bounce"
+                style={{ animationDelay: "0.4s" }}
+              ></div>
+            </div>
+          )}
 
-          {/* Timestamp */}
-          <p
-            className={`text-xs mt-2`}
-            style={{ color: isUser ? "rgba(255, 255, 255, 0.8)" : "#C89B6D" }}
-          >
-            {new Date(message.timestamp).toLocaleTimeString("vi-VN")}
-          </p>
+          {/* Message Content */}
+          {message.content && (
+            <>
+              <div
+                className="markdown-content text-sm"
+                style={{ color: isUser ? "#FFFFFF" : "#FFFFFF" }}
+                dangerouslySetInnerHTML={{
+                  __html: renderMarkdown(message.content),
+                }}
+              />
+
+              {/* Timestamp */}
+              <p
+                className={`text-xs mt-2`}
+                style={{
+                  color: isUser ? "rgba(255, 255, 255, 0.8)" : "#C89B6D",
+                }}
+              >
+                {new Date(message.timestamp).toLocaleTimeString("vi-VN")}
+              </p>
+            </>
+          )}
         </div>
 
         {/* Product Artifacts Carousel */}

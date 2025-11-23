@@ -209,27 +209,25 @@ const ProductGrid: React.FC<ProductGridProps> = ({
               </Text>
             </VStack>
           ) : (
-            <Box
-              className="grid gap-4"
+            <div
+              className="grid gap-3 sm:gap-4 w-full responsive-product-grid"
               style={{
-                gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))",
-                width: "100%",
+                gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))",
               }}
             >
               {searchResults.map((product) => {
                 const productId = product.id || product.product_id || "";
                 return (
-                  <Box key={`search-${productId}`}>
-                    <ProductCard
-                      product={product}
-                      onProductClick={onProductClick}
-                      onToggleWishlist={onToggleWishlist}
-                      isWishlisted={wishlist.includes(productId)}
-                    />
-                  </Box>
+                  <ProductCard
+                    key={`search-${productId}`}
+                    product={product}
+                    onProductClick={onProductClick}
+                    onToggleWishlist={onToggleWishlist}
+                    isWishlisted={wishlist.includes(productId)}
+                  />
                 );
               })}
-            </Box>
+            </div>
           )}
         </Box>
       )}

@@ -764,111 +764,113 @@ const ProductManagement: React.FC = () => {
           </Card.Body>
         ) : (
           <>
-            <Table.Root variant="outline">
-              <Table.Header>
-                <Table.Row>
-                  <Table.ColumnHeader className="px-6 py-4">
-                    STT
-                  </Table.ColumnHeader>
-                  <Table.ColumnHeader className="px-6 py-4">
-                    Ảnh
-                  </Table.ColumnHeader>
-                  <Table.ColumnHeader className="px-6 py-4">
-                    Tên sản phẩm
-                  </Table.ColumnHeader>
-                  <Table.ColumnHeader className="px-6 py-4">
-                    Giá
-                  </Table.ColumnHeader>
-                  <Table.ColumnHeader className="px-6 py-4">
-                    Danh mục
-                  </Table.ColumnHeader>
-                  <Table.ColumnHeader className="px-6 py-4">
-                    Thương hiệu
-                  </Table.ColumnHeader>
-                  <Table.ColumnHeader className="px-6 py-4">
-                    Ngày tạo
-                  </Table.ColumnHeader>
-                  <Table.ColumnHeader className="px-6 py-4 text-center">
-                    Thao tác
-                  </Table.ColumnHeader>
-                </Table.Row>
-              </Table.Header>
-              <Table.Body>
-                {products.map((product, index) => (
-                  <Table.Row key={product.product_id}>
-                    <Table.Cell className="px-6 py-4">
-                      {(currentPage - 1) * pageSize + index + 1}
-                    </Table.Cell>
-                    <Table.Cell className="px-6 py-4">
-                      {product.image_urls && product.image_urls.length > 0 ? (
-                        <Image
-                          src={product.image_urls[0]}
-                          alt={product.name}
-                          boxSize="50px"
-                          objectFit="cover"
-                          borderRadius="md"
-                        />
-                      ) : (
-                        <Box
-                          boxSize="50px"
-                          bg="gray.200"
-                          borderRadius="md"
-                          display="flex"
-                          alignItems="center"
-                          justifyContent="center"
-                        >
-                          <ImageIcon size={20} className="text-gray-400" />
-                        </Box>
-                      )}
-                    </Table.Cell>
-                    <Table.Cell className="px-6 py-4 font-semibold">
-                      {product.name}
-                    </Table.Cell>
-                    <Table.Cell className="px-6 py-4 text-blue-600 font-medium">
-                      {formatPrice(product.base_price || product.price)}
-                    </Table.Cell>
-                    <Table.Cell className="px-6 py-4 text-gray-600">
-                      {product.category_name ||
-                        getCategoryName(product.category_id)}
-                    </Table.Cell>
-                    <Table.Cell className="px-6 py-4 text-gray-600">
-                      {product.brand_name || getBrandName(product.brand_id)}
-                    </Table.Cell>
-                    <Table.Cell className="px-6 py-4 text-gray-600">
-                      {formatDate(product.created_at)}
-                    </Table.Cell>
-                    <Table.Cell className="px-6 py-4" textAlign="center">
-                      <HStack gap={2} justify="center">
-                        <IconButton
-                          size="sm"
-                          variant="ghost"
-                          className="text-blue-500 hover:bg-blue-50"
-                          onClick={() => handleOpenVariants(product)}
-                          title="Quản lý biến thể"
-                        >
-                          <Package size={18} />
-                        </IconButton>
-                        <IconButton
-                          size="sm"
-                          variant="ghost"
-                          className="text-red-500 hover:bg-red-50"
-                          onClick={() =>
-                            handleDeleteProduct(
-                              product.product_id || "",
-                              product.name
-                            )
-                          }
-                          loading={deletingId === product.product_id}
-                          disabled={deletingId === product.product_id}
-                        >
-                          <Trash2 size={18} />
-                        </IconButton>
-                      </HStack>
-                    </Table.Cell>
+            <div className="overflow-x-auto">
+              <Table.Root variant="outline">
+                <Table.Header>
+                  <Table.Row>
+                    <Table.ColumnHeader className="px-6 py-4">
+                      STT
+                    </Table.ColumnHeader>
+                    <Table.ColumnHeader className="px-6 py-4">
+                      Ảnh
+                    </Table.ColumnHeader>
+                    <Table.ColumnHeader className="px-6 py-4">
+                      Tên sản phẩm
+                    </Table.ColumnHeader>
+                    <Table.ColumnHeader className="px-6 py-4">
+                      Giá
+                    </Table.ColumnHeader>
+                    <Table.ColumnHeader className="px-6 py-4">
+                      Danh mục
+                    </Table.ColumnHeader>
+                    <Table.ColumnHeader className="px-6 py-4">
+                      Thương hiệu
+                    </Table.ColumnHeader>
+                    <Table.ColumnHeader className="px-6 py-4">
+                      Ngày tạo
+                    </Table.ColumnHeader>
+                    <Table.ColumnHeader className="px-6 py-4 text-center">
+                      Thao tác
+                    </Table.ColumnHeader>
                   </Table.Row>
-                ))}
-              </Table.Body>
-            </Table.Root>
+                </Table.Header>
+                <Table.Body>
+                  {products.map((product, index) => (
+                    <Table.Row key={product.product_id}>
+                      <Table.Cell className="px-6 py-4">
+                        {(currentPage - 1) * pageSize + index + 1}
+                      </Table.Cell>
+                      <Table.Cell className="px-6 py-4">
+                        {product.image_urls && product.image_urls.length > 0 ? (
+                          <Image
+                            src={product.image_urls[0]}
+                            alt={product.name}
+                            boxSize="50px"
+                            objectFit="cover"
+                            borderRadius="md"
+                          />
+                        ) : (
+                          <Box
+                            boxSize="50px"
+                            bg="gray.200"
+                            borderRadius="md"
+                            display="flex"
+                            alignItems="center"
+                            justifyContent="center"
+                          >
+                            <ImageIcon size={20} className="text-gray-400" />
+                          </Box>
+                        )}
+                      </Table.Cell>
+                      <Table.Cell className="px-6 py-4 font-semibold">
+                        {product.name}
+                      </Table.Cell>
+                      <Table.Cell className="px-6 py-4 text-blue-600 font-medium">
+                        {formatPrice(product.base_price || product.price)}
+                      </Table.Cell>
+                      <Table.Cell className="px-6 py-4 text-gray-600">
+                        {product.category_name ||
+                          getCategoryName(product.category_id)}
+                      </Table.Cell>
+                      <Table.Cell className="px-6 py-4 text-gray-600">
+                        {product.brand_name || getBrandName(product.brand_id)}
+                      </Table.Cell>
+                      <Table.Cell className="px-6 py-4 text-gray-600">
+                        {formatDate(product.created_at)}
+                      </Table.Cell>
+                      <Table.Cell className="px-6 py-4" textAlign="center">
+                        <HStack gap={2} justify="center">
+                          <IconButton
+                            size="sm"
+                            variant="ghost"
+                            className="text-blue-500 hover:bg-blue-50"
+                            onClick={() => handleOpenVariants(product)}
+                            title="Quản lý biến thể"
+                          >
+                            <Package size={18} />
+                          </IconButton>
+                          <IconButton
+                            size="sm"
+                            variant="ghost"
+                            className="text-red-500 hover:bg-red-50"
+                            onClick={() =>
+                              handleDeleteProduct(
+                                product.product_id || "",
+                                product.name
+                              )
+                            }
+                            loading={deletingId === product.product_id}
+                            disabled={deletingId === product.product_id}
+                          >
+                            <Trash2 size={18} />
+                          </IconButton>
+                        </HStack>
+                      </Table.Cell>
+                    </Table.Row>
+                  ))}
+                </Table.Body>
+              </Table.Root>
+            </div>
 
             {/* Pagination */}
             {totalPages > 1 && (
