@@ -181,21 +181,26 @@ const AddressManagement: React.FC = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Header & Add Button */}
-      <div className="flex justify-between items-center">
-        <div>
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4">
+        <div className="flex-1 min-w-0">
+          <h2 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white">
             Địa chỉ giao hàng
           </h2>
-          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+          <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-1">
             Quản lý địa chỉ giao hàng của bạn
           </p>
         </div>
         {!showAddForm && (
           <Button
             onClick={() => setShowAddForm(true)}
-            className="bg-green-600 hover:bg-green-700 text-white font-medium px-4 py-2 rounded-lg transition-all"
+            className="bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg transition-all w-full sm:w-auto"
+            size={{ base: "sm", sm: "md" }}
+            px={{ base: 3, sm: 4 }}
+            py={{ base: 1.5, sm: 2 }}
+            fontSize={{ base: "sm", sm: "md" }}
+            flexShrink={0}
           >
             + Thêm địa chỉ mới
           </Button>
@@ -226,9 +231,9 @@ const AddressManagement: React.FC = () => {
               </div>
 
               {/* Recipient Name & Phone */}
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                 <div>
-                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 block">
+                  <label className="text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 block">
                     Tên người nhận <span className="text-red-500">*</span>
                   </label>
                   <Input
@@ -241,11 +246,13 @@ const AddressManagement: React.FC = () => {
                     }
                     placeholder="Nguyễn Văn A"
                     required
+                    size={{ base: "sm", sm: "md" }}
+                    fontSize={{ base: "sm", sm: "md" }}
                     className="border-2 border-gray-300 dark:border-slate-600"
                   />
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 block">
+                  <label className="text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 block">
                     Số điện thoại <span className="text-red-500">*</span>
                   </label>
                   <Input
@@ -260,6 +267,8 @@ const AddressManagement: React.FC = () => {
                     required
                     minLength={10}
                     maxLength={11}
+                    size={{ base: "sm", sm: "md" }}
+                    fontSize={{ base: "sm", sm: "md" }}
                     className="border-2 border-gray-300 dark:border-slate-600"
                   />
                 </div>
@@ -267,7 +276,7 @@ const AddressManagement: React.FC = () => {
 
               {/* Address Line */}
               <div>
-                <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 block">
+                <label className="text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 block">
                   Địa chỉ <span className="text-red-500">*</span>
                 </label>
                 <Input
@@ -278,14 +287,16 @@ const AddressManagement: React.FC = () => {
                   placeholder="123 Đường ABC"
                   required
                   minLength={5}
+                  size={{ base: "sm", sm: "md" }}
+                  fontSize={{ base: "sm", sm: "md" }}
                   className="border-2 border-gray-300 dark:border-slate-600"
                 />
               </div>
 
               {/* Ward, District, City */}
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
                 <div>
-                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 block">
+                  <label className="text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 block">
                     Phường/Xã <span className="text-red-500">*</span>
                   </label>
                   <Input
@@ -295,11 +306,13 @@ const AddressManagement: React.FC = () => {
                     }
                     placeholder="Phường 1"
                     required
+                    size={{ base: "sm", sm: "md" }}
+                    fontSize={{ base: "sm", sm: "md" }}
                     className="border-2 border-gray-300 dark:border-slate-600"
                   />
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 block">
+                  <label className="text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 block">
                     Quận/Huyện <span className="text-red-500">*</span>
                   </label>
                   <Input
@@ -309,11 +322,13 @@ const AddressManagement: React.FC = () => {
                     }
                     placeholder="Quận 1"
                     required
+                    size={{ base: "sm", sm: "md" }}
+                    fontSize={{ base: "sm", sm: "md" }}
                     className="border-2 border-gray-300 dark:border-slate-600"
                   />
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 block">
+                  <label className="text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 block">
                     Tỉnh/Thành phố <span className="text-red-500">*</span>
                   </label>
                   <Input
@@ -323,6 +338,8 @@ const AddressManagement: React.FC = () => {
                     }
                     placeholder="TP. Hồ Chí Minh"
                     required
+                    size={{ base: "sm", sm: "md" }}
+                    fontSize={{ base: "sm", sm: "md" }}
                     className="border-2 border-gray-300 dark:border-slate-600"
                   />
                 </div>
@@ -381,19 +398,19 @@ const AddressManagement: React.FC = () => {
           addresses.map((address) => (
             <div
               key={address.id}
-              className={`bg-white dark:bg-slate-800 rounded-lg p-5 border-2 transition-all ${
+              className={`bg-white dark:bg-slate-800 rounded-lg p-3 sm:p-4 md:p-5 border-2 transition-all ${
                 address.is_default
                   ? "border-green-500 dark:border-green-600"
                   : "border-gray-200 dark:border-slate-700"
               }`}
             >
-              <div className="flex justify-between items-start">
-                <div className="flex-1">
-                  <div className="flex items-center gap-3 mb-2">
+              <div className="flex flex-col sm:flex-row justify-between items-start gap-3 sm:gap-4">
+                <div className="flex-1 min-w-0 w-full">
+                  <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-2">
                     {address.address_label && (
                       <Badge
                         colorScheme="blue"
-                        className="px-2 py-1 rounded text-xs"
+                        className="px-1.5 sm:px-2 py-0.5 sm:py-1 rounded text-xs"
                       >
                         {address.address_label}
                       </Badge>
@@ -401,25 +418,25 @@ const AddressManagement: React.FC = () => {
                     {address.is_default && (
                       <Badge
                         colorScheme="green"
-                        className="px-2 py-1 rounded text-xs"
+                        className="px-1.5 sm:px-2 py-0.5 sm:py-1 rounded text-xs"
                       >
                         Mặc định
                       </Badge>
                     )}
                   </div>
                   <div className="space-y-1">
-                    <div className="font-semibold text-gray-900 dark:text-white">
+                    <div className="font-semibold text-sm sm:text-base text-gray-900 dark:text-white break-words">
                       {address.recipient_name} | {address.recipient_phone}
                     </div>
-                    <div className="text-gray-700 dark:text-gray-300">
+                    <div className="text-xs sm:text-sm text-gray-700 dark:text-gray-300 break-words">
                       {address.address_line}
                     </div>
-                    <div className="text-gray-600 dark:text-gray-400 text-sm">
+                    <div className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 break-words">
                       {address.ward}, {address.district}, {address.city}
                     </div>
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap sm:flex-nowrap items-center gap-2 w-full sm:w-auto">
                   {!address.is_default && (
                     <Button
                       onClick={() => handleSetDefault(address.id)}

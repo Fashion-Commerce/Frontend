@@ -11,6 +11,7 @@ import {
   Image,
   Grid,
   SimpleGrid,
+  IconButton,
 } from "@chakra-ui/react";
 import { Avatar } from "@/components/ui/avatar";
 import { toast } from "react-toastify";
@@ -22,6 +23,7 @@ import {
   FileText,
   ChevronLeft,
   ChevronRight,
+  ArrowLeft,
 } from "lucide-react";
 import {
   chatApi,
@@ -45,6 +47,7 @@ const ChatLogs: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [messagePage, setMessagePage] = useState(1);
   const [hasMoreConversations, setHasMoreConversations] = useState(true);
+  const [showChatDetail, setShowChatDetail] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const conversationsContainerRef = useRef<HTMLDivElement>(null);
@@ -185,15 +188,27 @@ const ChatLogs: React.FC = () => {
       conv.user_email.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  const handleSelectConversation = (userId: string) => {
+    setSelectedUserId(userId);
+    setMessagePage(1);
+    setShowChatDetail(true);
+  };
+
+  const handleBackToList = () => {
+    setShowChatDetail(false);
+    setSelectedUserId(null);
+  };
+
   return (
     <Flex h="calc(100vh - 8rem)" gap={4}>
       {/* Left Panel - Conversation List */}
       <Box
-        w="400px"
+        w={{ base: "full", md: "400px" }}
         bg="white"
         borderRadius="lg"
         boxShadow="sm"
         overflow="hidden"
+        display={{ base: showChatDetail ? "none" : "block", md: "block" }}
       >
         <VStack gap={0} h="full">
           {/* Search Header */}
@@ -250,10 +265,7 @@ const ChatLogs: React.FC = () => {
                     borderBottom="1px solid"
                     borderColor="gray.200"
                     _hover={{ bg: "gray.50" }}
-                    onClick={() => {
-                      setSelectedUserId(conv.user_id);
-                      setMessagePage(1);
-                    }}
+                    onClick={() => handleSelectConversation(conv.user_id)}
                     transition="background 0.2s"
                   >
                     <HStack gap={3} alignItems="start">
@@ -304,6 +316,7 @@ const ChatLogs: React.FC = () => {
         borderRadius="lg"
         boxShadow="sm"
         overflow="hidden"
+        display={{ base: showChatDetail ? "block" : "none", md: "block" }}
       >
         {!selectedUserId ? (
           <Flex
@@ -333,10 +346,23 @@ const ChatLogs: React.FC = () => {
               bg="gray.50"
             >
               <HStack gap={3}>
+                {/* Back Button - Mobile only */}
+                <IconButton
+                  display={{ base: "flex", md: "none" }}
+                  aria-label="Quay lại"
+                  onClick={handleBackToList}
+                  size="sm"
+                  variant="ghost"
+                >
+                  <ArrowLeft size={20} />
+                </IconButton>
+
                 <Avatar name={chatDetail.user_info.fullname} size="md" />
-                <VStack alignItems="start" gap={0}>
-                  <Text fontWeight="600">{chatDetail.user_info.fullname}</Text>
-                  <Text fontSize="sm" color="gray.600">
+                <VStack alignItems="start" gap={0} flex={1}>
+                  <Text fontWeight="600" fontSize={{ base: "sm", md: "md" }}>
+                    {chatDetail.user_info.fullname}
+                  </Text>
+                  <Text fontSize={{ base: "xs", md: "sm" }} color="gray.600">
                     {chatDetail.user_info.email}
                   </Text>
                   <Text fontSize="xs" color="gray.500">

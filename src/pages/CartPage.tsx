@@ -14,6 +14,7 @@ import {
   CreditCard,
   Wallet,
 } from "lucide-react";
+import { Dialog, Button, Portal, Text, Flex } from "@chakra-ui/react";
 
 const CartPage: React.FC = () => {
   const navigate = useNavigate();
@@ -46,6 +47,11 @@ const CartPage: React.FC = () => {
     "created_at" | "updated_at" | "quantity"
   >("created_at");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [itemToDelete, setItemToDelete] = useState<{
+    id: string;
+    name: string;
+  } | null>(null);
 
   useEffect(() => {
     if (user) {
@@ -92,15 +98,22 @@ const CartPage: React.FC = () => {
     await updateQuantity(cartItemId, newQuantity);
   };
 
-  const handleRemoveItem = async (cartItemId: string) => {
-    if (window.confirm("Bạn có chắc muốn xóa sản phẩm này?")) {
-      await removeItem(cartItemId);
+  const handleRemoveItem = (cartItemId: string, productName: string) => {
+    setItemToDelete({ id: cartItemId, name: productName });
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmRemoveItem = async () => {
+    if (itemToDelete) {
+      await removeItem(itemToDelete.id);
       // Remove from selected items if it was selected
       setSelectedItems((prev) => {
         const newSet = new Set(prev);
-        newSet.delete(cartItemId);
+        newSet.delete(itemToDelete.id);
         return newSet;
       });
+      setDeleteDialogOpen(false);
+      setItemToDelete(null);
     }
   };
 
@@ -296,7 +309,7 @@ const CartPage: React.FC = () => {
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: "#F4F6F8" }}>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 md:py-8">
         {/* Breadcrumb */}
         <nav className="flex items-center gap-2 text-sm mb-6">
           <button
@@ -312,9 +325,9 @@ const CartPage: React.FC = () => {
         </nav>
 
         {/* Header */}
-        <div className="text-center mb-4">
+        <div className="text-center mb-3 sm:mb-4">
           <h1
-            className="text-3xl font-semibold mb-2"
+            className="text-xl sm:text-2xl md:text-3xl font-semibold mb-2"
             style={{ color: "#1A2A4E", fontFamily: "Montserrat, sans-serif" }}
           >
             Tổng giỏ hàng của bạn là {formatPrice(total)}
@@ -330,26 +343,30 @@ const CartPage: React.FC = () => {
         </div>
 
         {/* Cart Stats */}
-        <div className="flex justify-center gap-6 mb-8">
+        <div className="flex justify-center gap-4 sm:gap-6 mb-6 sm:mb-8">
           <div className="text-center">
-            <p className="text-2xl font-bold text-gray-900 dark:text-white">
+            <p className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900 dark:text-white">
               {totalCount}
             </p>
-            <p className="text-sm text-gray-600 dark:text-gray-400">Sản phẩm</p>
+            <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
+              Sản phẩm
+            </p>
           </div>
           <div className="text-center">
-            <p className="text-2xl font-bold text-gray-900 dark:text-white">
+            <p className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900 dark:text-white">
               {currentPage}/{totalPages}
             </p>
-            <p className="text-sm text-gray-600 dark:text-gray-400">Trang</p>
+            <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
+              Trang
+            </p>
           </div>
         </div>
 
         {/* Select All & Sort Controls */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm border border-gray-200 dark:border-gray-700 mb-4">
-          <div className="flex flex-wrap items-center justify-between gap-4">
+        <div className="bg-white dark:bg-gray-800 rounded-lg p-3 sm:p-4 shadow-sm border border-gray-200 dark:border-gray-700 mb-3 sm:mb-4">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
             {/* Select All */}
-            <label className="flex items-center gap-3 cursor-pointer">
+            <label className="flex items-center gap-2 sm:gap-3 cursor-pointer">
               <input
                 type="checkbox"
                 checked={
@@ -357,33 +374,39 @@ const CartPage: React.FC = () => {
                 }
                 onChange={toggleSelectAll}
                 disabled={isLoading || items.length === 0}
-                className="w-5 h-5 text-black dark:text-white border-gray-300 dark:border-gray-600 rounded focus:ring-2 focus:ring-black dark:focus:ring-white cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                title="Chọn tất cả"
+                className="w-4 h-4 sm:w-5 sm:h-5 text-black dark:text-white border-gray-300 dark:border-gray-600 rounded focus:ring-2 focus:ring-black dark:focus:ring-white cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
               />
-              <span className="text-sm font-medium text-gray-900 dark:text-white">
-                Chọn tất cả trang này ({selectedItems.size}/{items.length})
+              <span className="text-xs sm:text-sm font-medium text-gray-900 dark:text-white">
+                Chọn tất cả ({selectedItems.size}/{items.length})
               </span>
             </label>
 
             {/* Sort Controls */}
-            <div className="flex items-center gap-3">
-              <label className="text-sm text-gray-600 dark:text-gray-400">
+            <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto">
+              <label
+                htmlFor="sort-by"
+                className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 whitespace-nowrap"
+              >
                 Sắp xếp:
               </label>
               <select
+                id="sort-by"
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
-                className="px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white"
+                className="px-2 sm:px-3 py-1 sm:py-1.5 text-xs sm:text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white flex-1 sm:flex-none"
               >
                 <option value="created_at">Ngày thêm</option>
                 <option value="updated_at">Ngày cập nhật</option>
                 <option value="quantity">Số lượng</option>
               </select>
               <select
+                id="sort-order"
                 value={sortOrder}
                 onChange={(e) =>
                   setSortOrder(e.target.value as typeof sortOrder)
                 }
-                className="px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white"
+                className="px-2 sm:px-3 py-1 sm:py-1.5 text-xs sm:text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white flex-1 sm:flex-none"
               >
                 <option value="desc">Giảm dần</option>
                 <option value="asc">Tăng dần</option>
@@ -393,28 +416,28 @@ const CartPage: React.FC = () => {
         </div>
 
         {/* Cart Items */}
-        <div className="space-y-6 mb-6">
+        <div className="space-y-3 sm:space-y-4 md:space-y-6 mb-6">
           {items.map((item) => (
             <div
               key={item.cart_item_id}
-              className={`bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border-2 transition-all ${
+              className={`bg-white dark:bg-gray-800 rounded-lg p-3 sm:p-4 md:p-6 shadow-sm border-2 transition-all ${
                 selectedItems.has(item.cart_item_id)
                   ? "border-green-500 dark:border-green-600"
                   : "border-gray-200 dark:border-gray-700"
               }`}
             >
-              <div className="flex gap-6 flex-wrap">
+              <div className="flex gap-3 sm:gap-4 md:gap-6 flex-wrap">
                 {/* Checkbox */}
-                <div className="flex items-start pt-2">
+                <div className="flex items-start pt-1 sm:pt-2">
                   <input
                     type="checkbox"
                     checked={selectedItems.has(item.cart_item_id)}
                     onChange={() => toggleItemSelection(item.cart_item_id)}
-                    className="w-5 h-5 text-green-600 border-gray-300 dark:border-gray-600 rounded focus:ring-2 focus:ring-green-500 cursor-pointer"
+                    className="w-4 h-4 sm:w-5 sm:h-5 text-green-600 border-gray-300 dark:border-gray-600 rounded focus:ring-2 focus:ring-green-500 cursor-pointer"
                   />
                 </div>
                 {/* Product Image */}
-                <div className="w-32 h-32 flex-shrink-0 bg-gray-100 dark:bg-gray-700 rounded-lg overflow-hidden">
+                <div className="w-20 h-20 sm:w-24 sm:h-24 md:w-32 md:h-32 flex-shrink-0 bg-gray-100 dark:bg-gray-700 rounded-lg overflow-hidden">
                   {item.image_urls && item.image_urls.length > 0 ? (
                     <img
                       src={item.image_urls[0]}
@@ -435,18 +458,18 @@ const CartPage: React.FC = () => {
                 </div>
 
                 {/* Product Info */}
-                <div className="flex-1 min-w-[300px]">
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">
+                <div className="flex-1 min-w-0">
+                  <h3 className="text-sm sm:text-base md:text-lg font-semibold text-gray-900 dark:text-white mb-1">
                     {item.product_name}
                   </h3>
 
                   {/* Brand & Category */}
-                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
+                  <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mb-2 sm:mb-3">
                     {item.brand_name} • {item.category_name}
                   </p>
 
                   {/* Delivery Info */}
-                  <div className="space-y-1.5 mb-4">
+                  <div className="space-y-1 sm:space-y-1.5 mb-2 sm:mb-4">
                     {item.updated_at && (
                       <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-500">
                         <span>
@@ -458,12 +481,12 @@ const CartPage: React.FC = () => {
                   </div>
 
                   {/* Variant Selectors */}
-                  <div className="flex flex-wrap gap-3">
+                  <div className="flex flex-wrap gap-2 sm:gap-3">
                     {/* Quantity Input */}
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1.5 sm:gap-2">
                       <label
                         htmlFor={`quantity-${item.cart_item_id}`}
-                        className="text-sm text-gray-600 dark:text-gray-400"
+                        className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 whitespace-nowrap"
                       >
                         Số lượng:
                       </label>
@@ -529,79 +552,47 @@ const CartPage: React.FC = () => {
                           }
                         }}
                         disabled={isLoading}
-                        className="w-20 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-center focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white disabled:opacity-50"
+                        className="w-16 sm:w-20 px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-center focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white disabled:opacity-50"
                       />
                     </div>
 
-                    {/* Color Selector */}
+                    {/* Color Display */}
                     {item.variant_color && (
-                      <div className="relative">
-                        <label
-                          htmlFor={`color-${item.cart_item_id}`}
-                          className="sr-only"
-                        >
-                          Màu sắc
-                        </label>
-                        <select
-                          id={`color-${item.cart_item_id}`}
-                          value={item.variant_color}
-                          disabled
-                          className="appearance-none bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 pr-10 text-gray-900 dark:text-white focus:outline-none disabled:opacity-60 disabled:cursor-not-allowed"
-                        >
-                          <option>{item.variant_color}</option>
-                        </select>
-                        <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-700 dark:text-gray-300">
-                          <svg
-                            className="fill-current h-4 w-4"
-                            xmlns="http://www.w3.org/2000/svg"
-                            viewBox="0 0 20 20"
-                          >
-                            <path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" />
-                          </svg>
-                        </div>
+                      <div className="flex items-center gap-1.5 px-2 sm:px-3 py-1.5 sm:py-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg">
+                        <span className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
+                          Màu:
+                        </span>
+                        <span className="text-xs sm:text-sm font-medium text-gray-900 dark:text-white">
+                          {item.variant_color}
+                        </span>
                       </div>
                     )}
 
-                    {/* Size Selector */}
+                    {/* Size Display */}
                     {item.variant_size && (
-                      <div className="relative">
-                        <label
-                          htmlFor={`size-${item.cart_item_id}`}
-                          className="sr-only"
-                        >
-                          Kích cỡ
-                        </label>
-                        <select
-                          id={`size-${item.cart_item_id}`}
-                          value={item.variant_size}
-                          disabled
-                          className="appearance-none bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 pr-10 text-gray-900 dark:text-white focus:outline-none disabled:opacity-60 disabled:cursor-not-allowed"
-                        >
-                          <option>{item.variant_size}</option>
-                        </select>
-                        <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-700 dark:text-gray-300">
-                          <svg
-                            className="fill-current h-4 w-4"
-                            xmlns="http://www.w3.org/2000/svg"
-                            viewBox="0 0 20 20"
-                          >
-                            <path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" />
-                          </svg>
-                        </div>
+                      <div className="flex items-center gap-1.5 px-2 sm:px-3 py-1.5 sm:py-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg">
+                        <span className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
+                          Size:
+                        </span>
+                        <span className="text-xs sm:text-sm font-medium text-gray-900 dark:text-white">
+                          {item.variant_size}
+                        </span>
                       </div>
                     )}
                   </div>
                 </div>
 
                 {/* Price & Remove */}
-                <div className="flex flex-col items-end justify-between min-w-[120px]">
-                  <p className="text-xl font-semibold text-gray-900 dark:text-white">
+                <div className="flex flex-col items-end justify-between min-w-0">
+                  <p className="text-base sm:text-lg md:text-xl font-semibold text-gray-900 dark:text-white whitespace-nowrap">
                     {formatPrice(item.product_price * item.quantity)}
                   </p>
                   <button
-                    onClick={() => handleRemoveItem(item.cart_item_id)}
+                    onClick={() =>
+                      handleRemoveItem(item.cart_item_id, item.product_name)
+                    }
                     disabled={isLoading}
-                    className="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 text-sm font-medium disabled:opacity-50 transition-colors"
+                    className="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 text-xs sm:text-sm font-medium disabled:opacity-50 transition-colors mt-2"
                   >
                     Xóa
                   </button>
@@ -617,7 +608,7 @@ const CartPage: React.FC = () => {
             <button
               onClick={() => fetchCart(currentPage - 1, sortBy, sortOrder)}
               disabled={!hasPrevious || isLoading}
-              className="px-4 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               Trước
             </button>
@@ -629,7 +620,7 @@ const CartPage: React.FC = () => {
                     key={page}
                     onClick={() => fetchCart(page, sortBy, sortOrder)}
                     disabled={isLoading}
-                    className={`w-10 h-10 rounded-lg font-medium transition-colors ${
+                    className={`w-8 h-8 sm:w-10 sm:h-10 text-xs sm:text-sm rounded-lg font-medium transition-colors ${
                       page === currentPage
                         ? "bg-black dark:bg-white text-white dark:text-black"
                         : "bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
@@ -644,7 +635,7 @@ const CartPage: React.FC = () => {
             <button
               onClick={() => fetchCart(currentPage + 1, sortBy, sortOrder)}
               disabled={!hasNext || isLoading}
-              className="px-4 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               Tiếp
             </button>
@@ -652,20 +643,24 @@ const CartPage: React.FC = () => {
         )}
 
         {/* Summary */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700 max-w-md ml-auto">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+        <div className="bg-white dark:bg-gray-800 rounded-lg p-4 sm:p-5 md:p-6 shadow-sm border border-gray-200 dark:border-gray-700 max-w-full md:max-w-md md:ml-auto">
+          <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white mb-3 sm:mb-4">
             Tổng đơn hàng
           </h3>
 
           {/* Address Selection */}
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          <div className="mb-3 sm:mb-4">
+            <label
+              htmlFor="address-select"
+              className="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+            >
               Địa chỉ giao hàng <span className="text-red-500">*</span>
             </label>
             <select
+              id="address-select"
               value={selectedAddressId}
               onChange={(e) => setSelectedAddressId(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white"
+              className="w-full px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white"
             >
               <option value="">-- Chọn địa chỉ giao hàng --</option>
               {addresses.map((addr) => (
@@ -698,28 +693,32 @@ const CartPage: React.FC = () => {
           </div>
 
           {/* Notes */}
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          <div className="mb-3 sm:mb-4">
+            <label
+              htmlFor="order-notes"
+              className="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+            >
               Ghi chú đơn hàng
             </label>
             <textarea
+              id="order-notes"
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               placeholder="Ghi chú cho đơn hàng (không bắt buộc)..."
               rows={3}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white resize-none"
+              className="w-full px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white resize-none"
             />
           </div>
 
           {/* Payment Method Selection */}
-          <div className="mb-6">
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+          <div className="mb-4 sm:mb-6">
+            <label className="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 sm:mb-3">
               Phương thức thanh toán <span className="text-red-500">*</span>
             </label>
-            <div className="space-y-3">
+            <div className="space-y-2 sm:space-y-3">
               {/* COD Option */}
               <label
-                className={`flex items-center gap-3 p-4 border-2 rounded-lg cursor-pointer transition-all ${
+                className={`flex items-center gap-2 sm:gap-3 p-3 sm:p-4 border-2 rounded-lg cursor-pointer transition-all ${
                   paymentMethod === "cod"
                     ? "border-black dark:border-white bg-gray-50 dark:bg-gray-700"
                     : "border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500"
@@ -733,11 +732,11 @@ const CartPage: React.FC = () => {
                   onChange={(e) =>
                     setPaymentMethod(e.target.value as "cod" | "vnpay")
                   }
-                  className="w-4 h-4 text-black dark:text-white border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-black dark:focus:ring-white cursor-pointer"
+                  className="w-4 h-4 text-black dark:text-white border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-black dark:focus:ring-white cursor-pointer flex-shrink-0"
                 />
-                <Wallet className="w-5 h-5 text-gray-700 dark:text-gray-300" />
-                <div className="flex-1">
-                  <p className="font-medium text-gray-900 dark:text-white">
+                <Wallet className="w-4 h-4 sm:w-5 sm:h-5 text-gray-700 dark:text-gray-300 flex-shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm sm:text-base font-medium text-gray-900 dark:text-white">
                     Thanh toán khi nhận hàng (COD)
                   </p>
                   <p className="text-xs text-gray-500 dark:text-gray-400">
@@ -748,7 +747,7 @@ const CartPage: React.FC = () => {
 
               {/* VNPay Option */}
               <label
-                className={`flex items-center gap-3 p-4 border-2 rounded-lg cursor-pointer transition-all ${
+                className={`flex items-center gap-2 sm:gap-3 p-3 sm:p-4 border-2 rounded-lg cursor-pointer transition-all ${
                   paymentMethod === "vnpay"
                     ? "border-black dark:border-white bg-gray-50 dark:bg-gray-700"
                     : "border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500"
@@ -762,11 +761,11 @@ const CartPage: React.FC = () => {
                   onChange={(e) =>
                     setPaymentMethod(e.target.value as "cod" | "vnpay")
                   }
-                  className="w-4 h-4 text-black dark:text-white border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-black dark:focus:ring-white cursor-pointer"
+                  className="w-4 h-4 text-black dark:text-white border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-black dark:focus:ring-white cursor-pointer flex-shrink-0"
                 />
-                <CreditCard className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-                <div className="flex-1">
-                  <p className="font-medium text-gray-900 dark:text-white">
+                <CreditCard className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600 dark:text-blue-400 flex-shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm sm:text-base font-medium text-gray-900 dark:text-white">
                     Thanh toán qua VNPay
                   </p>
                   <p className="text-xs text-gray-500 dark:text-gray-400">
@@ -777,8 +776,8 @@ const CartPage: React.FC = () => {
             </div>
           </div>
 
-          <div className="space-y-3 mb-4">
-            <div className="flex justify-between text-sm">
+          <div className="space-y-2 sm:space-y-3 mb-3 sm:mb-4">
+            <div className="flex justify-between text-xs sm:text-sm">
               <span className="text-gray-600 dark:text-gray-400">
                 Sản phẩm đã chọn
               </span>
@@ -786,13 +785,13 @@ const CartPage: React.FC = () => {
                 {selectedItems.size} sản phẩm
               </span>
             </div>
-            <div className="flex justify-between text-sm">
+            <div className="flex justify-between text-xs sm:text-sm">
               <span className="text-gray-600 dark:text-gray-400">Tạm tính</span>
               <span className="font-medium text-gray-900 dark:text-white">
                 {formatPrice(subtotal)}
               </span>
             </div>
-            <div className="flex justify-between text-sm">
+            <div className="flex justify-between text-xs sm:text-sm">
               <span className="text-gray-600 dark:text-gray-400">
                 Phí vận chuyển
               </span>
@@ -802,12 +801,12 @@ const CartPage: React.FC = () => {
             </div>
           </div>
 
-          <div className="border-t border-gray-200 dark:border-gray-700 pt-4 mb-6">
+          <div className="border-t border-gray-200 dark:border-gray-700 pt-3 sm:pt-4 mb-4 sm:mb-6">
             <div className="flex justify-between items-center">
-              <span className="text-lg font-semibold text-gray-900 dark:text-white">
+              <span className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white">
                 Tổng cộng
               </span>
-              <span className="text-2xl font-bold text-gray-900 dark:text-white">
+              <span className="text-lg sm:text-2xl font-bold text-gray-900 dark:text-white">
                 {formatPrice(total)}
               </span>
             </div>
@@ -821,7 +820,7 @@ const CartPage: React.FC = () => {
               !selectedAddressId ||
               selectedItems.size === 0
             }
-            className="w-full px-6 py-3 bg-black dark:bg-white text-white dark:text-black rounded-lg font-medium hover:bg-gray-800 dark:hover:bg-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed mb-3"
+            className="w-full px-4 sm:px-6 py-2.5 sm:py-3 text-sm sm:text-base bg-black dark:bg-white text-white dark:text-black rounded-lg font-medium hover:bg-gray-800 dark:hover:bg-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed mb-2 sm:mb-3"
           >
             {isSubmittingOrder
               ? "Đang xử lý..."
@@ -836,6 +835,62 @@ const CartPage: React.FC = () => {
           </p>
         </div>
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog.Root
+        open={deleteDialogOpen}
+        onOpenChange={(e) => {
+          setDeleteDialogOpen(e.open);
+          if (!e.open) setItemToDelete(null);
+        }}
+      >
+        <Portal>
+          <Dialog.Backdrop className="!bg-black/50" />
+          <Dialog.Positioner>
+            <Dialog.Content className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-md w-full mx-4 my-auto">
+              <Dialog.Header className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+                <Dialog.Title className="text-2xl font-bold text-red-600">
+                  Xác nhận xóa
+                </Dialog.Title>
+              </Dialog.Header>
+
+              <Dialog.Body className="px-6 py-6">
+                <Text>
+                  Bạn có chắc chắn muốn xóa sản phẩm{" "}
+                  <span className="font-bold">"{itemToDelete?.name}"</span> khỏi
+                  giỏ hàng không?
+                </Text>
+                <Text color="red.500" fontSize="sm" mt={2}>
+                  Hành động này không thể hoàn tác!
+                </Text>
+              </Dialog.Body>
+
+              <Dialog.Footer className="px-6 py-4 border-t border-gray-200 dark:border-gray-700">
+                <Flex justify="flex-end" gap={3}>
+                  <Dialog.CloseTrigger asChild>
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        setDeleteDialogOpen(false);
+                        setItemToDelete(null);
+                      }}
+                      className="border-2 border-gray-200 hover:border-gray-300 rounded-lg px-4 py-2"
+                    >
+                      Hủy
+                    </Button>
+                  </Dialog.CloseTrigger>
+                  <Button
+                    className="bg-red-500 hover:bg-red-600 text-white rounded-lg px-4 py-2"
+                    onClick={confirmRemoveItem}
+                  >
+                    Xóa
+                  </Button>
+                </Flex>
+              </Dialog.Footer>
+            </Dialog.Content>
+          </Dialog.Positioner>
+        </Portal>
+      </Dialog.Root>
     </div>
   );
 };

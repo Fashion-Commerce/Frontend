@@ -188,20 +188,23 @@ const CategoryManagement: React.FC = () => {
   };
 
   return (
-    <Box p={6}>
+    <Box p={{ base: 4, sm: 6 }}>
       {/* Header */}
-      <VStack align="stretch" gap={6} mb={6}>
+      <VStack align="stretch" gap={{ base: 4, sm: 6 }} mb={{ base: 4, sm: 6 }}>
         <Box>
-          <Heading className="text-4xl font-bold" mb={2}>
+          <Heading
+            className="text-2xl sm:text-3xl md:text-4xl font-bold"
+            mb={2}
+          >
             Quản lý danh mục
           </Heading>
-          <Text color="gray.600">
+          <Text color="gray.600" fontSize={{ base: "sm", sm: "md" }}>
             Quản lý các danh mục sản phẩm trong hệ thống
           </Text>
         </Box>
 
         {/* Stats Cards */}
-        <SimpleGrid columns={{ base: 1, md: 3 }} gap={4}>
+        <SimpleGrid columns={{ base: 1, sm: 2, md: 3 }} gap={4}>
           <Card.Root>
             <Card.Body className="px-6 py-4">
               <Stack gap={1}>
@@ -387,62 +390,64 @@ const CategoryManagement: React.FC = () => {
           </Card.Body>
         ) : (
           <>
-            <Table.Root variant="outline">
-              <Table.Header>
-                <Table.Row>
-                  <Table.ColumnHeader className="px-6 py-4">
-                    STT
-                  </Table.ColumnHeader>
-                  <Table.ColumnHeader className="px-6 py-4">
-                    Tên danh mục
-                  </Table.ColumnHeader>
-                  <Table.ColumnHeader className="px-6 py-4">
-                    Danh mục cha
-                  </Table.ColumnHeader>
-                  <Table.ColumnHeader className="px-6 py-4">
-                    Ngày tạo
-                  </Table.ColumnHeader>
-                  <Table.ColumnHeader className="px-6 py-4 text-center">
-                    Thao tác
-                  </Table.ColumnHeader>
-                </Table.Row>
-              </Table.Header>
-              <Table.Body>
-                {categories.map((category, index) => (
-                  <Table.Row key={category.category_id}>
-                    <Table.Cell className="px-6 py-4">
-                      {(currentPage - 1) * pageSize + index + 1}
-                    </Table.Cell>
-                    <Table.Cell className="px-6 py-4 font-semibold">
-                      {category.name}
-                    </Table.Cell>
-                    <Table.Cell className="px-6 py-4 text-gray-600">
-                      {getParentName(category.parent_id)}
-                    </Table.Cell>
-                    <Table.Cell className="px-6 py-4 text-gray-600">
-                      {formatDate(category.created_at)}
-                    </Table.Cell>
-                    <Table.Cell className="px-6 py-4" textAlign="center">
-                      <IconButton
-                        size="sm"
-                        variant="ghost"
-                        className="text-red-500 hover:bg-red-50"
-                        onClick={() =>
-                          handleDeleteCategory(
-                            category.category_id || "",
-                            category.name
-                          )
-                        }
-                        loading={deletingId === category.category_id}
-                        disabled={deletingId === category.category_id}
-                      >
-                        <Trash2 size={18} />
-                      </IconButton>
-                    </Table.Cell>
+            <div className="overflow-x-auto">
+              <Table.Root variant="outline">
+                <Table.Header>
+                  <Table.Row>
+                    <Table.ColumnHeader className="px-6 py-4">
+                      STT
+                    </Table.ColumnHeader>
+                    <Table.ColumnHeader className="px-6 py-4">
+                      Tên danh mục
+                    </Table.ColumnHeader>
+                    <Table.ColumnHeader className="px-6 py-4">
+                      Danh mục cha
+                    </Table.ColumnHeader>
+                    <Table.ColumnHeader className="px-6 py-4">
+                      Ngày tạo
+                    </Table.ColumnHeader>
+                    <Table.ColumnHeader className="px-6 py-4 text-center">
+                      Thao tác
+                    </Table.ColumnHeader>
                   </Table.Row>
-                ))}
-              </Table.Body>
-            </Table.Root>
+                </Table.Header>
+                <Table.Body>
+                  {categories.map((category, index) => (
+                    <Table.Row key={category.category_id}>
+                      <Table.Cell className="px-6 py-4">
+                        {(currentPage - 1) * pageSize + index + 1}
+                      </Table.Cell>
+                      <Table.Cell className="px-6 py-4 font-semibold">
+                        {category.name}
+                      </Table.Cell>
+                      <Table.Cell className="px-6 py-4 text-gray-600">
+                        {getParentName(category.parent_id)}
+                      </Table.Cell>
+                      <Table.Cell className="px-6 py-4 text-gray-600">
+                        {formatDate(category.created_at)}
+                      </Table.Cell>
+                      <Table.Cell className="px-6 py-4" textAlign="center">
+                        <IconButton
+                          size="sm"
+                          variant="ghost"
+                          className="text-red-500 hover:bg-red-50"
+                          onClick={() =>
+                            handleDeleteCategory(
+                              category.category_id || "",
+                              category.name
+                            )
+                          }
+                          loading={deletingId === category.category_id}
+                          disabled={deletingId === category.category_id}
+                        >
+                          <Trash2 size={18} />
+                        </IconButton>
+                      </Table.Cell>
+                    </Table.Row>
+                  ))}
+                </Table.Body>
+              </Table.Root>
+            </div>
 
             {/* Pagination */}
             {totalPages > 1 && (

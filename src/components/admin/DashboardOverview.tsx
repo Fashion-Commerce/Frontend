@@ -23,9 +23,11 @@ const StatCard: React.FC<{
   subtext: string;
   subtextColor?: string;
 }> = ({ title, value, subtext, subtextColor = "text-green-500" }) => (
-  <div className="bg-white p-6 rounded-lg shadow">
-    <h3 className="text-sm font-medium text-gray-500">{title}</h3>
-    <p className="text-3xl font-bold text-gray-800 mt-2">{value}</p>
+  <div className="bg-white p-4 sm:p-6 rounded-lg shadow">
+    <h3 className="text-xs sm:text-sm font-medium text-gray-500">{title}</h3>
+    <p className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-800 mt-2 break-words">
+      {value}
+    </p>
     <p className={`text-xs ${subtextColor} mt-1`}>{subtext}</p>
   </div>
 );
@@ -103,14 +105,14 @@ const DashboardOverview: React.FC<DashboardOverviewProps> = ({
 
   return (
     <div>
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-3xl font-bold text-gray-800">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+        <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-800">
           Bảng điều khiển AgentFashion
         </h2>
         <select
           value={selectedMonths}
           onChange={(e) => setSelectedMonths(Number(e.target.value))}
-          className="px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="px-3 sm:px-4 py-2 text-sm sm:text-base border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 w-full sm:w-auto"
           aria-label="Chọn khoảng thời gian"
         >
           <option value={1}>1 tháng</option>
@@ -120,7 +122,7 @@ const DashboardOverview: React.FC<DashboardOverviewProps> = ({
         </select>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-8">
         <StatCard
           title={`Tổng doanh thu (${selectedMonths} tháng)`}
           value={formatPrice(metrics.revenue.current)}
@@ -166,11 +168,11 @@ const DashboardOverview: React.FC<DashboardOverviewProps> = ({
         />
       </div>
 
-      <div className="bg-white p-6 rounded-lg shadow">
-        <h3 className="text-lg font-semibold text-gray-700 mb-4">
+      <div className="bg-white p-4 sm:p-6 rounded-lg shadow">
+        <h3 className="text-base sm:text-lg font-semibold text-gray-700 mb-4">
           Phân tích doanh thu & đơn hàng
         </h3>
-        <div className="w-full h-96">
+        <div className="w-full h-64 sm:h-80 md:h-96">
           <ResponsiveContainer>
             <LineChart
               data={chartData}

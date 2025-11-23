@@ -160,38 +160,41 @@ const BrandManagement: React.FC = () => {
   };
 
   return (
-    <Box p={6}>
+    <Box p={{ base: 4, sm: 6 }}>
       {/* Header */}
-      <VStack align="stretch" gap={6} mb={6}>
+      <VStack align="stretch" gap={{ base: 4, sm: 6 }} mb={{ base: 4, sm: 6 }}>
         <Box>
-          <Heading className="text-4xl font-bold" mb={2}>
+          <Heading
+            className="text-2xl sm:text-3xl md:text-4xl font-bold"
+            mb={2}
+          >
             Quản lý thương hiệu
           </Heading>
-          <Text color="gray.600">
+          <Text color="gray.600" fontSize={{ base: "sm", sm: "md" }}>
             Quản lý các thương hiệu sản phẩm trong hệ thống
           </Text>
         </Box>
 
         {/* Stats Cards */}
-        <SimpleGrid columns={{ base: 1, md: 3 }} gap={4}>
+        <SimpleGrid columns={{ base: 1, sm: 2, md: 3 }} gap={4}>
           <Card.Root>
-            <Card.Body className="px-6 py-4">
+            <Card.Body className="px-4 sm:px-6 py-3 sm:py-4">
               <Stack gap={1}>
-                <Text fontSize="sm" color="gray.600">
+                <Text fontSize={{ base: "xs", sm: "sm" }} color="gray.600">
                   Tổng thương hiệu
                 </Text>
-                <Heading size="2xl">{total}</Heading>
+                <Heading size={{ base: "xl", sm: "2xl" }}>{total}</Heading>
               </Stack>
             </Card.Body>
           </Card.Root>
 
           <Card.Root>
-            <Card.Body className="px-6 py-4">
+            <Card.Body className="px-4 sm:px-6 py-3 sm:py-4">
               <Stack gap={1}>
-                <Text fontSize="sm" color="gray.600">
+                <Text fontSize={{ base: "xs", sm: "sm" }} color="gray.600">
                   Trang hiện tại
                 </Text>
-                <Heading size="2xl">
+                <Heading size={{ base: "xl", sm: "2xl" }}>
                   {currentPage}/{totalPages}
                 </Heading>
               </Stack>
@@ -199,12 +202,14 @@ const BrandManagement: React.FC = () => {
           </Card.Root>
 
           <Card.Root>
-            <Card.Body className="px-6 py-4">
+            <Card.Body className="px-4 sm:px-6 py-3 sm:py-4">
               <Stack gap={1}>
-                <Text fontSize="sm" color="gray.600">
+                <Text fontSize={{ base: "xs", sm: "sm" }} color="gray.600">
                   Hiển thị
                 </Text>
-                <Heading size="2xl">{brands.length}</Heading>
+                <Heading size={{ base: "xl", sm: "2xl" }}>
+                  {brands.length}
+                </Heading>
               </Stack>
             </Card.Body>
           </Card.Root>
@@ -212,10 +217,10 @@ const BrandManagement: React.FC = () => {
 
         {/* Toolbar */}
         <Card.Root>
-          <Card.Body className="px-6 py-4">
+          <Card.Body className="px-4 sm:px-6 py-3 sm:py-4">
             <Flex
               direction={{ base: "column", md: "row" }}
-              gap={4}
+              gap={{ base: 3, sm: 4 }}
               align={{ base: "stretch", md: "center" }}
               justify="space-between"
             >
@@ -228,11 +233,12 @@ const BrandManagement: React.FC = () => {
                   setCurrentPage(1);
                 }}
                 maxW={{ md: "400px" }}
-                className="border-2 border-gray-200 focus:border-blue-500 rounded-lg px-4 py-2"
+                size={{ base: "sm", sm: "md" }}
+                className="border-2 border-gray-200 focus:border-blue-500 rounded-lg px-3 sm:px-4 py-2"
               />
 
               {/* Actions */}
-              <HStack gap={3}>
+              <HStack gap={{ base: 2, sm: 3 }} flexWrap="wrap">
                 <Menu.Root>
                   <Menu.Trigger asChild>
                     <Button
@@ -359,54 +365,56 @@ const BrandManagement: React.FC = () => {
           </Card.Body>
         ) : (
           <>
-            <Table.Root variant="outline">
-              <Table.Header>
-                <Table.Row>
-                  <Table.ColumnHeader className="px-6 py-4">
-                    STT
-                  </Table.ColumnHeader>
-                  <Table.ColumnHeader className="px-6 py-4">
-                    Tên thương hiệu
-                  </Table.ColumnHeader>
+            <div className="overflow-x-auto">
+              <Table.Root variant="outline">
+                <Table.Header>
+                  <Table.Row>
+                    <Table.ColumnHeader className="px-6 py-4">
+                      STT
+                    </Table.ColumnHeader>
+                    <Table.ColumnHeader className="px-6 py-4">
+                      Tên thương hiệu
+                    </Table.ColumnHeader>
 
-                  <Table.ColumnHeader className="px-6 py-4">
-                    Ngày tạo
-                  </Table.ColumnHeader>
-                  <Table.ColumnHeader className="px-6 py-4 text-center">
-                    Thao tác
-                  </Table.ColumnHeader>
-                </Table.Row>
-              </Table.Header>
-              <Table.Body>
-                {brands.map((brand, index) => (
-                  <Table.Row key={brand.brand_id}>
-                    <Table.Cell className="px-6 py-4">
-                      {(currentPage - 1) * pageSize + index + 1}
-                    </Table.Cell>
-                    <Table.Cell className="px-6 py-4 font-semibold">
-                      {brand.name}
-                    </Table.Cell>
-                    <Table.Cell className="px-6 py-4 text-gray-600">
-                      {formatDate(brand.created_at)}
-                    </Table.Cell>
-                    <Table.Cell className="px-6 py-4" textAlign="center">
-                      <IconButton
-                        size="sm"
-                        variant="ghost"
-                        className="text-red-500 hover:bg-red-50"
-                        onClick={() =>
-                          handleDeleteBrand(brand.brand_id || "", brand.name)
-                        }
-                        loading={deletingId === brand.brand_id}
-                        disabled={deletingId === brand.brand_id}
-                      >
-                        <Trash2 size={18} />
-                      </IconButton>
-                    </Table.Cell>
+                    <Table.ColumnHeader className="px-6 py-4">
+                      Ngày tạo
+                    </Table.ColumnHeader>
+                    <Table.ColumnHeader className="px-6 py-4 text-center">
+                      Thao tác
+                    </Table.ColumnHeader>
                   </Table.Row>
-                ))}
-              </Table.Body>
-            </Table.Root>
+                </Table.Header>
+                <Table.Body>
+                  {brands.map((brand, index) => (
+                    <Table.Row key={brand.brand_id}>
+                      <Table.Cell className="px-6 py-4">
+                        {(currentPage - 1) * pageSize + index + 1}
+                      </Table.Cell>
+                      <Table.Cell className="px-6 py-4 font-semibold">
+                        {brand.name}
+                      </Table.Cell>
+                      <Table.Cell className="px-6 py-4 text-gray-600">
+                        {formatDate(brand.created_at)}
+                      </Table.Cell>
+                      <Table.Cell className="px-6 py-4" textAlign="center">
+                        <IconButton
+                          size="sm"
+                          variant="ghost"
+                          className="text-red-500 hover:bg-red-50"
+                          onClick={() =>
+                            handleDeleteBrand(brand.brand_id || "", brand.name)
+                          }
+                          loading={deletingId === brand.brand_id}
+                          disabled={deletingId === brand.brand_id}
+                        >
+                          <Trash2 size={18} />
+                        </IconButton>
+                      </Table.Cell>
+                    </Table.Row>
+                  ))}
+                </Table.Body>
+              </Table.Root>
+            </div>
 
             {/* Pagination */}
             {totalPages > 1 && (

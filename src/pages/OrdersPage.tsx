@@ -171,17 +171,29 @@ const OrdersPage: React.FC = () => {
   const getStatusIcon = (status: string) => {
     switch (status.toLowerCase()) {
       case "pending":
-        return <Clock className="w-5 h-5 text-yellow-600" />;
+        return (
+          <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-yellow-600 flex-shrink-0" />
+        );
       case "processing":
-        return <Package className="w-5 h-5 text-blue-600" />;
+        return (
+          <Package className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600 flex-shrink-0" />
+        );
       case "shipped":
-        return <Truck className="w-5 h-5 text-purple-600" />;
+        return (
+          <Truck className="w-4 h-4 sm:w-5 sm:h-5 text-purple-600 flex-shrink-0" />
+        );
       case "delivered":
-        return <CheckCircle className="w-5 h-5 text-green-600" />;
+        return (
+          <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5 text-green-600 flex-shrink-0" />
+        );
       case "cancelled":
-        return <XCircle className="w-5 h-5 text-red-600" />;
+        return (
+          <XCircle className="w-4 h-4 sm:w-5 sm:h-5 text-red-600 flex-shrink-0" />
+        );
       default:
-        return <Package className="w-5 h-5 text-gray-600" />;
+        return (
+          <Package className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600 flex-shrink-0" />
+        );
     }
   };
 
@@ -238,10 +250,10 @@ const OrdersPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 md:py-8">
         {/* Header */}
-        <div className="mb-6">
-          <h1 className="text-3xl font-semibold text-gray-900 dark:text-white mb-2">
+        <div className="mb-4 sm:mb-6">
+          <h1 className="text-2xl sm:text-3xl font-semibold text-gray-900 dark:text-white mb-2">
             Đơn hàng của tôi
           </h1>
           <p className="text-gray-600 dark:text-gray-400">
@@ -250,19 +262,23 @@ const OrdersPage: React.FC = () => {
         </div>
 
         {/* Filter */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm border border-gray-200 dark:border-gray-700 mb-6">
-          <div className="flex flex-wrap gap-4 items-center">
-            <div className="flex items-center gap-2">
-              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+        <div className="bg-white dark:bg-gray-800 rounded-lg p-3 sm:p-4 shadow-sm border border-gray-200 dark:border-gray-700 mb-4 sm:mb-6">
+          <div className="flex flex-col sm:flex-row flex-wrap gap-2 sm:gap-4 items-stretch sm:items-center">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-1.5 sm:gap-2">
+              <label
+                htmlFor="status-filter"
+                className="text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 whitespace-nowrap"
+              >
                 Trạng thái:
               </label>
               <select
+                id="status-filter"
                 value={selectedStatus}
                 onChange={(e) => {
                   setSelectedStatus(e.target.value);
                   setCurrentPage(1);
                 }}
-                className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white"
+                className="px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 text-xs sm:text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white"
               >
                 <option value="">Tất cả</option>
                 <option value="pending">Chờ xác nhận</option>
@@ -273,33 +289,41 @@ const OrdersPage: React.FC = () => {
               </select>
             </div>
 
-            <div className="flex items-center gap-2">
-              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-1.5 sm:gap-2">
+              <label
+                htmlFor="date-from"
+                className="text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 whitespace-nowrap"
+              >
                 Từ ngày:
               </label>
               <input
+                id="date-from"
                 type="date"
                 value={dateFrom}
                 onChange={(e) => {
                   setDateFrom(e.target.value);
                   setCurrentPage(1);
                 }}
-                className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white"
+                className="px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 text-xs sm:text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white"
               />
             </div>
 
-            <div className="flex items-center gap-2">
-              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-1.5 sm:gap-2">
+              <label
+                htmlFor="date-to"
+                className="text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 whitespace-nowrap"
+              >
                 Đến ngày:
               </label>
               <input
+                id="date-to"
                 type="date"
                 value={dateTo}
                 onChange={(e) => {
                   setDateTo(e.target.value);
                   setCurrentPage(1);
                 }}
-                className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white"
+                className="px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 text-xs sm:text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white"
               />
             </div>
 
@@ -310,13 +334,13 @@ const OrdersPage: React.FC = () => {
                   setDateTo("");
                   setCurrentPage(1);
                 }}
-                className="px-3 py-2 text-sm bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                className="px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
               >
                 Xóa bộ lọc ngày
               </button>
             )}
 
-            <div className="ml-auto text-sm text-gray-600 dark:text-gray-400">
+            <div className="sm:ml-auto text-xs sm:text-sm text-gray-600 dark:text-gray-400 pt-2 sm:pt-0">
               Tổng: {totalCount} đơn hàng
             </div>
           </div>
@@ -328,38 +352,38 @@ const OrdersPage: React.FC = () => {
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 dark:border-white"></div>
           </div>
         ) : orders.length === 0 ? (
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-12 text-center shadow-sm border border-gray-200 dark:border-gray-700">
-            <Package className="w-16 h-16 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-2">
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 sm:p-8 md:p-12 text-center shadow-sm border border-gray-200 dark:border-gray-700">
+            <Package className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 text-gray-300 dark:text-gray-600 mx-auto mb-3 sm:mb-4" />
+            <h3 className="text-base sm:text-lg font-semibold text-gray-800 dark:text-gray-200 mb-2">
               Chưa có đơn hàng nào
             </h3>
-            <p className="text-gray-600 dark:text-gray-400 mb-6">
+            <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400 mb-4 sm:mb-6">
               Bắt đầu mua sắm để tạo đơn hàng đầu tiên!
             </p>
             <button
               onClick={() => navigate("/")}
-              className="px-6 py-3 bg-black dark:bg-white text-white dark:text-black rounded-lg font-medium hover:bg-gray-800 dark:hover:bg-gray-100 transition-colors"
+              className="px-4 sm:px-6 py-2 sm:py-3 text-sm sm:text-base bg-black dark:bg-white text-white dark:text-black rounded-lg font-medium hover:bg-gray-800 dark:hover:bg-gray-100 transition-colors"
             >
               Khám phá sản phẩm
             </button>
           </div>
         ) : (
-          <div className="space-y-4">
+          <div className="space-y-3 sm:space-y-4">
             {orders.map((order) => (
               <div
                 key={order.order_id}
-                className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700 hover:shadow-md transition-shadow"
+                className="bg-white dark:bg-gray-800 rounded-lg p-3 sm:p-4 md:p-6 shadow-sm border border-gray-200 dark:border-gray-700 hover:shadow-md transition-shadow"
               >
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex items-center gap-3">
+                <div className="flex flex-col sm:flex-row items-start justify-between gap-3 sm:gap-4 mb-3 sm:mb-4">
+                  <div className="flex items-start gap-2 sm:gap-3 flex-1 min-w-0">
                     {getStatusIcon(order.status)}
-                    <div>
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="font-mono text-sm text-gray-600 dark:text-gray-400">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 mb-1">
+                        <span className="font-mono text-xs sm:text-sm text-gray-600 dark:text-gray-400">
                           #{order.order_id.slice(0, 8)}
                         </span>
                         <span
-                          className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(
+                          className={`px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full text-xs font-medium ${getStatusColor(
                             order.status
                           )}`}
                         >
@@ -379,8 +403,8 @@ const OrdersPage: React.FC = () => {
                         )}
                     </div>
                   </div>
-                  <div className="text-right">
-                    <p className="text-lg font-semibold text-gray-900 dark:text-white">
+                  <div className="text-left sm:text-right w-full sm:w-auto">
+                    <p className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white">
                       {formatPrice(order.total_amount)}
                     </p>
                     {order.shipping_fee && (
@@ -391,30 +415,30 @@ const OrdersPage: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="mb-4 pb-4 border-b border-gray-200 dark:border-gray-700">
-                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">
+                <div className="mb-3 sm:mb-4 pb-3 sm:pb-4 border-b border-gray-200 dark:border-gray-700">
+                  <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mb-1">
                     <span className="font-medium">Địa chỉ:</span>{" "}
                     {order.shipping_address}
                   </p>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                  <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
                     <span className="font-medium">SĐT:</span>{" "}
                     {order.shipping_phone}
                   </p>
                   {order.notes && (
-                    <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
+                    <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-2">
                       <span className="font-medium">Ghi chú:</span>{" "}
                       {order.notes}
                     </p>
                   )}
                 </div>
 
-                <div className="flex gap-3 flex-wrap">
+                <div className="flex gap-2 sm:gap-3 flex-wrap">
                   <button
                     onClick={() => loadOrderDetail(order.order_id)}
-                    className="px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg font-medium hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors flex items-center gap-2"
+                    className="px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg font-medium hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors flex items-center gap-1.5 sm:gap-2"
                   >
                     Xem chi tiết
-                    <ChevronRight className="w-4 h-4" />
+                    <ChevronRight className="w-3 h-3 sm:w-4 sm:h-4" />
                   </button>
                   {order.status.toLowerCase() === "pending" && (
                     <>
@@ -424,7 +448,7 @@ const OrdersPage: React.FC = () => {
                           setPaymentMethod("cod");
                           setPaymentDialogOpen(true);
                         }}
-                        className="px-4 py-2 bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 rounded-lg font-medium hover:bg-green-200 dark:hover:bg-green-900/50 transition-colors"
+                        className="px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 rounded-lg font-medium hover:bg-green-200 dark:hover:bg-green-900/50 transition-colors"
                       >
                         Thanh toán
                       </button>
@@ -433,7 +457,7 @@ const OrdersPage: React.FC = () => {
                           setOrderToCancel(order.order_id);
                           setCancelDialogOpen(true);
                         }}
-                        className="px-4 py-2 bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded-lg font-medium hover:bg-red-200 dark:hover:bg-red-900/50 transition-colors"
+                        className="px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded-lg font-medium hover:bg-red-200 dark:hover:bg-red-900/50 transition-colors"
                       >
                         Hủy đơn
                       </button>
@@ -447,21 +471,21 @@ const OrdersPage: React.FC = () => {
 
         {/* Pagination */}
         {totalPages > 1 && (
-          <div className="mt-6 flex justify-center gap-2">
+          <div className="mt-4 sm:mt-6 flex justify-center gap-2">
             <button
               onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
               disabled={currentPage === 1}
-              className="px-4 py-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-lg font-medium border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-lg font-medium border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               Trước
             </button>
-            <span className="px-4 py-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-lg border border-gray-200 dark:border-gray-700">
+            <span className="px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-lg border border-gray-200 dark:border-gray-700">
               Trang {currentPage} / {totalPages}
             </span>
             <button
               onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
               disabled={currentPage === totalPages}
-              className="px-4 py-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-lg font-medium border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-lg font-medium border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               Sau
             </button>
@@ -471,10 +495,10 @@ const OrdersPage: React.FC = () => {
 
       {/* Order Detail Modal */}
       {selectedOrderId && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-3 sm:p-4">
           <div className="bg-white dark:bg-gray-800 rounded-lg max-w-3xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="sticky top-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-6 flex justify-between items-center">
-              <h2 className="text-2xl font-semibold text-gray-900 dark:text-white">
+            <div className="sticky top-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-4 sm:p-6 flex justify-between items-center">
+              <h2 className="text-lg sm:text-xl md:text-2xl font-semibold text-gray-900 dark:text-white">
                 Chi tiết đơn hàng
               </h2>
               <button
@@ -482,31 +506,32 @@ const OrdersPage: React.FC = () => {
                   setSelectedOrderId(null);
                   setOrderDetail(null);
                 }}
+                title="Đóng"
                 className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
               >
-                <X className="w-6 h-6" />
+                <X className="w-5 h-5 sm:w-6 sm:h-6" />
               </button>
             </div>
 
             {isLoadingDetail ? (
-              <div className="p-12 flex items-center justify-center">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 dark:border-white"></div>
+              <div className="p-8 sm:p-12 flex items-center justify-center">
+                <div className="animate-spin rounded-full h-10 w-10 sm:h-12 sm:w-12 border-b-2 border-gray-900 dark:border-white"></div>
               </div>
             ) : orderDetail ? (
-              <div className="p-6 space-y-6">
+              <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
                 {/* Order Info */}
-                <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
-                  <div className="grid grid-cols-2 gap-4">
+                <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-3 sm:p-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                     <div>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                      <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
                         Mã đơn hàng
                       </p>
-                      <p className="font-mono text-sm font-medium text-gray-900 dark:text-white">
+                      <p className="font-mono text-xs sm:text-sm font-medium text-gray-900 dark:text-white break-all">
                         {orderDetail.order_id}
                       </p>
                     </div>
                     <div>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                      <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
                         Trạng thái
                       </p>
                       <span
@@ -518,28 +543,28 @@ const OrdersPage: React.FC = () => {
                       </span>
                     </div>
                     <div>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                      <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
                         Ngày đặt
                       </p>
-                      <p className="text-sm font-medium text-gray-900 dark:text-white">
+                      <p className="text-xs sm:text-sm font-medium text-gray-900 dark:text-white">
                         {formatDate(orderDetail.order_date)}
                       </p>
                     </div>
                     <div>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                      <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
                         Thanh toán
                       </p>
-                      <p className="text-sm font-medium text-gray-900 dark:text-white">
+                      <p className="text-xs sm:text-sm font-medium text-gray-900 dark:text-white">
                         {orderDetail.payment_method?.toUpperCase() || "COD"}
                       </p>
                     </div>
                     {orderDetail.status.toLowerCase() !== "cancelled" &&
                       orderDetail.status.toLowerCase() !== "delivered" && (
-                        <div className="col-span-2">
-                          <p className="text-sm text-gray-500 dark:text-gray-400">
+                        <div className="sm:col-span-2">
+                          <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
                             Dự kiến giao hàng
                           </p>
-                          <p className="text-sm font-medium text-green-600 dark:text-green-400">
+                          <p className="text-xs sm:text-sm font-medium text-green-600 dark:text-green-400">
                             {getEstimatedDeliveryDate(orderDetail.order_date)}
                           </p>
                         </div>

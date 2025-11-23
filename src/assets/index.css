@@ -45,6 +45,19 @@ body {
   color: var(--color-text-primary);
 }
 
+/* Responsive Grid Utilities */
+@media (min-width: 640px) {
+  .responsive-product-grid {
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)) !important;
+  }
+}
+
+@media (min-width: 1024px) {
+  .responsive-product-grid {
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)) !important;
+  }
+}
+
 /* Typography - Headings use Montserrat */
 h1,
 h2,

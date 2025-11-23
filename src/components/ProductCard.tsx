@@ -65,7 +65,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
   return (
     <Box
       onClick={() => onProductClick(product)}
-      className="bg-white rounded-lg overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1 cursor-pointer"
+      className="bg-white rounded-lg overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1 cursor-pointer w-full"
       style={{ border: "1px solid #E9ECEF" }}
     >
       {/* Image Container */}
@@ -101,32 +101,37 @@ const ProductCard: React.FC<ProductCardProps> = ({
 
         {/* Official Badge */}
         <Badge
-          className="absolute top-2 left-2 text-white text-[10px] font-bold px-2 py-0.5 flex items-center gap-1"
+          className="absolute top-1 sm:top-2 left-1 sm:left-2 text-white text-[8px] sm:text-[10px] font-bold px-1 sm:px-2 py-0.5 flex items-center gap-0.5 sm:gap-1"
           style={{ backgroundColor: "#C89B6D" }}
         >
-          <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+          <svg
+            className="w-2 h-2 sm:w-3 sm:h-3"
+            fill="currentColor"
+            viewBox="0 0 20 20"
+          >
             <path
               fillRule="evenodd"
               d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
               clipRule="evenodd"
             />
           </svg>
-          <span>OFFICIAL STORE</span>
+          <span className="hidden sm:inline">OFFICIAL STORE</span>
+          <span className="sm:hidden">OFFICIAL</span>
         </Badge>
       </Box>
 
       {/* Product Info */}
-      <VStack className="items-stretch p-3 gap-1">
+      <VStack className="items-stretch p-2 sm:p-3 gap-1">
         {/* Brand */}
         {brandName && (
-          <Text className="text-xs text-gray-500 overflow-hidden text-ellipsis whitespace-nowrap">
+          <Text className="text-[10px] sm:text-xs text-gray-500 overflow-hidden text-ellipsis whitespace-nowrap">
             {brandName}
           </Text>
         )}
 
         {/* Product Name */}
         <Text
-          className="text-sm font-medium min-h-[40px] leading-[1.25]"
+          className="text-xs sm:text-sm font-medium min-h-[32px] sm:min-h-[40px] leading-[1.25]"
           css={{
             display: "-webkit-box",
             WebkitLineClamp: 2,
@@ -146,7 +151,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
 
         {/* Price */}
         <Text
-          className="text-lg font-bold"
+          className="text-sm sm:text-lg font-bold"
           style={{
             color: "#C89B6D",
             fontFamily: "Montserrat, sans-serif",

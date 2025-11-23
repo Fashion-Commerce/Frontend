@@ -178,17 +178,17 @@ const ProfilePage: React.FC = () => {
   }
 
   return (
-    <div className="p-8 ml-16">
-      <div className="max-w-4xl mx-auto space-y-6">
+    <div className="p-4 sm:p-6 md:p-8 ml-0 sm:ml-8 md:ml-16">
+      <div className="max-w-4xl mx-auto space-y-4 sm:space-y-6">
         {/* Header */}
         <div>
           <h1
-            className="text-3xl font-bold mb-2"
+            className="text-2xl sm:text-3xl font-bold mb-2"
             style={{ fontFamily: "Montserrat, sans-serif", color: "#1A2A4E" }}
           >
             Tài khoản của tôi
           </h1>
-          <p style={{ color: "#666666" }}>
+          <p className="text-sm sm:text-base" style={{ color: "#666666" }}>
             Quản lý thông tin cá nhân và bảo mật
           </p>
         </div>
@@ -199,32 +199,37 @@ const ProfilePage: React.FC = () => {
           style={{ border: "1px solid #E9ECEF" }}
         >
           <div
-            className="px-6 py-4"
+            className="px-4 sm:px-6 py-3 sm:py-4"
             style={{ borderBottom: "2px solid #C89B6D" }}
           >
             <h2
-              className="text-lg font-semibold"
+              className="text-base sm:text-lg font-semibold"
               style={{ fontFamily: "Montserrat, sans-serif", color: "#1A2A4E" }}
             >
               Thông tin cá nhân
             </h2>
           </div>
 
-          <div className="p-6 space-y-5">
+          <div className="p-4 sm:p-6 space-y-4 sm:space-y-5">
             {/* Họ tên - EDITABLE */}
-            <div className="grid grid-cols-3 gap-4 items-start">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-4 items-start">
               <label
-                className="text-sm font-medium pt-2"
+                htmlFor="fullname-input"
+                className="text-xs sm:text-sm font-medium pt-0 sm:pt-2"
                 style={{ color: "#333333" }}
               >
                 Họ và tên
               </label>
-              <div className="col-span-2 relative">
+              <div className="col-span-1 sm:col-span-2 relative">
                 <Input
+                  id="fullname-input"
                   value={fullname}
                   onChange={(e) => setFullname(e.target.value)}
-                  className="w-full px-4 py-2.5"
-                  size="md"
+                  className="w-full"
+                  size={{ base: "sm", sm: "md" }}
+                  px={{ base: 3, sm: 4 }}
+                  py={{ base: 2, sm: 2.5 }}
+                  fontSize={{ base: "sm", sm: "md" }}
                   placeholder="Nhập họ và tên"
                   style={{ borderColor: "#E9ECEF" }}
                   _hover={{ borderColor: "#C89B6D" }}
@@ -237,16 +242,16 @@ const ProfilePage: React.FC = () => {
             </div>
 
             {/* Email - READ ONLY */}
-            <div className="grid grid-cols-3 gap-4 items-start">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-4 items-start">
               <label
-                className="text-sm font-medium pt-2"
+                className="text-xs sm:text-sm font-medium pt-0 sm:pt-2"
                 style={{ color: "#333333" }}
               >
                 Email
               </label>
-              <div className="col-span-2">
+              <div className="col-span-1 sm:col-span-2">
                 <div
-                  className="py-2.5 px-4 rounded-md"
+                  className="py-2 sm:py-2.5 px-3 sm:px-4 rounded-md text-sm sm:text-base break-all"
                   style={{
                     backgroundColor: "#F4F6F8",
                     border: "1px solid #E9ECEF",
@@ -262,20 +267,25 @@ const ProfilePage: React.FC = () => {
             </div>
 
             {/* Số điện thoại - EDITABLE */}
-            <div className="grid grid-cols-3 gap-4 items-start">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-4 items-start">
               <label
-                className="text-sm font-medium pt-2"
+                htmlFor="phone-input"
+                className="text-xs sm:text-sm font-medium pt-0 sm:pt-2"
                 style={{ color: "#333333" }}
               >
                 Số điện thoại
               </label>
-              <div className="col-span-2 relative">
+              <div className="col-span-1 sm:col-span-2 relative">
                 <Input
+                  id="phone-input"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
                   placeholder="Chưa cập nhật"
-                  className="w-full px-4 py-2.5"
-                  size="md"
+                  className="w-full"
+                  size={{ base: "sm", sm: "md" }}
+                  px={{ base: 3, sm: 4 }}
+                  py={{ base: 2, sm: 2.5 }}
+                  fontSize={{ base: "sm", sm: "md" }}
                   style={{ borderColor: "#E9ECEF" }}
                   _hover={{ borderColor: "#C89B6D" }}
                   _focus={{
@@ -287,18 +297,19 @@ const ProfilePage: React.FC = () => {
             </div>
 
             {/* Loại tài khoản - READ ONLY */}
-            <div className="grid grid-cols-3 gap-4 items-start">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-4 items-start">
               <label
-                className="text-sm font-medium pt-2"
+                className="text-xs sm:text-sm font-medium pt-0 sm:pt-2"
                 style={{ color: "#333333" }}
               >
                 Loại tài khoản
               </label>
-              <div className="col-span-2 pt-2">
+              <div className="col-span-1 sm:col-span-2 pt-0 sm:pt-2">
                 <Badge
                   size="sm"
-                  px={3}
-                  py={1}
+                  px={{ base: 2, sm: 3 }}
+                  py={{ base: 0.5, sm: 1 }}
+                  fontSize={{ base: "xs", sm: "sm" }}
                   className="rounded-md"
                   style={{
                     backgroundColor:
@@ -314,22 +325,22 @@ const ProfilePage: React.FC = () => {
             </div>
 
             {/* Trạng thái - READ ONLY with dynamic color */}
-            <div className="grid grid-cols-3 gap-4 items-start">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-4 items-start">
               <label
-                className="text-sm font-medium pt-2"
+                className="text-xs sm:text-sm font-medium pt-0 sm:pt-2"
                 style={{ color: "#333333" }}
               >
                 Trạng thái
               </label>
-              <div className="col-span-2 pt-2">
+              <div className="col-span-1 sm:col-span-2 pt-0 sm:pt-2">
                 {userDetails?.is_active ? (
-                  <span className="inline-flex items-center px-3 py-1 rounded-md text-sm font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
-                    <span className="w-2 h-2 bg-green-500 rounded-full mr-2 animate-pulse"></span>
+                  <span className="inline-flex items-center px-2 sm:px-3 py-0.5 sm:py-1 rounded-md text-xs sm:text-sm font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
+                    <span className="w-2 h-2 bg-green-500 rounded-full mr-1.5 sm:mr-2 animate-pulse"></span>
                     Hoạt động
                   </span>
                 ) : (
-                  <span className="inline-flex items-center px-3 py-1 rounded-md text-sm font-medium bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200">
-                    <span className="w-2 h-2 bg-gray-500 rounded-full mr-2"></span>
+                  <span className="inline-flex items-center px-2 sm:px-3 py-0.5 sm:py-1 rounded-md text-xs sm:text-sm font-medium bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200">
+                    <span className="w-2 h-2 bg-gray-500 rounded-full mr-1.5 sm:mr-2"></span>
                     Không hoạt động
                   </span>
                 )}
@@ -337,27 +348,33 @@ const ProfilePage: React.FC = () => {
             </div>
 
             {/* Ngày tạo - READ ONLY */}
-            <div className="grid grid-cols-3 gap-4 items-start">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-4 items-start">
               <label
-                className="text-sm font-medium pt-2"
+                className="text-xs sm:text-sm font-medium pt-0 sm:pt-2"
                 style={{ color: "#333333" }}
               >
                 Ngày tạo
               </label>
-              <div className="col-span-2 py-2" style={{ color: "#333333" }}>
+              <div
+                className="col-span-1 sm:col-span-2 py-0 sm:py-2 text-sm sm:text-base"
+                style={{ color: "#333333" }}
+              >
                 {userDetails && formatDate(userDetails.created_at)}
               </div>
             </div>
 
             {/* Cập nhật - READ ONLY */}
-            <div className="grid grid-cols-3 gap-4 items-start">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-4 items-start">
               <label
-                className="text-sm font-medium pt-2"
+                className="text-xs sm:text-sm font-medium pt-0 sm:pt-2"
                 style={{ color: "#333333" }}
               >
                 Cập nhật
               </label>
-              <div className="col-span-2 py-2" style={{ color: "#333333" }}>
+              <div
+                className="col-span-1 sm:col-span-2 py-0 sm:py-2 text-sm sm:text-base"
+                style={{ color: "#333333" }}
+              >
                 {userDetails && formatDate(userDetails.updated_at)}
               </div>
             </div>
@@ -365,17 +382,21 @@ const ProfilePage: React.FC = () => {
             {/* Save/Cancel buttons - only show when modified */}
             {isProfileModified && (
               <div
-                className="grid grid-cols-3 gap-4 items-start pt-4"
+                className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-4 items-start pt-3 sm:pt-4"
                 style={{ borderTop: "1px solid #E9ECEF" }}
               >
-                <div></div>
-                <div className="col-span-2">
-                  <HStack gap={3}>
+                <div className="hidden sm:block"></div>
+                <div className="col-span-1 sm:col-span-2">
+                  <HStack gap={{ base: 2, sm: 3 }} flexWrap="wrap">
                     <Button
                       onClick={handleProfileUpdate}
                       loading={isUpdatingProfile}
                       disabled={!fullname.trim() || isUpdatingProfile}
-                      className="text-white font-medium px-6 py-2 rounded-lg transition-all shadow-sm hover:shadow-md"
+                      className="text-white font-medium rounded-lg transition-all shadow-sm hover:shadow-md"
+                      size={{ base: "sm", sm: "md" }}
+                      px={{ base: 4, sm: 6 }}
+                      py={{ base: 1.5, sm: 2 }}
+                      fontSize={{ base: "sm", sm: "md" }}
                       style={{
                         backgroundColor: "#C89B6D",
                         fontFamily: "Montserrat, sans-serif",
@@ -387,7 +408,11 @@ const ProfilePage: React.FC = () => {
                     <Button
                       onClick={handleCancelProfileEdit}
                       disabled={isUpdatingProfile}
-                      className="bg-white font-medium px-6 py-2 rounded-lg transition-all"
+                      className="bg-white font-medium rounded-lg transition-all"
+                      size={{ base: "sm", sm: "md" }}
+                      px={{ base: 4, sm: 6 }}
+                      py={{ base: 1.5, sm: 2 }}
+                      fontSize={{ base: "sm", sm: "md" }}
                       style={{ border: "1px solid #E9ECEF", color: "#333333" }}
                       _hover={{ backgroundColor: "#F4F6F8" }}
                     >
@@ -406,34 +431,38 @@ const ProfilePage: React.FC = () => {
           style={{ border: "1px solid #E9ECEF" }}
         >
           <div
-            className="px-6 py-4"
+            className="px-4 sm:px-6 py-3 sm:py-4"
             style={{ borderBottom: "2px solid #C89B6D" }}
           >
             <h2
-              className="text-lg font-semibold"
+              className="text-base sm:text-lg font-semibold"
               style={{ fontFamily: "Montserrat, sans-serif", color: "#1A2A4E" }}
             >
               Đổi mật khẩu
             </h2>
           </div>
 
-          <div className="p-6 space-y-5">
+          <div className="p-4 sm:p-6 space-y-4 sm:space-y-5">
             {/* Mật khẩu hiện tại */}
-            <div className="grid grid-cols-3 gap-4 items-start">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-4 items-start">
               <label
-                className="text-sm font-medium pt-2"
+                htmlFor="current-password"
+                className="text-xs sm:text-sm font-medium pt-0 sm:pt-2"
                 style={{ color: "#333333" }}
               >
                 Mật khẩu hiện tại
               </label>
-              <div className="col-span-2 relative">
+              <div className="col-span-1 sm:col-span-2 relative">
                 <Input
+                  id="current-password"
                   type="password"
                   value={currentPassword}
                   onChange={(e) => setCurrentPassword(e.target.value)}
                   placeholder="Nhập mật khẩu hiện tại"
-                  size="md"
-                  className="px-4 py-2.5"
+                  size={{ base: "sm", sm: "md" }}
+                  px={{ base: 3, sm: 4 }}
+                  py={{ base: 2, sm: 2.5 }}
+                  fontSize={{ base: "sm", sm: "md" }}
                   style={{ borderColor: "#E9ECEF" }}
                   _hover={{ borderColor: "#C89B6D" }}
                   _focus={{
@@ -445,21 +474,25 @@ const ProfilePage: React.FC = () => {
             </div>
 
             {/* Mật khẩu mới */}
-            <div className="grid grid-cols-3 gap-4 items-start">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-4 items-start">
               <label
-                className="text-sm font-medium pt-2"
+                htmlFor="new-password"
+                className="text-xs sm:text-sm font-medium pt-0 sm:pt-2"
                 style={{ color: "#333333" }}
               >
                 Mật khẩu mới
               </label>
-              <div className="col-span-2 relative">
+              <div className="col-span-1 sm:col-span-2 relative">
                 <Input
+                  id="new-password"
                   type="password"
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
                   placeholder="Tối thiểu 6 ký tự"
-                  size="md"
-                  className="px-4 py-2.5"
+                  size={{ base: "sm", sm: "md" }}
+                  px={{ base: 3, sm: 4 }}
+                  py={{ base: 2, sm: 2.5 }}
+                  fontSize={{ base: "sm", sm: "md" }}
                   style={{ borderColor: "#E9ECEF" }}
                   _hover={{ borderColor: "#C89B6D" }}
                   _focus={{
@@ -471,21 +504,25 @@ const ProfilePage: React.FC = () => {
             </div>
 
             {/* Xác nhận mật khẩu */}
-            <div className="grid grid-cols-3 gap-4 items-start">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-4 items-start">
               <label
-                className="text-sm font-medium pt-2"
+                htmlFor="confirm-password"
+                className="text-xs sm:text-sm font-medium pt-0 sm:pt-2"
                 style={{ color: "#333333" }}
               >
                 Xác nhận mật khẩu
               </label>
-              <div className="col-span-2 relative">
+              <div className="col-span-1 sm:col-span-2 relative">
                 <Input
+                  id="confirm-password"
                   type="password"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   placeholder="Nhập lại mật khẩu mới"
-                  size="md"
-                  className="px-4 py-2.5"
+                  size={{ base: "sm", sm: "md" }}
+                  px={{ base: 3, sm: 4 }}
+                  py={{ base: 2, sm: 2.5 }}
+                  fontSize={{ base: "sm", sm: "md" }}
                   style={{ borderColor: "#E9ECEF" }}
                   _hover={{ borderColor: "#C89B6D" }}
                   _focus={{
@@ -498,11 +535,11 @@ const ProfilePage: React.FC = () => {
 
             {/* Button */}
             <div
-              className="grid grid-cols-3 gap-4 items-start pt-4"
+              className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-4 items-start pt-3 sm:pt-4"
               style={{ borderTop: "1px solid #E9ECEF" }}
             >
-              <div></div>
-              <div className="col-span-2">
+              <div className="hidden sm:block"></div>
+              <div className="col-span-1 sm:col-span-2">
                 <Button
                   onClick={handlePasswordChange}
                   loading={isUpdatingPassword}
@@ -512,7 +549,11 @@ const ProfilePage: React.FC = () => {
                     !confirmPassword ||
                     isUpdatingPassword
                   }
-                  className="text-white font-medium px-6 py-2 rounded-lg transition-all shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="text-white font-medium rounded-lg transition-all shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+                  size={{ base: "sm", sm: "md" }}
+                  px={{ base: 4, sm: 6 }}
+                  py={{ base: 1.5, sm: 2 }}
+                  fontSize={{ base: "sm", sm: "md" }}
                   style={{
                     backgroundColor: "#C89B6D",
                     fontFamily: "Montserrat, sans-serif",
@@ -532,17 +573,17 @@ const ProfilePage: React.FC = () => {
           style={{ border: "1px solid #E9ECEF" }}
         >
           <div
-            className="px-6 py-4"
+            className="px-4 sm:px-6 py-3 sm:py-4"
             style={{ borderBottom: "2px solid #C89B6D" }}
           >
             <h2
-              className="text-lg font-semibold"
+              className="text-base sm:text-lg font-semibold"
               style={{ fontFamily: "Montserrat, sans-serif", color: "#1A2A4E" }}
             >
               Địa chỉ giao hàng
             </h2>
           </div>
-          <div className="p-6">
+          <div className="p-4 sm:p-6">
             <AddressManagement />
           </div>
         </div>
