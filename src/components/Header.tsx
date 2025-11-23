@@ -75,7 +75,8 @@ const Header: React.FC<HeaderProps> = ({
             }}
           />
           <Text
-            className="text-white font-bold text-base sm:text-xl md:text-2xl hidden xs:block"
+            className="font-bold"
+            fontSize={{ base: "base", sm: "xl", md: "2xl" }}
             style={{ fontFamily: "Montserrat, sans-serif", color: "#C89B6D" }}
           >
             AgentFashion
