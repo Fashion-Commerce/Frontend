@@ -20,9 +20,5 @@
         }
       ]
     }
-  ],
-  "env": {
-    "VITE_API_URL_1": "@vite_api_url_1",
-    "VITE_API_URL_2": "@vite_api_url_2"
-  }
+  ]
 }
