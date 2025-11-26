@@ -65,7 +65,7 @@ export const useChatStore = create<ChatState>()(
       isStreaming: false,
       uploadedFiles: [],
       error: null,
-      collectionName: "chatbot-foxai",
+      collectionName: "fashion_commerce",
       currentPage: 0,
       totalPages: 0,
       isLoadingHistory: false,
